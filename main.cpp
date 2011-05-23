@@ -62,6 +62,10 @@ int main(void)
         case 'd':
           serial_labelnum("PLATFORM SET TEMP: ", EC.getPlatformST());
           break;
+        case 'z':
+          serial_writestr("Doing EC Update.\r\n");
+          EC.update();
+          break;
       }
     }
   }
