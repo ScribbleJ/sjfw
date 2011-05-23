@@ -13,8 +13,12 @@ MBIEC EC(RS485_TX_ENABLE, RS485_RX_ENABLE);
 MBIEC::MBIEC(Pin tx_en, Pin rx_en) 
   : TX_ENABLE_PIN(tx_en), RX_ENABLE_PIN(rx_en),
     rxring(MBIEC_BUFSIZE, rxbuf), txring(MBIEC_BUFSIZE, txbuf)
-
 {
+  last_command=0;
+  hotend_temp=0;
+  platform_temp=0;
+  hotend_set_temp=0;
+  platform_set_temp=0;
   // Using double-speec comms; probably not necessary.
   UCSR1A = MASK(U2X1);
   UBRR1 = (((F_CPU / 8) / 38400) - 0.5);
@@ -41,6 +45,8 @@ uint16_t MBIEC::handle_rx_char(uint8_t c)
   buf[len++] = c;
   if(len == EC_MAX_COMM)
   {
+    // Too much data
+    len = 0;
     return 0;
   }
 
@@ -51,6 +57,7 @@ uint16_t MBIEC::handle_rx_char(uint8_t c)
 
   if(dlen > EC_MAX_COMM - 4)
   {
+    // Packet too large
     len = 0;
     return 0;
   }
@@ -61,13 +68,85 @@ uint16_t MBIEC::handle_rx_char(uint8_t c)
   len = 0;
   uint16_t p = 0;
 
+  // Could check CRC here.
+
   if(dlen >= 3)
   {
     p = buf[3] | (buf[4] << 8);
+    handle_command_response(p);
   }
 
   return p;
 }
+
+void MBIEC::handle_command_response(uint16_t p)
+{
+  switch(last_command)
+  {
+    case SLAVE_CMD_GET_TEMP:
+      hotend_temp = p;
+      break;
+    case SLAVE_CMD_GET_SP:
+      hotend_set_temp = p;
+      break;
+    case SLAVE_CMD_GET_PLATFORM_TEMP:
+      platform_temp = p;
+      break;
+    case SLAVE_CMD_GET_PLATFORM_SP:
+      platform_set_temp = p;
+      break;
+  }
+}
+    
+void MBIEC::setHotend(uint16_t p)
+{
+  dotoolreq(SLAVE_CMD_SET_TEMP, p);
+}
+
+void MBIEC::setPlatform(uint16_t p)
+{
+  dotoolreq(SLAVE_CMD_SET_PLATFORM_TEMP, p);
+}
+
+uint16_t MBIEC::getHotend()
+{
+  return hotend_temp;
+}
+
+uint16_t MBIEC::getPlatform()
+{
+  return platform_temp;
+}
+
+uint16_t MBIEC::getHotendST()
+{
+  return hotend_set_temp;
+}
+
+uint16_t MBIEC::getPlatformST()
+{
+  return platform_set_temp;
+}
+
+
+void MBIEC::update()
+{
+  // could enfore call timing here.
+  static const uint8_t commands[] = 
+  {
+    SLAVE_CMD_GET_TEMP,
+    SLAVE_CMD_GET_PLATFORM_TEMP,
+    SLAVE_CMD_GET_SP,
+    SLAVE_CMD_GET_PLATFORM_SP
+  };
+  static const uint8_t cmdnum = 4;
+  static int cmd = 0;
+  dotoolreq(commands[cmd++]);
+  if(cmd >= cmdnum)
+    cmd = 0;
+}
+
+
 
 uint8_t MBIEC::crc_update (uint8_t crc, uint8_t data) 
 {
@@ -95,6 +174,8 @@ void MBIEC::dotoolreq(uint8_t command_id, uint16_t param)
   uint8_t toolnum = 0;
   uint8_t c = 2;
   uint8_t crc = 0;
+
+  last_command = command_id;
 
   EC.write(0xD5); // start byte
 

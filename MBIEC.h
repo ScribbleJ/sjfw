@@ -15,6 +15,7 @@
 
 #include "AvrPort.h"
 #include "CircularBuffer.h"
+#include "ExtruderCommands.h"
 
 #define MBIEC_BUFSIZE 16
 #define MASK(PIN) (1 << PIN)
@@ -57,7 +58,18 @@ class MBIEC
       else  TX_ENABLE_PIN.setValue(true);
     }
 
+    void setHotend(uint16_t p);
+    void setPlatform(uint16_t p);
+    uint16_t getHotend();
+    uint16_t getPlatform();
+    uint16_t getHotendST();
+    uint16_t getPlatformST();
+
+    void update();
+
+
   private:
+    void handle_command_response(uint16_t p);
     Pin TX_ENABLE_PIN;
     Pin RX_ENABLE_PIN;
     uint8_t rxbuf[MBIEC_BUFSIZE];
@@ -65,6 +77,7 @@ class MBIEC
     uint8_t txbuf[MBIEC_BUFSIZE];
     CircularBufferTempl<uint8_t> txring;
     volatile uint8_t loopbytes;
+    uint8_t last_command;
     void speak()
     {
       TX_ENABLE_PIN.setValue(true);
@@ -73,6 +86,11 @@ class MBIEC
     }
     void listen() { TX_ENABLE_PIN.setValue(false); }
     uint8_t crc_update (uint8_t crc, uint8_t data);
+    uint16_t hotend_temp;
+    uint16_t platform_temp;
+    uint16_t hotend_set_temp;
+    uint16_t platform_set_temp;
+
 };
 
 extern MBIEC EC;
