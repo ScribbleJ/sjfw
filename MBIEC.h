@@ -16,6 +16,7 @@
 #include "AvrPort.h"
 #include "CircularBuffer.h"
 #include "ExtruderCommands.h"
+#include <avr/interrupt.h>
 
 #define MBIEC_BUFSIZE 16
 #define MASK(PIN) (1 << PIN)

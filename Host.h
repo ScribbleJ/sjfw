@@ -5,18 +5,13 @@
    Chris "ScribbleJ" Jansen
    (c)2011
 
-   This class handles setting up the second comm port on a AVR 
-   to communicate via RS485 with a MBI Extruder Controller running stock MBI
-   firmware (tested with 2.8).  
-
-   Uses different methods to set pins as it's based on code from various places and
-   not what I'd call fully-integrated (yet).
+   Loosely based on Teacup serial library
 */
 
-#include "AvrPort.h"
 #include "CircularBuffer.h"
+#include <avr/interrupt.h>
 
-#define HOST_BUFSIZE 16
+#define HOST_BUFSIZE 256
 #define HOST_BAUD 115200
 #define MASK(PIN) (1 << PIN)
 
@@ -24,12 +19,12 @@ class Host
 {
   public:
     // TODO: Should be made into a proper Singleton pattern, since it is.
-    Host(uint16_t baudrate);
+    Host(unsigned long baudrate);
 
-    uint8_t rxchars() { return rxring.getLength(); }
-    uint8_t popchar() { return rxring.pop(); }
-    void write(uint8_t data) { txring.push(data);   UCSR0B |= MASK(UDRIE0); }
-    void write(const char *data) { while(char d = *data++) txring.push(d); }
+    uint8_t rxchars() { uint8_t l; cli(); l = rxring.getLength(); sei(); return l; }
+    uint8_t popchar() { uint8_t c; cli(); c = rxring.pop(); sei(); return c; }
+    void write(uint8_t data) { cli(); txring.push(data); sei();   UCSR0B |= MASK(UDRIE0); }
+    void write(const char *data) { uint8_t i = 0, r; while ((r = data[i++])) write(r); }
     void write(uint16_t n, uint16_t rad) 
     {
       	for(uint16_t i = rad; i >= 1; i = i/10)
@@ -53,13 +48,10 @@ class Host
 
     void udre_interrupt_handler()
     {
-      if(txring.getLength() == 0)
-      {
-        // diable interrupt
-        UCSR0B &= ~MASK(UDRIE0);
-      }
-      else
+      if(txring.getLength() > 0)
         UDR0 = txring.pop();
+      else
+        UCSR0B &= ~MASK(UDRIE0);
     }
 
   private:

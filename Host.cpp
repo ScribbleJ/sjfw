@@ -9,7 +9,7 @@
 // We create an instance of the class here as a global - should be made into a proper Singleton pattern eventually.
 Host HOST(HOST_BAUD);
 
-Host::Host(uint16_t BAUD)
+Host::Host(unsigned long BAUD)
   : rxring(HOST_BUFSIZE, rxbuf), txring(HOST_BUFSIZE, txbuf)
 {
   if(BAUD > 38401)
@@ -36,7 +36,6 @@ ISR(USART0_RX_vect)
   HOST.rx_interrupt_handler();
 }
 
-// Possibly should load UDR1 on UDRE interrupt handler - but am aping MBI's behavior for now.
 ISR(USART0_UDRE_vect)
 {
   HOST.udre_interrupt_handler();

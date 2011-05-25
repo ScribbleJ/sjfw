@@ -1,4 +1,3 @@
-// Illustrative code demoing EC comms class.
 // (c) 2011, Christopher "ScribbleJ" Jansen
 // Licence: GPL or whatever.
 
