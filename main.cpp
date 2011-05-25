@@ -6,11 +6,13 @@
 #include "Host.h"
 #include "ExtruderCommands.h"
 #include "MBIEC.h"
+#include "Time.h"
 
 
 int main(void)
 {
   sei();
+  init_time();
 
   for (;;) { 
     int len = EC.rxchars();
@@ -30,6 +32,7 @@ int main(void)
     if(len)
     {
       uint8_t host = HOST.popchar();
+      unsigned long t = 0;
       switch(host)
       {
         case 'A':
@@ -63,6 +66,16 @@ int main(void)
         case 'z':
           HOST.write("Doing EC Update.\r\n");
           EC.update();
+          break;
+        case 'T':
+          t = millis();
+          HOST.write("Millis: "); HOST.write(t,10);
+          HOST.write("\r\n");
+          break;
+        case 't':
+          t = micros();
+          HOST.write("Micros: "); HOST.write(t,10);
+          HOST.write("\r\n");
           break;
       }
     }

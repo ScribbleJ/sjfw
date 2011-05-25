@@ -10,6 +10,7 @@
 
 #include "CircularBuffer.h"
 #include <avr/interrupt.h>
+#include <stdlib.h>
 
 #define HOST_BUFSIZE 256
 #define HOST_BAUD 115200
@@ -25,19 +26,18 @@ class Host
     uint8_t popchar() { uint8_t c; cli(); c = rxring.pop(); sei(); return c; }
     void write(uint8_t data) { cli(); txring.push(data); sei();   UCSR0B |= MASK(UDRIE0); }
     void write(const char *data) { uint8_t i = 0, r; while ((r = data[i++])) write(r); }
-    void write(uint16_t n, uint16_t rad) 
+    void write(unsigned long n, int radix)
     {
-      	for(uint16_t i = rad; i >= 1; i = i/10)
-	      {
-		      write((uint8_t)(n/i) + '0');
-		      n -= (n/i) * i; // This looks like nonsense but it chops off the remainder.
-	      }
+      static const char bufsize = 8 * sizeof(unsigned long) + 1;
+      char buf[bufsize];
+      ultoa(n,buf,radix);
+      write(buf);
     }
 
     void labelnum(const char *label, uint16_t num)
     {
       write(label);
-      write(num, 100);
+      write(num,10);
       write("\r\n");
     }
 
