@@ -40,6 +40,14 @@ class MBIEC
     void    dotoolreq(uint8_t command_id, uint16_t param);
     void    dotoolreq(uint8_t command_id);
 
+    void scan_input()
+    {
+      if(rxring.isEmpty())
+        return;
+
+      handle_rx_char(rxring.pop());
+    }
+
     void rx_interrupt_handler()
     {
       uint8_t rc = UDR1;
@@ -97,7 +105,8 @@ class MBIEC
     uint16_t platform_temp;
     uint16_t hotend_set_temp;
     uint16_t platform_set_temp;
-
+    unsigned long lastresponsetime;
+    unsigned long lastrequesttime;
 };
 
 extern MBIEC& EC;

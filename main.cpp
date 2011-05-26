@@ -30,18 +30,13 @@ int main(void)
     // Checks to see if recieve buffer has enough data to parse, and sends it to 
     // Gcodes.h for processing if so.
     HOST.scan_input();
-  
-    int len = EC.rxchars();
-    if(len)
-    {
-      uint8_t db = EC.popchar();
-      HOST.labelnum("CHAR: ", db); // sends a copy of each character to the host
-      uint16_t param = EC.handle_rx_char(db);
-      if(param != 0) 
-      {
-        HOST.labelnum("PARAM: ", param);
-      }
-    }
+
+    // Checks for data coming in from EC and handles it.
+    EC.scan_input();
+
+    // Runs regular temperature queries against the EC, also reports errors when
+    // EC is unresponsive for too long.
+    EC.update();
   }
 
   return 0;

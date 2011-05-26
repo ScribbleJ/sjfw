@@ -5,6 +5,8 @@
 
 #include "MBIEC.h"
 #include "pins.h"
+#include "Time.h"
+#include "Host.h"
 #include <avr/interrupt.h>
 
 MBIEC& EC = MBIEC::Instance();
@@ -95,6 +97,7 @@ void MBIEC::handle_command_response(uint16_t p)
       platform_set_temp = p;
       break;
   }
+  lastresponsetime = millis();
 }
     
 void MBIEC::setHotend(uint16_t p)
@@ -128,8 +131,28 @@ uint16_t MBIEC::getPlatformST()
 }
 
 
+#define MAX_EC_INTERVAL_MS 1000
+#define MIN_EC_INTERVAL_MS 10
+#define MIN_REQUEST_INTERVAL 200
 void MBIEC::update()
 {
+  unsigned long now = millis();
+  if(now - lastresponsetime > MAX_EC_INTERVAL_MS)
+  {
+    // TODO: Take some action.
+    HOST.write("!! EXTRUDER CONTROLLER NONRESPONSIVE\r\n");
+    // Reset alarm.
+    lastresponsetime = millis();
+  }
+  else if(now - lastresponsetime < MIN_EC_INTERVAL_MS)
+  {
+    return;
+  }
+  if(now - lastrequesttime < MIN_REQUEST_INTERVAL)
+  {
+    return;
+  }
+
   // could enfore call timing here.
   static const uint8_t commands[] = 
   {
@@ -170,6 +193,12 @@ uint8_t MBIEC::crc_update (uint8_t crc, uint8_t data)
 // Might need some extra support for Gen3.
 void MBIEC::dotoolreq(uint8_t command_id, uint16_t param)
 {
+  unsigned long now = millis();
+  if(now - lastrequesttime < MIN_REQUEST_INTERVAL)
+  {
+    return;
+  }
+  lastrequesttime = now;
   uint8_t toolnum = 0;
   uint8_t c = 2;
   uint8_t crc = 0;
