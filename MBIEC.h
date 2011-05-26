@@ -23,10 +23,16 @@
 
 class MBIEC
 {
+  // THERE CAN BE ONLY ONE!
   public:
-    // TODO: Should be made into a proper Singleton pattern, since it is.
-    MBIEC(Pin tx_enable, Pin rx_enable);
+    static MBIEC& Instance() { static MBIEC instance; return instance; };
+  private:
+    explicit MBIEC();
+    MBIEC(MBIEC&);
+    MBIEC& operator=(MBIEC&);
 
+  // Ok, on with it.
+  public:
     uint8_t rxchars() { return rxring.getLength(); };
     uint8_t popchar() { return rxring.pop(); };
     void write(uint8_t data) { txring.push(data); };
@@ -94,7 +100,7 @@ class MBIEC
 
 };
 
-extern MBIEC EC;
+extern MBIEC& EC;
 
 
 #endif

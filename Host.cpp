@@ -7,8 +7,7 @@
 #include <avr/interrupt.h>
 #include "Gcodes.h"
 
-// We create an instance of the class here as a global - should be made into a proper Singleton pattern eventually.
-Host HOST(HOST_BAUD);
+Host& HOST = Host::Instance();
 
 Host::Host(unsigned long BAUD)
   : rxring(HOST_BUFSIZE, rxbuf), txring(HOST_BUFSIZE, txbuf)

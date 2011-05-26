@@ -7,11 +7,10 @@
 #include "pins.h"
 #include <avr/interrupt.h>
 
-// We create an instance of the class here as a global - should be made into a proper Singleton pattern eventually.
-MBIEC EC(RS485_TX_ENABLE, RS485_RX_ENABLE);
+MBIEC& EC = MBIEC::Instance();
 
-MBIEC::MBIEC(Pin tx_en, Pin rx_en) 
-  : TX_ENABLE_PIN(tx_en), RX_ENABLE_PIN(rx_en),
+MBIEC::MBIEC() 
+  : TX_ENABLE_PIN(RS485_TX_ENABLE), RX_ENABLE_PIN(RS485_RX_ENABLE),
     rxring(MBIEC_BUFSIZE, rxbuf), txring(MBIEC_BUFSIZE, txbuf)
 {
   last_command=0;

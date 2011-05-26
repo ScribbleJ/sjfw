@@ -5,16 +5,19 @@
 #include "CircularBuffer.h"
 #include "MGcode.h"
 #include <stdlib.h>
+#include <errno.h>
 
 #define GCODE_BUFSIZE 10
 class Gcodes
 {
 public:
-  static Gcodes& Instance() 
-  {
-    static Gcodes instance;
-    return instance;
-  }
+  // Truly one-of-a-kind
+  static Gcodes& Instance() { static Gcodes instance; return instance; }
+private:
+  explicit Gcodes()  :codes(GCODE_BUFSIZE, codes_buf,1), crc_state(NOCRC), crc(0), line_number(0) { };
+  Gcodes(Gcodes const&);
+  void operator=(const Gcodes&);
+public:
 
 
   uint16_t queuelen() { return codes.getLength(); }
@@ -32,9 +35,9 @@ public:
   void parsecompleted()
   {
     MGcode& c=codes[codes.getLength()];
-    if(c[M].isUnused() and c[G].isUnused())
+    if(c[M].isUnused() == c[G].isUnused()) // Both used or both unused is an error.
     {
-      HOST.write("Discarding bogus Gcode.\r\n");
+      HOST.rxerror("Discarding bogus Gcode.", line_number + 1);
       c.reset();
       return;
     }
@@ -42,7 +45,7 @@ public:
     if(codes.hasOverflow() || codes.hasUnderflow())
     {
       codes.reset();
-      HOST.rxerror("GCODE buffer FUBAR.");
+      HOST.rxerror("GCODE buffer FUBAR.", line_number + 1);
       // Throw some nasty-ass error
     }
     else
@@ -104,7 +107,8 @@ public:
     bytes[numbytes] = 0;
 
     int idx = codes.getLength();
-    union { float f; unsigned long l; };
+    unsigned long l; 
+    errno = 0;
     switch(bytes[0])
     {
       case 'N':
@@ -113,7 +117,7 @@ public:
         {
           crc = 0;
           crc_state = NOCRC;
-          HOST.rxerror("Invalid line number.");
+          HOST.rxerror("Invalid line number.",line_number + 1);
           return;
         }
         line_number++;
@@ -153,6 +157,13 @@ public:
         packetdone = true;
         break;
     }
+    if(errno)
+    {
+      crc = 0;
+      crc_state = NOCRC;
+      line_number--;
+      HOST.rxerror("Number Conversion Error", line_number + 1);
+    }
 
     if(packetdone)
     {
@@ -165,7 +176,7 @@ public:
             crc = 0;
             crc_state = NOCRC;
             line_number--;
-            HOST.rxerror("CRC mismatch.");
+            HOST.rxerror("CRC mismatch.",line_number + 1);
             return;
           }
           break;
@@ -178,7 +189,7 @@ public:
           crc_state = NOCRC;
           line_number--;
           // Error out - no CRC before end of command or invalid state.
-          HOST.rxerror("Missing CRC.");
+          HOST.rxerror("Missing CRC.",line_number + 1);
           return;
       }
       parsecompleted();
@@ -191,9 +202,6 @@ public:
   }
 
 private:
-  explicit Gcodes()  :codes(GCODE_BUFSIZE, codes_buf,1), crc_state(NOCRC), crc(0), line_number(0) { };
-  Gcodes(Gcodes const&);
-  void operator=(const Gcodes&);
   MGcode codes_buf[GCODE_BUFSIZE];
   CircularBufferTempl<MGcode> codes;
 

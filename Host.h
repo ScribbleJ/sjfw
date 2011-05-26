@@ -19,8 +19,13 @@
 class Host
 {
   public:
-    // TODO: Should be made into a proper Singleton pattern, since it is.
-    Host(unsigned long baudrate);
+    // singleton
+    static Host& Instance() { static Host instance(HOST_BAUD); return instance; }
+  private:
+    explicit Host(unsigned long baud);
+    Host(Host&);
+    Host& operator=(Host&);
+  public:
 
     // We do full-duplex here and fast too, so if cli() and sei() aren't called it will cause corruption.
     uint8_t rxchars() { uint8_t l; cli(); l = rxring.getLength(); sei(); return l; }
@@ -53,14 +58,22 @@ class Host
       write("\r\n");
     }
 
-    void rxerror(const char*errmsg)
+    void rxerror(const char*errmsg, uint16_t linenum)
     {
+      write("rs ");
+      write(linenum, 10);
+      write(' ');
       write(errmsg);
       write("\r\n");
       cli();
       rxring.reset();
       input_ready=0;
       sei();
+    }
+
+    void rxerror(const char* errmsg)
+    {
+      rxerror(errmsg, 0);
     }
 
     void scan_input();
@@ -87,9 +100,10 @@ class Host
     uint8_t txbuf[HOST_BUFSIZE];
     CircularBufferTempl<uint8_t> txring;
     volatile unsigned int input_ready;
+
 };
 
-extern Host HOST;
+extern Host& HOST;
 
 
 #endif
