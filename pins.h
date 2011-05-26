@@ -1,46 +1,7 @@
-/*
- * Copyright 2010 by Adam Mayer	 <adam@makerbot.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
- */
-
-#ifndef BOARDS_RRMBV22_CONFIGURATION_HH_
-#define BOARDS_RRMBV22_CONFIGURATION_HH_
-
-// This file details the pin assignments and features of the RepRap Motherboard
-// version 1.2 for the ordinary use case.
+#ifndef _PINS_H_
+#define _PINS_H_
 
 #include "AvrPort.h"
-
-// Interval for the stepper update in microseconds.  This interval is the minimum
-// possible time between steps; in practical terms, your time between steps should
-// be at least eight times this large.  Reducing the interval can cause resource
-// starvation; leave this at 64uS or greater unless you know what you're doing.
-#define INTERVAL_IN_MICROSECONDS 64
-
-// --- Power Supply Unit configuration ---
-// Define as 1 if a PSU is present; 0 if not.
-#define HAS_PSU         0
-
-// --- Secure Digital Card configuration ---
-// NOTE: If SD support is enabled, it is implicitly assumed that the
-// following pins are connected:
-//  AVR    |   SD header
-//---------|--------------
-//  MISO   |   DATA_OUT
-//  MOSI   |   DATA_IN
-//  SCK    |   CLK
 
 // Define as 1 if and SD card slot is present; 0 if not.
 #define HAS_SD          1
@@ -53,15 +14,10 @@
 
 // --- Slave UART configuration ---
 // The slave UART is presumed to be an RS485 connection through a sn75176 chip.
-// Define as 1 if the slave UART is present; 0 if not.
-#define HAS_SLAVE_UART  1
 // The pin that connects to the driver enable line on the RS485 chip.
 #define RS485_TX_ENABLE   Pin(PortC,5)
 // The pin that connects to the active-low recieve enable line on the RS485 chip.
 #define RS485_RX_ENABLE   Pin(PortC,7)
-
-// --- Host UART configuration ---
-// The host UART is presumed to always be present on the RX/TX lines.
 
 // --- Piezo Buzzer configuration ---
 // Define as 1 if the piezo buzzer is present, 0 if not.
@@ -139,14 +95,9 @@
 // --- Debugging configuration ---
 // The pin which controls the debug LED (active high)
 #define DEBUG_PIN       Pin(PortB,7)
-// By default, debugging packets should be honored; this is made
-// configurable if we're short on cycles or EEPROM.
-// Define as 1 if debugging packets are honored; 0 if not.
-#define HONOR_DEBUG_PACKETS 1
 
 // SCRIBBLEJHACK - LCD
 #define HAS_LCD         1
-
 #define LCD_RS_PIN      Pin(PortC,3)
 #define LCD_RW_PIN      Pin(PortC,2)
 #define LCD_E_PIN       Pin(PortC,0)
@@ -162,14 +113,6 @@
 #define LCD_X 16
 #define LCD_Y 2
 
-
-// Used to report on LCD.
-#define NUM_TOOLS       1
-#define PLATFORM_HEATER_TOOLNUM 0
-// EXTRACHARS must be length of string.
-#define LCD_EXTRASTRING ""
-#define LCD_EXTRACHARS 0
-#define LCD_TEMP_UPDATE_INTERVAL_MICROS 2000000
 // My Newhaven starts each line in memory after the previous.
 // The hitachi standard starts each line offset by 40h
 // GOOD FOR HITACHI/STANDARD 16CHAR
@@ -179,14 +122,6 @@
 // My Newhaven can only address every other character. 
 // The hitachi standard can address each char individually.
 #define LCD_FULLADDRESS 1
-
-// How many lines of logging data to keep/present
-#define LOG_LINES	10
-// How many chars in a filename?
-#define LCD_MAX_FILE_LEN  32
-
-#define FILE_QUEUE_LEN  10
-
 
 #define HAS_KEYPAD	1
 #define KP_COLS		3
@@ -204,9 +139,5 @@
 
 #define KP_DEBOUNCE     50
 
-
-
-
-
-#endif // BOARDS_RRMBV12_CONFIGURATION_HH_
+#endif
 

@@ -39,11 +39,17 @@ private:
 	BufDataType* const data; /// Pointer to buffer data
 	volatile bool overflow; /// Overflow indicator
 	volatile bool underflow; /// Underflow indicator
+  const BufSizeType reserved; /// num entries off-limits to normal operations
 public:
 	CircularBufferTempl(BufSizeType size_in, BufDataType* data_in) :
 		size(size_in), length(0), start(0), data(data_in), overflow(false),
-				underflow(false) {
+				underflow(false), reserved(0){
 	}
+	CircularBufferTempl(BufSizeType size_in, BufDataType* data_in, BufSizeType reserved_in) :
+		size(size_in), length(0), start(0), data(data_in), overflow(false),
+				underflow(false), reserved(reserved_in) {
+	}
+
 
 	/// Reset the buffer to its empty state.  All data in
 	/// the buffer will be (effectively) lost.
@@ -55,7 +61,7 @@ public:
 	}
 	/// Append a byte to the tail of the buffer
 	inline void push(BufDataType b) {
-		if (length < size) {
+		if (length < size - reserved) {
 			operator[](length) = b;
 			length++;
 		} else {
@@ -74,29 +80,28 @@ public:
 		return popped_byte;
 	}
 
-  // Push a number of bytes onto the buffer
-  inline void push(BufDataType* bp) {
-    while(*bp != 0)
-    {
-      if(length < size) {
-        operator[](length) = *bp++;
-        length++;
-      }
-      else break;
+  // advance the tail pointer by one.
+  inline void fakepush() {
+    if(length < size - reserved)
+    { 
+      length++;
     }
-    operator[](length++) = 0;
+    else
+    {
+      overflow = true;
+    }
   }
 
-	/// Pop a number of bytes off the head of the buffer.  If there
-	/// are not enough bytes to complete the pop, pop what we can and
-	/// set the underflow flag.
-	inline void pop(BufSizeType sz) {
-		if (length < sz) {
+	inline void fakepop() {
+		if (isEmpty())
+    {
 			underflow = true;
-			sz = length;
+    }
+    else
+    {
+		  start = (start + 1) % size;
+  		length--;
 		}
-		start = (start + sz) % size;
-		length -= sz;
 	}
 
 	/// Get the length of the buffer
@@ -106,7 +111,7 @@ public:
 
 	/// Get the remaining capacity of this buffer
 	inline const BufSizeType getRemainingCapacity() const {
-		return size - length;
+		return size - length - reserved;
 	}
 
 	/// Check if the buffer is empty

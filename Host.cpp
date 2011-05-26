@@ -5,6 +5,7 @@
 
 #include "Host.h"
 #include <avr/interrupt.h>
+#include "Gcodes.h"
 
 // We create an instance of the class here as a global - should be made into a proper Singleton pattern eventually.
 Host HOST(HOST_BAUD);
@@ -12,6 +13,7 @@ Host HOST(HOST_BAUD);
 Host::Host(unsigned long BAUD)
   : rxring(HOST_BUFSIZE, rxbuf), txring(HOST_BUFSIZE, txbuf)
 {
+  input_ready = false;
   if(BAUD > 38401)
   {
     UCSR0A = MASK(U2X0);
@@ -28,6 +30,49 @@ Host::Host(unsigned long BAUD)
 
   UCSR0B |= MASK(RXCIE0) | MASK(UDRIE0);
 }
+
+
+#define MAX_PARSEBYTES 16
+void Host::scan_input()
+{
+  if(rxring.hasOverflow())
+  {
+    rxerror("Recieve Buffer Overflow.");
+    return;
+  }
+
+  if(input_ready == 0)
+    return;
+
+  char buf[MAX_PARSEBYTES];
+  uint8_t len;
+ 
+  // HOST.labelnum("Input fragments ready:", input_ready);
+
+  cli(); 
+  input_ready--;
+  for(len=0;len<MAX_PARSEBYTES;len++)
+  {
+    buf[len] = rxring.pop();
+    if(buf[len] <= 32)
+      break;
+  }
+  sei();
+
+  // HOST.labelnum("Fragment length:", len);
+
+  if(len == MAX_PARSEBYTES)
+  {
+    rxerror("Fragment buffer overflow.");
+    return;
+  }
+
+
+  GCODES.parsebytes(buf, len);
+
+}
+
+      
 
 
 /*** INTERRUPT HANDLERS ***/

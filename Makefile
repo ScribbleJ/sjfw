@@ -13,7 +13,7 @@ F_CPU = 16000000
 
 AVR_TOOLS_PATH = /usr/bin
 SRC =  
-CXXSRC = AvrPort.cpp Host.cpp MBIEC.cpp Time.cpp
+CXXSRC = AvrPort.cpp Host.cpp MBIEC.cpp Time.cpp Gcodes.cpp
 FORMAT = ihex
 
 
@@ -40,10 +40,10 @@ CSTANDARD =
 CDEBUG = -g$(DEBUG)
 CWARN = -Wall -Winline
 CTUNING = -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
-#CEXTRA = -Wa,-adhlns=$(<:.c=.lst)
+CXXEXTRA = -fno-threadsafe-statics
 
 CFLAGS = $(CDEBUG) $(CDEFS) $(CINCS) -O$(OPT) $(CWARN) $(CSTANDARD) $(CEXTRA)
-CXXFLAGS = $(CDEFS) $(CINCS) -O$(OPT) 
+CXXFLAGS = $(CDEFS) $(CINCS) -O$(OPT) $(CXXEXTRA)
 #ASFLAGS = -Wa,-adhlns=$(<:.S=.lst),-gstabs 
 LDFLAGS = -lm
 
