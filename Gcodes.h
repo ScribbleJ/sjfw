@@ -33,6 +33,8 @@ public:
     {
       codes.fakepop();
       loops = 0;
+      if(codes.isEmpty())
+        return;
     }
     codes[0].execute();
 
