@@ -24,11 +24,26 @@ public:
 
   void handlenext()
   {
+    static unsigned int loops = 0;
     if(codes.isEmpty())
       return;
 
-    codes[0].dump_to_host();
-    codes.fakepop();
+
+    if(codes[0].isDone())
+    {
+      codes.fakepop();
+      loops = 0;
+    }
+    codes[0].execute();
+
+    // If we just executed the code in front for the first time, then we just return.
+    // If it's had some time to go, then we start preparing the next, and the one after, etc.
+    unsigned int codesinqueue = codes.getLength();
+    unsigned int less = loops < codesinqueue ? loops : codesinqueue;
+    for(unsigned int x=1;x<less;x++)
+      codes[x].prepare();
+
+    ++loops;
   }
 
 
@@ -56,6 +71,8 @@ public:
     crc_state = NOCRC;
     crc = 0;
   }
+
+  bool isFull() { return (codes.getRemainingCapacity() == 0); }
 
   void parsebytes(char *bytes, uint8_t numbytes)
   {
@@ -198,6 +215,8 @@ public:
     {
       // HOST.write("Fragment parsed.\r\n");
     }
+
+    return;
     
   }
 

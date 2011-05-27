@@ -43,6 +43,9 @@ void Host::scan_input()
   if(input_ready == 0)
     return;
 
+  if(GCODES.isFull())
+    return;
+
   char buf[MAX_PARSEBYTES];
   uint8_t len;
  

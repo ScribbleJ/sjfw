@@ -57,14 +57,44 @@ class MGcode
 public:
   MGcode(): cps((CodeParam[10]){  CodeParam('M'), CodeParam('G'), CodeParam('X'), CodeParam('Y'),
                                   CodeParam('Z'), CodeParam('E'), CodeParam('F'), CodeParam('P'),
-                                  CodeParam('S'), CodeParam('T') }) {};
+                                  CodeParam('S'), CodeParam('T') }),
+            state(NEW) {};
   CodeParam cps[T+1];                    
   CodeParam& operator[](int idx) { return cps[idx]; }
+  enum mg_states_t { NEW, PREPARED, ACTIVE, DONE };
+  
+
   void reset()
   {
     for(int x=0;x<T;x++)
       cps[x].unset();
+    state = NEW;
   }
+
+  // Stuff to do if it's a G move code, otherwise not I guess.
+  // This function MAY get called repeatedly before the execute() function.
+  // Or, it MAY not get called at all.  No guarantees.
+  void prepare()
+  {
+    if(state == PREPARED)
+      return;
+
+    state = PREPARED;
+  }
+
+  // Do some stuff and return.  This function will be called repeatedly while 
+  // the state is still ACTIVE, and you can set up an interrupt for precise timings.
+  // DON'T hang around here... do a couple little things and return.
+  void execute()
+  {
+    if(state == DONE)
+      return;
+
+    state = DONE;
+  }
+
+  bool isDone() { return (state == DONE); };
+
   void dump_to_host()
   {
     HOST.write("Gcode: ");
@@ -72,6 +102,10 @@ public:
       cps[x].dump_to_host();
     HOST.write("\r\n");
   }
+
+private:
+  volatile mg_states_t state;
+
 };
 
 
