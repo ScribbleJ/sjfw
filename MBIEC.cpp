@@ -133,7 +133,7 @@ uint16_t MBIEC::getPlatformST()
 
 #define MAX_EC_INTERVAL_MS 1000
 #define MIN_EC_INTERVAL_MS 10
-#define MIN_REQUEST_INTERVAL 200
+#define MIN_REQUEST_INTERVAL 50
 void MBIEC::update()
 {
   unsigned long now = millis();
@@ -191,12 +191,12 @@ uint8_t MBIEC::crc_update (uint8_t crc, uint8_t data)
 // the meta-control (e.g. reset, init) and temperature
 // controls, which are all we need to care about on Gen4.
 // Might need some extra support for Gen3.
-void MBIEC::dotoolreq(uint8_t command_id, uint16_t param)
+bool MBIEC::dotoolreq(uint8_t command_id, uint16_t param)
 {
   unsigned long now = millis();
   if(now - lastrequesttime < MIN_REQUEST_INTERVAL)
   {
-    return;
+    return false;
   }
   lastrequesttime = now;
   uint8_t toolnum = 0;
@@ -230,9 +230,11 @@ void MBIEC::dotoolreq(uint8_t command_id, uint16_t param)
 
   EC.write(crc); // crc
   EC.speak();
+
+  return true;
 }
 
-void MBIEC::dotoolreq(uint8_t command_id)
+bool MBIEC::dotoolreq(uint8_t command_id)
 {
   return dotoolreq(command_id, 0xffff);
 }

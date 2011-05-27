@@ -48,6 +48,7 @@ public:
     ++loops;
   }
 
+  void setLineNumber(unsigned int l) { line_number = l; }
 
   void parsecompleted()
   {
@@ -163,10 +164,10 @@ public:
         codes[idx][E].setFloat(bytes+1);
         break;
       case 'P':
-        codes[idx][P].setFloat(bytes+1);
+        codes[idx][P].setInt(bytes+1);
         break;
       case 'S':
-        codes[idx][S].setFloat(bytes+1);
+        codes[idx][S].setInt(bytes+1);
         break;
       case 'T':
         codes[idx][T].setInt(bytes+1);

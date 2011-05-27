@@ -4,6 +4,7 @@
 // ato? functions.
 #include <stdlib.h>
 #include "Host.h"
+#include "MBIEC.h"
 
 class CodeParam
 {
@@ -73,82 +74,30 @@ public:
     state = NEW;
     preparecalls = 0;
     executecalls = 0;
+    lastms = 0;
   }
 
   // Stuff to do if it's a G move code, otherwise not I guess.
   // This function MAY get called repeatedly before the execute() function.
   // Or, it MAY not get called at all.  No guarantees.
-  void prepare()
-  {
-    preparecalls++;
-    if(state == PREPARED)
-      return;
-
-    state = PREPARED;
-  }
-
+  void prepare();
   // Do some stuff and return.  This function will be called repeatedly while 
   // the state is still ACTIVE, and you can set up an interrupt for precise timings.
-  void execute()
-  {
-    executecalls++;
-    if(state == DONE)
-      return;
-
-    if(cps[G].isUnused())
-    {
-      do_m_code();
-    }
-    else
-    {
-      do_g_code();
-    }
-
-    dump_to_host();
-
-    state = DONE;
-  }
-
+  void execute();
   bool isDone() { return (state == DONE); };
-
-  void dump_to_host()
-  {
-    HOST.write('P'); HOST.write(preparecalls, 10);
-    HOST.write('E'); HOST.write(executecalls, 10);
-    HOST.write(' ');
-    for(int x=0;x<T;x++)
-      cps[x].dump_to_host();
-    HOST.write("\r\n");
-  }
+  void dump_to_host();
 
 private:
   CodeParam cps[T+1];                    
   volatile mg_states_t state;
+  unsigned long lastms;
   unsigned int preparecalls;
   unsigned int executecalls;
 
-  void do_g_code() 
-  {
-    switch(cps[G].getInt())
-    {
-      default:
-        HOST.write("ok 0 GCODE "); HOST.write(cps[G].getInt(), 10); HOST.write(" NOT SUPPORTED\r\n");
-        break;
-    }
-  }
+  void do_m_code();
+  void do_g_code();
+  void write_temps_to_host();
 
-  void do_m_code()
-  {
-    switch(cps[M].getInt())
-    {
-      case 115:
-        HOST.write("ok 0 DEBUG MESSAGE\r\n");
-        break;
-      default:
-        HOST.write("ok 0 MCODE "); HOST.write(cps[M].getInt(), 10); HOST.write(" NOT SUPPORTED\r\n");
-        break;
-    }
-  }
 };
 
 

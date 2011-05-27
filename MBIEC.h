@@ -37,8 +37,8 @@ class MBIEC
     uint8_t popchar() { return rxring.pop(); };
     void write(uint8_t data) { txring.push(data); };
     uint16_t handle_rx_char(uint8_t c);
-    void    dotoolreq(uint8_t command_id, uint16_t param);
-    void    dotoolreq(uint8_t command_id);
+    bool    dotoolreq(uint8_t command_id, uint16_t param);
+    bool    dotoolreq(uint8_t command_id);
 
     void scan_input()
     {
