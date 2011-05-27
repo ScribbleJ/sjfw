@@ -1,6 +1,7 @@
 #include "MGcode.h"
 #include "Gcodes.h"
 #include "Time.h"
+#include "Globals.h"
 
 // Stuff to do if it's a G move code, otherwise not I guess.
 // This function MAY get called repeatedly before the execute() function.
@@ -93,7 +94,9 @@ void MGcode::do_m_code()
       state = DONE;
       break;
     case 115: // Get Firmware Version and Capabilities
-      HOST.write("ok 0 PROTOCOL_VERSION:SJ FIRMWARE_NAME:sjfw MACHINE_TYPE:ThingOMatic EXTRUDER_COUNT:1\r\n");
+      HOST.write("ok 0 PROTOCOL_VERSION:SJ FIRMWARE_NAME:sjfw MACHINE_TYPE:ThingOMatic EXTRUDER_COUNT:1 FREE_RAM:");
+      HOST.write(getFreeRam(),10);
+      HOST.write("\r\n");
       state = DONE;
       break;
     case 116: // Wait on temperatures
