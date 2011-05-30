@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include "Host.h"
 #include "MBIEC.h"
+#include "Movedata.h"
+#include <string.h>
 
 class CodeParam
 {
@@ -65,6 +67,7 @@ public:
                                   CodeParam('S'), CodeParam('T') }) { reset(); };
   CodeParam& operator[](int idx) { return cps[idx]; }
   enum mg_states_t { NEW, PREPARED, ACTIVE, DONE };
+  volatile mg_states_t state;
   
 
   void reset()
@@ -75,6 +78,7 @@ public:
     preparecalls = 0;
     executecalls = 0;
     lastms = 0;
+    memset(movedata, 0, sizeof(Movedata));
   }
 
   // Stuff to do if it's a G move code, otherwise not I guess.
@@ -86,10 +90,10 @@ public:
   void execute();
   bool isDone() { return (state == DONE); };
   void dump_to_host();
+  char* movedata[sizeof(Movedata)];
 
 private:
   CodeParam cps[T+1];                    
-  volatile mg_states_t state;
   unsigned long lastms;
   unsigned int preparecalls;
   unsigned int executecalls;

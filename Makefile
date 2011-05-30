@@ -13,7 +13,7 @@ F_CPU = 16000000
 
 AVR_TOOLS_PATH = /usr/bin
 SRC =  
-CXXSRC = AvrPort.cpp Host.cpp MBIEC.cpp Time.cpp Gcodes.cpp MGcode.cpp
+CXXSRC = AvrPort.cpp Host.cpp MBIEC.cpp Time.cpp Gcodes.cpp MGcode.cpp Axis.cpp Motion.cpp
 FORMAT = ihex
 
 
@@ -25,7 +25,7 @@ MAKEFILE = Makefile
 # AVR (extended) COFF requires stabs, plus an avr-objcopy run.
 DEBUG = stabs
 
-OPT = 2
+OPT = s
 
 # Place -D or -U options here
 CDEFS = -DF_CPU=$(F_CPU)

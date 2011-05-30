@@ -51,12 +51,14 @@ class Host
 
 
 
-    void labelnum(const char *label, uint16_t num)
+    void labelnum(const char *label, uint16_t num, bool endl)
     {
       write(label);
       write(num,10);
-      write("\r\n");
+      if(endl)
+        write("\r\n");
     }
+    void labelnum(const char *label, uint16_t num) { labelnum(label, num, true); };
 
     void rxerror(const char*errmsg, uint16_t linenum)
     {

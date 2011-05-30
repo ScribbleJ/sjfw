@@ -2,6 +2,7 @@
 #include "Gcodes.h"
 #include "Time.h"
 #include "Globals.h"
+#include "Motion.h"
 
 // Stuff to do if it's a G move code, otherwise not I guess.
 // This function MAY get called repeatedly before the execute() function.
@@ -12,7 +13,10 @@ void MGcode::prepare()
   if(state == PREPARED)
     return;
 
-  state = PREPARED;
+  if(cps[G].isUnused())
+    state = PREPARED;
+  else
+    MOTION.gcode_precalc(*this);
 }
 
 // Do some stuff and return.  This function will be called repeatedly while 
@@ -48,6 +52,10 @@ void MGcode::do_g_code()
 {
   switch(cps[G].getInt())
   {
+    case 0:
+    case 1:
+      MOTION.gcode_execute(*this);
+      break;
     default:
       HOST.write("ok 0 GCODE "); HOST.write(cps[G].getInt(), 10); HOST.write(" NOT SUPPORTED\r\n");
       state = DONE;

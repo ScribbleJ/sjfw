@@ -3,6 +3,13 @@
 
 #include "AvrPort.h"
 
+
+#define ENDSTOPPULLUPS 1
+#define ENDSTOPS_INVERTING 1
+#define MINIMUM_FEEDRATE 150
+#define MAX_SOFTWARE_ENDSTOPS 0
+#define MIN_SOFTWARE_ENDSTOPS 0
+
 // Define as 1 if and SD card slot is present; 0 if not.
 #define HAS_SD          1
 // The pin that connects to the write protect line on the SD header.
