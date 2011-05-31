@@ -27,7 +27,10 @@ void MGcode::execute()
 {
   executecalls++;
   if(state < PREPARED)
+  {
     prepare();
+    return;
+  }
   if(state == DONE)
     return;
 

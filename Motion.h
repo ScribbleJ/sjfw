@@ -30,7 +30,9 @@ private:
   Motion& operator=(Motion&);
 
   Axis AXES[NUM_AXES];
-  MGcode* volatile current_gcode;
+  volatile MGcode* volatile current_gcode;
+  volatile unsigned long deltas[NUM_AXES];
+  volatile long errors[NUM_AXES];
 
 public:
 
@@ -150,22 +152,24 @@ public:
   {
     // Only execute codes that are prepared.
     if(gcode.state < MGcode::PREPARED)
-      ; // TODO: This should never happen now and is an error.
+      return; // TODO: This should never happen now and is an error.
     // Don't execute codes that are ACTIVE or DONE (ACTIVE get handled by interrupt)
     if(gcode.state > MGcode::PREPARED)
       return;
 
     // temporary - dump data to host
     dumpMovedata(gcode.movedata);
-    // NOT temporary - validate axis prcompute is OK
+    // NOT temporary - set axis move data, invalidate all precomputes if bad data
     for(int ax=0;ax<NUM_AXES;ax++)
     {
       AXES[ax].dump_to_host();
-      if(gcode.movedata.startpos[ax] != AXES[ax].getCurrentPosition())
+      if(!AXES[ax].setupMove(gcode.movedata.startpos[ax], gcode.movedata.axisdirs[ax], gcode.movedata.axismovesteps[ax]))
       {
         GCODES.Invalidate();
         return;
       }
+      deltas[ax] = gcode.movedata.axismovesteps[ax];
+      errors[ax] = gcode.movedata.movesteps / 2;
     }
     gcode.dump_to_host();
 
@@ -205,9 +209,51 @@ public:
 
   void handleInterrupt()
   {
-    HOST.write("\r\nInterrupt\r\n");
-    current_gcode->state = MGcode::DONE;
-    disableInterrupt();
+    volatile Movedata& md = current_gcode->movedata;
+    if(md.movesteps == 0)
+    {
+      disableInterrupt();
+      current_gcode->state = MGcode::DONE;
+      return;
+    }
+    md.movesteps--;
+
+    if(md.movesteps > md.accel_until)
+      OCR1A -= md.accel_inc;
+    else if(md.movesteps < md.decel_from)
+      OCR1A += md.accel_inc;
+
+    for(int ax=0;ax<NUM_AXES;ax++)
+    {
+      if(ax == md.leading_axis)
+      {
+        AXES[ax].doStep();
+        continue;
+      }
+
+      errors[ax] = errors[ax] - deltas[ax];
+      if(errors[ax] < 0)
+      {
+        AXES[ax].doStep();
+        errors[ax] = errors[ax] + deltas[md.leading_axis];
+      }
+    }
+        
+    if(md.movesteps == 0)
+    {
+      // Finish up any remaining axis - I don't know this will ever actually happen
+      for(int ax=0;ax<NUM_AXES;ax++)
+      {
+        while(AXES[ax].isMoving())
+        {
+          HOST.labelnum("SR:",AXES[ax].getRemainingSteps(), true);
+          AXES[ax].doStep();
+        }
+      }
+
+      disableInterrupt();
+      current_gcode->state = MGcode::DONE;
+    }
   }
 
   void setupInterrupt() 

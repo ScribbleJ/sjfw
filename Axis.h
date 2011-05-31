@@ -27,7 +27,7 @@ class Axis
 
   void dump_to_host();
 	
-	bool isMoving() { if(steps_remaining > 0) return true; return false; };
+	bool isMoving() { return (steps_remaining > 0); };
   // Doesn't take into account position is not updated during move.
   float getCurrentPosition() { return position; }
 
@@ -51,10 +51,61 @@ class Axis
   { 
     return start + (float)((float)steps / steps_per_unit * (dir ? 1.0 : -1.0));
   }
-  
+
+  void doStep()
+  {
+    if(steps_remaining == 0) return;
+    if(direction)
+    {
+      if(!max_pin.isNull() && max_pin.getValue() != ENDSTOPS_INVERTING)
+      {
+        position += (float)(steps_to_take-steps_remaining) / steps_per_unit;
+        steps_remaining = 0;
+        return;
+      }
+    }
+    else
+    {
+      if(!min_pin.isNull() && min_pin.getValue() != ENDSTOPS_INVERTING)
+      {
+        position -= (float)(steps_to_take-steps_remaining) / steps_per_unit;
+        steps_remaining = 0;
+        return;
+      }
+    }
+
+    steps_remaining--;
+    step_pin.setValue(true);
+    step_pin.setValue(false);
+
+    if(steps_remaining == 0)
+    {
+      if(direction)
+        position += (float)steps_to_take / steps_per_unit;
+      else
+        position += (float)steps_to_take / steps_per_unit;
+    }
+  }
+
+  bool setupMove(float supposed_position, bool dir, unsigned long steps)
+  {
+    if(supposed_position != position)
+      return false;
+    direction = dir;
+    steps_to_take = steps;
+    steps_remaining = steps;
+    if(direction) dir_pin.setValue(!dir_inverted);
+    else dir_pin.setValue(dir_inverted);
+    return true;
+  }  
+
+  unsigned long getRemainingSteps() { return steps_remaining; }
 
 private:
+  float position;
 	bool direction;
+	unsigned long steps_to_take;
+	unsigned long steps_remaining;
 
 	float steps_per_unit;
   float max_length;
@@ -63,8 +114,6 @@ private:
   unsigned long accel_dist;
 
   int homing_dir;
-
-	bool relative;
 	
 	Pin step_pin;
 	Pin dir_pin;
@@ -73,11 +122,8 @@ private:
 	bool enable_inverted;
 	Pin min_pin;
 	Pin max_pin;
+	bool relative;
 
-	unsigned long steps_to_take;
-	volatile unsigned long steps_remaining;
-
-  float position;
 };
 
 #endif // __AXIS_H__

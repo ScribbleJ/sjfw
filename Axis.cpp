@@ -9,10 +9,10 @@ Axis::Axis(Pin step_pin, Pin dir_pin, Pin enable_pin, Pin min_pin, Pin max_pin,
 {
 	// Initialize class data
 	this->steps_per_unit = steps_per_unit;
-  this->min_interval = interval_from_feedrate(max_feedrate);
-  this->avg_interval = interval_from_feedrate(home_feedrate);
-  this->max_interval = interval_from_feedrate(min_feedrate);
-  this->accel_dist = steps_per_unit * accel_distance_in_units;
+  min_interval = interval_from_feedrate(max_feedrate);
+  avg_interval = interval_from_feedrate(home_feedrate);
+  max_interval = interval_from_feedrate(min_feedrate);
+  accel_dist = steps_per_unit * accel_distance_in_units;
   position = 0;
 
 	// Initialize pins we control.
