@@ -15,7 +15,7 @@ public:
   // Truly one-of-a-kind
   static Gcodes& Instance() { static Gcodes instance; return instance; }
 private:
-  explicit Gcodes()  :codes(GCODE_BUFSIZE, codes_buf,1), crc_state(NOCRC), crc(0), line_number(0) { };
+  explicit Gcodes()  :codes(GCODE_BUFSIZE, codes_buf,1), crc_state(NOCRC), crc(0), line_number(0), invalidate_codes(false) { };
   Gcodes(Gcodes const&);
   void operator=(const Gcodes&);
 public:
@@ -23,31 +23,7 @@ public:
 
   uint16_t queuelen() { return codes.getLength(); }
 
-  void handlenext()
-  {
-    static unsigned int loops = 0;
-    if(codes.isEmpty())
-      return;
-
-
-    if(codes[0].isDone())
-    {
-      codes.fakepop();
-      loops = 0;
-      if(codes.isEmpty())
-        return;
-    }
-    codes[0].execute();
-
-    // If we just executed the code in front for the first time, then we just return.
-    // If it's had some time to go, then we start preparing the next, and the one after, etc.
-    unsigned int codesinqueue = codes.getLength();
-    unsigned int less = loops < codesinqueue ? loops : codesinqueue;
-    for(unsigned int x=1;x<less;x++)
-      codes[x].prepare();
-
-    ++loops;
-  }
+  void handlenext();
 
   void setLineNumber(unsigned int l) { line_number = l; }
 
@@ -223,6 +199,7 @@ public:
     return;
     
   }
+  void Invalidate() { invalidate_codes = true; }
 
 private:
   MGcode codes_buf[GCODE_BUFSIZE];
@@ -231,6 +208,7 @@ private:
   enum crc_state_t { NOCRC, CRC, CRCCOMPLETE } crc_state;
   uint8_t crc;
   uint16_t line_number;
+  bool invalidate_codes;
 };
   
 extern Gcodes& GCODES;  

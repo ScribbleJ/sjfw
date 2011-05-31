@@ -4,14 +4,13 @@
 #include "Globals.h"
 #include "Motion.h"
 
+Point MGcode::lastpos;
+float MGcode::lastfeed;
 // Stuff to do if it's a G move code, otherwise not I guess.
 // This function MAY get called repeatedly before the execute() function.
 // It WILL get called at least once.
 void MGcode::prepare()
 {
-  static Point lastpos;
-  static float lastfeed;
-
   preparecalls++;
   if(state == PREPARED)
     return;

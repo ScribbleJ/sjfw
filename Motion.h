@@ -6,6 +6,7 @@
 #include "MGcode.h"
 #include "Axis.h"
 #include "Globals.h"
+#include "Gcodes.h"
 
 class Motion
 {
@@ -33,10 +34,12 @@ private:
 
 public:
 
-  void setStartPosition(MGcode& gcode)
+  Point getCurrentPosition()
   {
+    Point p;
     for(int ax=0;ax<NUM_AXES;ax++)
-      gcode.movedata.startpos[ax] = AXES[ax].getCurrentPosition();
+      p[ax] = AXES[ax].getCurrentPosition();
+    return p;
   }
 
   void getMovesteps(MGcode& gcode)
@@ -154,8 +157,16 @@ public:
 
     // temporary - dump data to host
     dumpMovedata(gcode.movedata);
+    // NOT temporary - validate axis prcompute is OK
     for(int ax=0;ax<NUM_AXES;ax++)
+    {
       AXES[ax].dump_to_host();
+      if(gcode.movedata.startpos[ax] != AXES[ax].getCurrentPosition())
+      {
+        GCODES.Invalidate();
+        return;
+      }
+    }
     gcode.dump_to_host();
 
     // setup pointer to current move data for interrupt

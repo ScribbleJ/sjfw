@@ -10,13 +10,13 @@ class Point
 public:
   float axes[NUM_AXES];
   Point() { };
-  Point& operator=(Point& tocopy)
+  Point& operator=(const Point& tocopy)
   {
     for(int ax=0;ax<NUM_AXES;ax++)
       axes[ax] = tocopy.axes[ax];
     return *this;
   }
-  Point(Point& tocopy);
+  Point(const Point& tocopy);
   // No bounds checking
   float& operator[](int idx) { return axes[idx]; }
 };

@@ -75,6 +75,8 @@ public:
     memset(&movedata, 0, sizeof(Movedata));
   }
 
+  static void resetlastpos(const Point& lp) { lastpos = lp; }
+
   // Stuff to do if it's a G move code, otherwise not I guess.
   // This function MAY get called repeatedly before the execute() function.
   // Or, it MAY not get called at all.  No guarantees.
@@ -93,6 +95,8 @@ private:
   unsigned long lastms;
   unsigned int preparecalls;
   unsigned int executecalls;
+  static Point lastpos;
+  static float lastfeed;
 
   void do_m_code();
   void do_g_code();
