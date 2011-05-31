@@ -25,7 +25,7 @@ MAKEFILE = Makefile
 # AVR (extended) COFF requires stabs, plus an avr-objcopy run.
 DEBUG = stabs
 
-OPT = s
+OPT = 2
 
 # Place -D or -U options here
 CDEFS = -DF_CPU=$(F_CPU)

@@ -22,17 +22,16 @@ private:
     Axis(Z_STEP_PIN,Z_DIR_PIN,Z_ENABLE_PIN,Z_MIN_PIN,Z_MAX_PIN,Z_STEPS_PER_UNIT,Z_INVERT_DIR,Z_LENGTH,Z_MAX_FEED,Z_AVG_FEED,Z_START_FEED,Z_ACCEL_DIST,Z_HOME_DIR),
     Axis(A_STEP_PIN,A_DIR_PIN,A_ENABLE_PIN,Pin(),Pin(),A_STEPS_PER_UNIT,A_INVERT_DIR,A_LENGTH,A_MAX_FEED,A_AVG_FEED,A_START_FEED,A_ACCEL_DIST,A_HOME_DIR)
   })
-  {};
+  {
+    setupInterrupt();
+  };
   Motion(Motion&);
   Motion& operator=(Motion&);
 
-public:
   Axis AXES[NUM_AXES];
-  float feedrate;
+  MGcode* volatile current_gcode;
 
-
-  float getFeedrate() { return feedrate; }
-  void setFeedrate(float f) { feedrate = f; }
+public:
 
   void setStartPosition(MGcode& gcode)
   {
@@ -95,7 +94,7 @@ public:
   }
 
 
-  void gcode_precalc(MGcode& gcode, MGcode *prevcode)
+  void gcode_precalc(MGcode& gcode, float& feedin, Point& lastend)
   {
     Movedata& md = gcode.movedata;
 
@@ -103,19 +102,10 @@ public:
       return;
 
     // We want to carry over the previous ending position and feedrate if possible.
-    if(prevcode && prevcode->state >= MGcode::PREPARED)
-    {
-      md.startpos = prevcode->movedata.endpos;
-      if(gcode[F].isUnused())
-        md.feed = prevcode->movedata.feed;
-    }
+    md.startpos = lastend;
+    if(gcode[F].isUnused())
+      md.feed = feedin;
     else
-    {
-      md.feed = feedrate;
-      setStartPosition(gcode);
-    }
-
-    if(!gcode[F].isUnused())
       md.feed = gcode[F].getFloat();
 
     if(md.feed == 0)
@@ -147,22 +137,33 @@ public:
       md.accel_inc = intervaldiff / md.steps_to_accel;
     }  
 
+    lastend = gcode.movedata.endpos;
+    feedin  = md.feed;
     gcode.state = MGcode::PREPARED;
   }
 
+  
   void gcode_execute(MGcode& gcode)
   {
+    // Only execute codes that are prepared.
     if(gcode.state < MGcode::PREPARED)
-      gcode_precalc(gcode, NULL);
+      ; // TODO: This should never happen now and is an error.
+    // Don't execute codes that are ACTIVE or DONE (ACTIVE get handled by interrupt)
     if(gcode.state > MGcode::PREPARED)
       return;
 
+    // temporary - dump data to host
     dumpMovedata(gcode.movedata);
     for(int ax=0;ax<NUM_AXES;ax++)
       AXES[ax].dump_to_host();
     gcode.dump_to_host();
 
-    gcode.state = MGcode::DONE;
+    // setup pointer to current move data for interrupt
+    gcode.state = MGcode::ACTIVE;
+    current_gcode = &gcode;
+
+    setInterruptCycles(gcode.movedata.startinterval);
+    enableInterrupt();
   }
 
   bool axesAreMoving() 
@@ -193,12 +194,41 @@ public:
 
   void handleInterrupt()
   {
-    
+    HOST.write("\r\nInterrupt\r\n");
+    current_gcode->state = MGcode::DONE;
+    disableInterrupt();
   }
 
-  void enableInterrupt() {};
-  void disableInterrupt() {};
-  void setInterruptCycles(unsigned long cycles) {};
+  void setupInterrupt() 
+  {
+    // 16-bit registers that must be set/read with interrupts disabled:
+    // TCNTn, OCRnA/B/C, ICRn
+    // "Fast PWM" and no prescaler.
+    TCCR1A |= _BV(WGM10) | _BV(WGM11);
+    TCCR1B |= _BV(WGM12) | _BV(WGM13) | _BV(CS10);
+  }
+
+
+  void enableInterrupt() 
+  {
+    // reset counter in case.
+    TCNT1 = 0;
+     // Enable timer
+    PRR0 &= ~(_BV(PRTIM1));
+    // Outcompare Compare match A
+    TIMSK1 |= _BV(OCIE1A);
+  };
+  void disableInterrupt() 
+  {
+    // Outcompare Compare match A
+    TIMSK1 &= ~(_BV(OCIE1A));
+    PRR0 |= _BV(PRTIM1);
+  };
+  void setInterruptCycles(unsigned long cycles) 
+  {
+    // Reset timer to 0, target to cycles.
+    OCR1A = cycles;
+  };
 
 };
 

@@ -32,7 +32,7 @@ class Host
     uint8_t popchar() { uint8_t c; cli(); c = rxring.pop(); sei(); return c; }
     uint8_t peekchar() { uint8_t c; cli(); c = rxring[0]; sei(); return c; }
 
-    void write(uint8_t data) { cli(); txring.push(data); sei();   UCSR0B |= MASK(UDRIE0); }
+    void write(uint8_t data) { unsigned char sreg=SREG; cli(); txring.push(data); SREG=sreg;   UCSR0B |= MASK(UDRIE0); }
     void write(const char *data) { uint8_t i = 0, r; while ((r = data[i++])) write(r); }
     void write(unsigned long n, int radix)
     {

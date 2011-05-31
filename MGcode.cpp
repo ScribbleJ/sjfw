@@ -6,9 +6,12 @@
 
 // Stuff to do if it's a G move code, otherwise not I guess.
 // This function MAY get called repeatedly before the execute() function.
-// Or, it MAY not get called at all.  No guarantees.
-void MGcode::prepare(MGcode *prevcode)
+// It WILL get called at least once.
+void MGcode::prepare()
 {
+  static Point lastpos;
+  static float lastfeed;
+
   preparecalls++;
   if(state == PREPARED)
     return;
@@ -16,7 +19,7 @@ void MGcode::prepare(MGcode *prevcode)
   if(cps[G].isUnused())
     state = PREPARED;
   else
-    MOTION.gcode_precalc(*this, prevcode);
+    MOTION.gcode_precalc(*this,lastfeed,lastpos);
 }
 
 // Do some stuff and return.  This function will be called repeatedly while 
@@ -24,8 +27,11 @@ void MGcode::prepare(MGcode *prevcode)
 void MGcode::execute()
 {
   executecalls++;
+  if(state < PREPARED)
+    prepare();
   if(state == DONE)
     return;
+
 
   if(cps[G].isUnused())
   {

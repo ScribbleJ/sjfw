@@ -44,7 +44,7 @@ public:
     unsigned int codesinqueue = codes.getLength();
     unsigned int less = loops < codesinqueue ? loops : codesinqueue;
     for(unsigned int x=1;x<less;x++)
-      codes[x].prepare(&(codes[x-1]));
+      codes[x].prepare();
 
     ++loops;
   }

@@ -78,7 +78,7 @@ public:
   // Stuff to do if it's a G move code, otherwise not I guess.
   // This function MAY get called repeatedly before the execute() function.
   // Or, it MAY not get called at all.  No guarantees.
-  void prepare(MGcode* prevcode);
+  void prepare();
   // Do some stuff and return.  This function will be called repeatedly while 
   // the state is still ACTIVE, and you can set up an interrupt for precise timings.
   void execute();
@@ -97,7 +97,6 @@ private:
   void do_m_code();
   void do_g_code();
   void write_temps_to_host();
-
 };
 
 

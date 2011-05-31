@@ -4,7 +4,7 @@
 #include "config.h"
 #include "Point.h"
 
-struct Movedata
+class Movedata
 {
 public:
   float feed;
