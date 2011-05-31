@@ -50,20 +50,14 @@ public:
   };
 };
 
-
-// Whether I should define such common letters as globals is a bit questionable, but...
-// at any rate, it's CRITICAL the order here matches the array below.  We also
-// assume multiple places that T is the last item.
-enum { M=0, G, X, Y, Z, E, F, P, S, T };
-
 // It would be a swell plan to make this class a polymorphic hierarchy and pop pointers to base
 // in the queue, use dynamic alloc... 
 // I might try it, dunno.
 class MGcode
 {
 public:
-  MGcode(): cps((CodeParam[10]){  CodeParam('M'), CodeParam('G'), CodeParam('X'), CodeParam('Y'),
-                                  CodeParam('Z'), CodeParam('E'), CodeParam('F'), CodeParam('P'),
+  MGcode(): cps((CodeParam[10]){  CodeParam('X'), CodeParam('Y'), CodeParam('Z'), CodeParam('E'),
+                                  CodeParam('M'), CodeParam('G'), CodeParam('F'), CodeParam('P'),
                                   CodeParam('S'), CodeParam('T') }) { reset(); };
   CodeParam& operator[](int idx) { return cps[idx]; }
   enum mg_states_t { NEW, PREPARED, ACTIVE, DONE };
@@ -78,19 +72,21 @@ public:
     preparecalls = 0;
     executecalls = 0;
     lastms = 0;
-    memset(movedata, 0, sizeof(Movedata));
+    memset(&movedata, 0, sizeof(Movedata));
   }
 
   // Stuff to do if it's a G move code, otherwise not I guess.
   // This function MAY get called repeatedly before the execute() function.
   // Or, it MAY not get called at all.  No guarantees.
-  void prepare();
+  void prepare(MGcode* prevcode);
   // Do some stuff and return.  This function will be called repeatedly while 
   // the state is still ACTIVE, and you can set up an interrupt for precise timings.
   void execute();
   bool isDone() { return (state == DONE); };
   void dump_to_host();
-  char* movedata[sizeof(Movedata)];
+  // This is separated out so that eventually we could make it a union with data required
+  // for other types of gcodes, or be on a path to something more drastic, like polymorphic gcode class.
+  Movedata movedata;
 
 private:
   CodeParam cps[T+1];                    

@@ -12,7 +12,7 @@
 #include <avr/interrupt.h>
 #include <stdlib.h>
 
-#define HOST_BUFSIZE 128
+#define HOST_BUFSIZE 512
 #define HOST_BAUD 115200
 #define MASK(PIN) (1 << PIN)
 
@@ -59,6 +59,23 @@ class Host
         write("\r\n");
     }
     void labelnum(const char *label, uint16_t num) { labelnum(label, num, true); };
+    void labelnum(const char *label, int num) { labelnum(label, (uint16_t)num, true); };
+    void labelnum(const char *label, unsigned long num) { labelnum(label, (uint16_t)num, true); };
+    void labelnum(const char *label, int num, bool endl) { labelnum(label, (uint16_t)num, endl); };
+    void labelnum(const char *label, unsigned long num,bool endl) { labelnum(label, (uint16_t)num, endl); };
+
+
+
+    void labelnum(const char *label, float num, bool endl)
+    {
+      write(label);
+      write(num,10,4);
+      if(endl)
+        write("\r\n");
+    }
+    void labelnum(const char *label, float num) { labelnum(label, num, true); };
+
+
 
     void rxerror(const char*errmsg, uint16_t linenum)
     {

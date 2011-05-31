@@ -1,3 +1,10 @@
-Someday to be a proper firmware for 3d printing - right now only good as an illustration of how to talk to a Gen3/4 EC.
+ScribbleJ Firmware
+(c) 2011 Christopher "ScribbleJ" Jansen
 
-Includes code from Teacup, Makerbot, and Sprinter firmwares.
+This is a firmware for 3D printers with an advance gcode pipeline, capable of running at high speeds efficiently.
+
+Currently, it's not capable of printing.
+
+Tested and developed on Gen4.
+
+Includes a little code from Teacup, Makerbot, and Sprinter firmwares.

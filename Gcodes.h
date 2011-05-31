@@ -4,6 +4,7 @@
 #include "Host.h"
 #include "CircularBuffer.h"
 #include "MGcode.h"
+#include "Globals.h"
 #include <stdlib.h>
 #include <errno.h>
 
@@ -43,7 +44,7 @@ public:
     unsigned int codesinqueue = codes.getLength();
     unsigned int less = loops < codesinqueue ? loops : codesinqueue;
     for(unsigned int x=1;x<less;x++)
-      codes[x].prepare();
+      codes[x].prepare(&(codes[x-1]));
 
     ++loops;
   }
@@ -149,7 +150,7 @@ public:
         codes[idx][G].setInt(bytes+1);
         break;
       case 'F':
-        codes[idx][F].setInt(bytes+1);
+        codes[idx][F].setFloat(bytes+1);
         break;
       case 'X':
         codes[idx][X].setFloat(bytes+1);

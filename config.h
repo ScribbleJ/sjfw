@@ -6,6 +6,7 @@
 
 #define NUM_AXES 4
 #define ENDSTOPS_INVERTING 1
+#define SAFE_DEFAULT_FEED 1200
 
 #define X_STEP_PIN      Pin(PortA,6)
 #define X_DIR_PIN       Pin(PortA,5)
@@ -18,6 +19,7 @@
 #define X_MAX_FEED      6000
 #define X_AVG_FEED      3000
 #define X_START_FEED    1200
+#define X_ACCEL_DIST    5
 #define X_LENGTH        110
 
 #define Y_STEP_PIN      Pin(PortA,3)
@@ -31,6 +33,7 @@
 #define Y_MAX_FEED      6000
 #define Y_AVG_FEED      3000
 #define Y_START_FEED    1200
+#define Y_ACCEL_DIST    5
 #define Y_LENGTH        110
 
 #define Z_STEP_PIN      Pin(PortA,0)
@@ -44,6 +47,7 @@
 #define Z_MAX_FEED      6000
 #define Z_AVG_FEED      3000
 #define Z_START_FEED    1200
+#define Z_ACCEL_DIST    5
 #define Z_LENGTH        110
 
 #define A_STEP_PIN      Pin(PortJ,0)
@@ -55,6 +59,7 @@
 #define A_MAX_FEED      6000
 #define A_AVG_FEED      3000
 #define A_START_FEED    1200
+#define A_ACCEL_DIST    5
 #define A_LENGTH        110
 
 #define B_STEP_PIN      Pin(PortG,5)
@@ -66,6 +71,7 @@
 #define B_MAX_FEED      6000
 #define B_AVG_FEED      3000
 #define B_START_FEED    1200
+#define B_ACCEL_DIST    5
 #define B_LENGTH        110
 
 
