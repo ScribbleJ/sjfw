@@ -15,7 +15,7 @@ public:
   // Truly one-of-a-kind
   static Gcodes& Instance() { static Gcodes instance; return instance; }
 private:
-  explicit Gcodes()  :codes(GCODE_BUFSIZE, codes_buf,1), crc_state(NOCRC), crc(0), line_number(0), invalidate_codes(false) { };
+  explicit Gcodes()  :codes(GCODE_BUFSIZE, codes_buf,1), crc_state(NOCRC), crc(0), line_number(-1), chars_in_line(0), invalidate_codes(false) { };
   Gcodes(Gcodes const&);
   void operator=(const Gcodes&);
 public:
@@ -25,18 +25,30 @@ public:
 
   void handlenext();
 
-  void setLineNumber(unsigned int l) { line_number = l; }
+  void setLineNumber(unsigned int l) { line_number = l - 1; }
 
   void parsecompleted()
   {
-    MGcode& c=codes[codes.getLength()];
+    int currentcode = codes.getLength();
+    MGcode& c=codes[currentcode];
+    if(chars_in_line == 1)
+    {
+      HOST.write("Noise.\r\n");
+      c.reset();
+      return;
+    }
+
     if(c[M].isUnused() == c[G].isUnused()) // Both used or both unused is an error.
     {
-      HOST.rxerror("Discarding bogus Gcode.", line_number + 1);
+      // For now, we will fail silently here, rather than work out a method for handling blank lines without erroring.
+      HOST.labelnum("Discarding bogus Gcode.", (int)line_number + 1);
+      c.dump_to_host();
       c.reset();
       return;
     }
     codes.fakepush();
+    HOST.write("Added code to queue:");
+    c.dump_to_host();
     if(codes.hasOverflow() || codes.hasUnderflow())
     {
       codes.reset();
@@ -50,17 +62,16 @@ public:
     codes[codes.getLength()].reset();
     crc_state = NOCRC;
     crc = 0;
+    chars_in_line = 0;
   }
 
   bool isFull() { return (codes.getRemainingCapacity() == 0); }
 
   void parsebytes(char *bytes, uint8_t numbytes)
   {
-    if(numbytes == 0)
-      return;
-
     uint8_t ourcrc = 0;
     bool packetdone = false;
+    chars_in_line += numbytes+1;
 
     // HOST.labelnum("GCode parsing X bytes:", numbytes);
     
@@ -81,6 +92,8 @@ public:
         }
 
         crc = crc ^ bytes[x];
+        // HOST.labelnum("CRC+=", bytes[x], true);
+        // HOST.labelnum("CRC=", crc, true);
 
         if(bytes[x] < 32)
         {
@@ -92,7 +105,7 @@ public:
       // CRC finished?
       // If crcpos == 0 then no crcpos.  
       // If crcpos == 1 then it will be handled in following switch.
-      if(crcpos > 1)
+      if(crcpos >= 1)
       {
         ourcrc = atoi(bytes + crcpos);
         packetdone = true;
@@ -101,57 +114,69 @@ public:
     else if(bytes[numbytes] < 32)
       packetdone = true;
 
+    if(numbytes == 0 and !packetdone)
+      return;
+
     bytes[numbytes] = 0;
 
     int idx = codes.getLength();
-    unsigned long l; 
+    MGcode& c = codes[idx];
+    long l; 
     errno = 0;
     switch(bytes[0])
     {
       case 'N':
         l = atol(bytes+1);
+        HOST.labelnum("Starting line number:", (int) line_number + 1, true);
         if(line_number + 1 != l)
         {
-          crc = 0;
-          crc_state = NOCRC;
-          HOST.rxerror("Invalid line number.",line_number + 1);
-          return;
+          if(l != -1)
+          {
+            crc = 0;
+            crc_state = NOCRC;
+            HOST.rxerror("Invalid line number.",line_number + 1);
+            return;
+          }
+          break;
         }
         line_number++;
+        c.setLinenumber(line_number);
         break;
       case 'M':
-        codes[idx][M].setInt(bytes+1);
+        c[M].setInt(bytes+1);
         break;
       case 'G':
-        codes[idx][G].setInt(bytes+1);
+        c[G].setInt(bytes+1);
         break;
       case 'F':
-        codes[idx][F].setFloat(bytes+1);
+        c[F].setFloat(bytes+1);
         break;
       case 'X':
-        codes[idx][X].setFloat(bytes+1);
+        c[X].setFloat(bytes+1);
         break;
       case 'Y':
-        codes[idx][Y].setFloat(bytes+1);
+        c[Y].setFloat(bytes+1);
         break;
       case 'Z':
-        codes[idx][Z].setFloat(bytes+1);
+        c[Z].setFloat(bytes+1);
         break;
       case 'E':
-        codes[idx][E].setFloat(bytes+1);
+        c[E].setFloat(bytes+1);
         break;
       case 'P':
-        codes[idx][P].setInt(bytes+1);
+        c[P].setInt(bytes+1);
         break;
       case 'S':
-        codes[idx][S].setInt(bytes+1);
+        c[S].setInt(bytes+1);
         break;
       case 'T':
-        codes[idx][T].setInt(bytes+1);
+        c[T].setInt(bytes+1);
         break;
       case 0:
-        ourcrc = atoi(bytes + 1);
-        packetdone = true;
+        ; // noise
+        break;
+      default:
+        ; // just noise
         break;
     }
     if(errno)
@@ -165,11 +190,14 @@ public:
     if(packetdone)
     {
       // HOST.write("Packet parsed.\r\n");
+      HOST.labelnum("Ending line number:", (int) line_number, true);
       switch(crc_state)
       {
         case CRCCOMPLETE:
           if(crc != ourcrc)
           {
+            HOST.labelnum("CRC COMPUTED: ", crc, true);
+            HOST.labelnum("CRC RECVD: ", ourcrc, true);
             crc = 0;
             crc_state = NOCRC;
             line_number--;
@@ -207,7 +235,8 @@ private:
 
   enum crc_state_t { NOCRC, CRC, CRCCOMPLETE } crc_state;
   uint8_t crc;
-  uint16_t line_number;
+  int32_t line_number;
+  uint8_t chars_in_line;
   bool invalidate_codes;
 };
   

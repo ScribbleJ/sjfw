@@ -15,7 +15,7 @@
 #define X_MAX_PIN       Pin(PortB,5)
 #define X_INVERT_DIR    true
 #define X_HOME_DIR      -1
-#define X_STEPS_PER_UNIT 80.376
+#define X_STEPS_PER_UNIT 47.069852
 #define X_MAX_FEED      6000
 #define X_AVG_FEED      3000
 #define X_START_FEED    1200
@@ -29,7 +29,7 @@
 #define Y_MAX_PIN       Pin(PortH,6)
 #define Y_INVERT_DIR    true
 #define Y_HOME_DIR      -1
-#define Y_STEPS_PER_UNIT 80.376
+#define Y_STEPS_PER_UNIT 47.069852
 #define Y_MAX_FEED      6000
 #define Y_AVG_FEED      3000
 #define Y_START_FEED    1200
@@ -41,12 +41,12 @@
 #define Z_ENABLE_PIN    Pin(PortH,1)
 #define Z_MIN_PIN       Pin(PortH,5)
 #define Z_MAX_PIN       Pin(PortH,4)
-#define Z_INVERT_DIR    true
-#define Z_HOME_DIR      -1
-#define Z_STEPS_PER_UNIT 80.376
-#define Z_MAX_FEED      6000
-#define Z_AVG_FEED      3000
-#define Z_START_FEED    1200
+#define Z_INVERT_DIR    false
+#define Z_HOME_DIR      1
+#define Z_STEPS_PER_UNIT 200
+#define Z_MAX_FEED      600
+#define Z_AVG_FEED      300
+#define Z_START_FEED    120
 #define Z_ACCEL_DIST    5
 #define Z_LENGTH        110
 
@@ -55,7 +55,7 @@
 #define A_ENABLE_PIN    Pin(PortE,5)
 #define A_INVERT_DIR    true
 #define A_HOME_DIR      0
-#define A_STEPS_PER_UNIT 80.376
+#define A_STEPS_PER_UNIT 500
 #define A_MAX_FEED      6000
 #define A_AVG_FEED      3000
 #define A_START_FEED    1200
@@ -65,9 +65,9 @@
 #define B_STEP_PIN      Pin(PortG,5)
 #define B_DIR_PIN       Pin(PortE,3)
 #define B_ENABLE_PIN    Pin(PortH,3)
-#define B_INVERT_DIR    true
+#define B_INVERT_DIR    false
 #define B_HOME_DIR      0
-#define B_STEPS_PER_UNIT 80.376
+#define B_STEPS_PER_UNIT 700
 #define B_MAX_FEED      6000
 #define B_AVG_FEED      3000
 #define B_START_FEED    1200

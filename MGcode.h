@@ -62,6 +62,7 @@ public:
   CodeParam& operator[](int idx) { return cps[idx]; }
   enum mg_states_t { NEW, PREPARED, ACTIVE, DONE };
   volatile mg_states_t state;
+  int32_t  linenum;
   
 
   void reset()
@@ -72,10 +73,12 @@ public:
     preparecalls = 0;
     executecalls = 0;
     lastms = 0;
+    linenum = -1;
     memset(&movedata, 0, sizeof(Movedata));
   }
 
   static void resetlastpos(const Point& lp) { lastpos = lp; }
+
 
   // Stuff to do if it's a G move code, otherwise not I guess.
   // This function MAY get called repeatedly before the execute() function.
@@ -90,9 +93,13 @@ public:
   // for other types of gcodes, or be on a path to something more drastic, like polymorphic gcode class.
   Movedata movedata;
 
+  // Just kept in case we need it.
+  void setLinenumber(int32_t num) { linenum = num; };
+
 private:
   CodeParam cps[T+1];                    
   unsigned long lastms;
+  unsigned long startmillis; // Time execution began
   unsigned int preparecalls;
   unsigned int executecalls;
   static Point lastpos;

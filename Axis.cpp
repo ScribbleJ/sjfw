@@ -14,6 +14,8 @@ Axis::Axis(Pin step_pin, Pin dir_pin, Pin enable_pin, Pin min_pin, Pin max_pin,
   max_interval = interval_from_feedrate(min_feedrate);
   accel_dist = steps_per_unit * accel_distance_in_units;
   position = 0;
+  relative = false;
+  this->dir_inverted = dir_inverted;
 
 	// Initialize pins we control.
   step_pin.setDirection(true); step_pin.setValue(false);

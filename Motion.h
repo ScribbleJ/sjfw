@@ -44,11 +44,39 @@ public:
     return p;
   }
 
+  void setCurrentPosition(MGcode &gcode)
+  {
+    for(int ax=0;ax<NUM_AXES;ax++)
+    {
+      if(!gcode[ax].isUnused())
+      {
+        AXES[ax].setCurrentPosition(gcode[ax].getFloat());
+      }
+    }
+  }
+
+  void setAbsolute()
+  {
+    for(int ax=0;ax<NUM_AXES;ax++)
+      AXES[ax].setAbsolute();
+  }
+
+  void setRelative()
+  {
+    for(int ax=0;ax<NUM_AXES;ax++)
+      AXES[ax].setRelative();
+  }
+
+
+
+
   void getMovesteps(MGcode& gcode)
   {
     for(int ax=0;ax < NUM_AXES;ax++)
     {
-      gcode.movedata.axismovesteps[ax] = AXES[ax].getMovesteps(gcode.movedata.startpos[ax], gcode[ax].getFloat(), gcode.movedata.axisdirs[ax]);
+      gcode.movedata.axismovesteps[ax] = AXES[ax].getMovesteps(gcode.movedata.startpos[ax], 
+                                                               gcode[ax].isUnused() ? gcode.movedata.startpos[ax] : AXES[ax].isRelative() ? gcode.movedata.startpos[ax] + gcode[ax].getFloat() : gcode[ax].getFloat(), 
+                                                               gcode.movedata.axisdirs[ax]);
       if(gcode.movedata.movesteps < gcode.movedata.axismovesteps[ax])
       {
         gcode.movedata.movesteps = gcode.movedata.axismovesteps[ax];
@@ -62,6 +90,7 @@ public:
     unsigned long mi = 0;
     for(int ax=0;ax < NUM_AXES;ax++)
     {
+      if(gcode[ax].isUnused()) continue;
       unsigned long t = AXES[ax].getStartInterval(gcode.movedata.feed);
       if(t > mi) mi = t;
     }
@@ -73,6 +102,7 @@ public:
     unsigned long mi = 0;
     for(int ax=0;ax < NUM_AXES;ax++)
     {
+      if(gcode[ax].isUnused()) continue;
       unsigned long t = AXES[ax].getEndInterval(gcode.movedata.feed);
       if(t > mi) mi = t;
     }
@@ -84,6 +114,7 @@ public:
       unsigned long ad = 0;
       for(int ax=0;ax < NUM_AXES;ax++)
       {
+        if(gcode[ax].isUnused()) continue;
         unsigned long t = AXES[ax].getAccelDistance();
         if(t > ad) ad = t;
       }
@@ -126,7 +157,7 @@ public:
     md.decel_from  = 0;
     md.accel_inc   = 0;
 
-    unsigned long intervaldiff = md.startinterval - md.fullinterval;
+    long intervaldiff = md.startinterval - md.fullinterval;
     if(intervaldiff > 0)
     {
       if(md.steps_to_accel > md.movesteps / 2)
@@ -142,7 +173,7 @@ public:
       md.accel_inc = intervaldiff / md.steps_to_accel;
     }  
 
-    lastend = gcode.movedata.endpos;
+    lastend = md.endpos;
     feedin  = md.feed;
     gcode.state = MGcode::PREPARED;
   }
@@ -205,6 +236,15 @@ public:
     HOST.labelnum(" start[0]:", md.startpos[0], false);
     HOST.labelnum(" end[0]:", md.endpos[0],true);
   }
+
+  void writePositionToHost()
+  {
+    for(int ax=0;ax<NUM_AXES;ax++)
+    {
+      HOST.write(ax > Z ? 'A' - Z - 1 + ax : 'X' + ax); HOST.write(':'); HOST.write(AXES[ax].getCurrentPosition(),10,4); HOST.write(' ');
+    }
+  }
+
 
 
   void handleInterrupt()

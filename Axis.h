@@ -30,10 +30,15 @@ class Axis
 	bool isMoving() { return (steps_remaining > 0); };
   // Doesn't take into account position is not updated during move.
   float getCurrentPosition() { return position; }
+  void  setCurrentPosition(float pos) { position = pos; }
+  void  setAbsolute() { relative = false; }
+  void  setRelative() { relative = true; }
+  bool  isRelative()  { return relative; }
 
   float getMovesteps(float start, float end, bool& dir) 
   { 
     float d = end - start; 
+
     if(d<0) 
     {
       d = d * -1; 
@@ -74,16 +79,13 @@ class Axis
       }
     }
 
-    steps_remaining--;
     step_pin.setValue(true);
     step_pin.setValue(false);
 
-    if(steps_remaining == 0)
+    if(--steps_remaining == 0)
     {
-      if(direction)
-        position += (float)steps_to_take / steps_per_unit;
-      else
-        position += (float)steps_to_take / steps_per_unit;
+      HOST.labelnum("FINISH MOVE, ", steps_to_take, true);
+      position += (float)((float)steps_to_take / steps_per_unit * (direction ? 1.0 : -1.0));
     }
   }
 
@@ -102,10 +104,10 @@ class Axis
   unsigned long getRemainingSteps() { return steps_remaining; }
 
 private:
-  float position;
-	bool direction;
-	unsigned long steps_to_take;
-	unsigned long steps_remaining;
+  volatile float position;
+	volatile bool direction;
+	volatile unsigned long steps_to_take;
+	volatile unsigned long steps_remaining;
 
 	float steps_per_unit;
   float max_length;
