@@ -71,13 +71,11 @@ void MGcode::do_g_code()
       if(millis() - cps[P].getInt() > startmillis)
       {
         state = DONE;
-        HOST.write("done 0\r\n");
       }
       else
         state = ACTIVE;
       break;
     case 21: // Units are mm
-      HOST.write("done 0\r\n"); // do nothing
       state = DONE;
       break;
     case 90: // Absolute positioning
@@ -93,15 +91,21 @@ void MGcode::do_g_code()
       state = DONE;
       break;
     default:
-      HOST.write("done 0 GCODE "); HOST.write(cps[G].getInt(), 10); HOST.write(" NOT SUPPORTED\r\n");
+      HOST.labelnum("warning ",(int)linenum, false); HOST.write(" GCODE "); HOST.write(cps[G].getInt(), 10); HOST.write(" NOT SUPPORTED\r\n");
       state = DONE;
       break;
   }
+
+  if(state == DONE)
+  {
+    HOST.labelnum("done ", (unsigned long)linenum, false); HOST.labelnum(" G", (unsigned long)cps[G].getInt());
+  }
+
 }
 
 void MGcode::write_temps_to_host()
 {
-  HOST.write("T:"); HOST.write(EC.getHotend(), 10); HOST.write('/'); HOST.write(EC.getHotendST(), 10);
+  HOST.write(" T:"); HOST.write(EC.getHotend(), 10); HOST.write('/'); HOST.write(EC.getHotendST(), 10);
   HOST.write(" B:"); HOST.write(EC.getPlatform(), 10);  HOST.write('/'); HOST.write(EC.getPlatformST(), 10);
 }
 
@@ -110,21 +114,22 @@ void MGcode::do_m_code()
   switch(cps[M].getInt())
   {
     case 0: // Finish up and shut down.
+      HOST.labelnum("done ", (unsigned long)linenum, false);
       state = DONE;
       break;
     case 84: // "Stop Idle Hold" == shut down motors.
+      HOST.labelnum("done ", (unsigned long)linenum, false);
       state = DONE;
       break;
-
     case 104: // Set Extruder Temperature (Fast)
       if(EC.dotoolreq(SLAVE_CMD_SET_TEMP, cps[S].getInt()))
       {
-        HOST.write("done 0 "); write_temps_to_host(); HOST.write("\r\n");
+        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\r\n");
         state = DONE;
       }
       break;
     case 105: // Get Extruder Temperature
-      HOST.write("done 0 "); write_temps_to_host(); HOST.write("\r\n");
+      HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\r\n");
       state = DONE;
       break;
     case 109: // Set Extruder Temperature
@@ -132,26 +137,31 @@ void MGcode::do_m_code()
         state = ACTIVE;
 
       if(EC.getHotend() >= cps[S].getInt())
+      {
+        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\r\n");
         state = DONE;
+      }
 
       if(millis() - lastms > 1000)
       {
         lastms = millis();
-        HOST.write("done 0 "); write_temps_to_host(); HOST.write("\r\n");
+        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\r\n");
       }
       break;
     case 110: // Set Current Line Number
       GCODES.setLineNumber(cps[S].isUnused() ? 0 : cps[S].getInt());
+      HOST.labelnum("done ", (unsigned long)linenum, false);
       state = DONE;
       break;
     case 114: // Get Current Position
-      HOST.write("done 0 ");
+      HOST.labelnum("done ", (unsigned long)linenum, false);
       MOTION.writePositionToHost();
       HOST.write("\r\n");
       state = DONE;
-      break; // done C: X:0.00 Y:0.00 Z:0.00 E:0.00
+      break; 
     case 115: // Get Firmware Version and Capabilities
-      HOST.write("done 0 PROTOCOL_VERSION:SJ FIRMWARE_NAME:sjfw MACHINE_TYPE:ThingOMatic EXTRUDER_COUNT:1 FREE_RAM:");
+      HOST.labelnum("done ", (unsigned long)linenum, false);
+      HOST.write(" PROTOCOL_VERSION:SJ FIRMWARE_NAME:sjfw MACHINE_TYPE:ThingOMatic EXTRUDER_COUNT:1 FREE_RAM:");
       HOST.write(getFreeRam(),10);
       HOST.write("\r\n");
       state = DONE;
@@ -163,18 +173,19 @@ void MGcode::do_m_code()
       if(millis() - lastms > 1000)
       {
         lastms = millis();
-        HOST.write("done 0 "); write_temps_to_host(); HOST.write("\r\n");
+        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\r\n");
       }
       break;
     case 140: // Bed Temperature (Fast) 
       if(EC.dotoolreq(SLAVE_CMD_SET_PLATFORM_TEMP, cps[S].getInt()))
       {
-        HOST.write("done 0 "); write_temps_to_host(); HOST.write("\r\n");
+        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\r\n");
         state = DONE;
       }
       break;
     default:
-      HOST.write("done 0 MCODE "); HOST.write(cps[M].getInt(), 10); HOST.write(" NOT SUPPORTED\r\n");
+      HOST.labelnum("done ", (unsigned long)linenum, false);
+      HOST.write(" MCODE "); HOST.write(cps[M].getInt(), 10); HOST.write(" NOT SUPPORTED\r\n");
       state = DONE;
       break;
   }

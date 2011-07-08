@@ -84,7 +84,7 @@ class Axis
 
     if(--steps_remaining == 0)
     {
-      HOST.labelnum("FINISH MOVE, ", steps_to_take, true);
+      //HOST.labelnum("FINISH MOVE, ", steps_to_take, true);
       position += (float)((float)steps_to_take / steps_per_unit * (direction ? 1.0 : -1.0));
     }
   }

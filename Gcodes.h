@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#define GCODE_BUFSIZE 10
+#define GCODE_BUFSIZE 15
 class Gcodes
 {
 public:
@@ -33,7 +33,7 @@ public:
     MGcode& c=codes[currentcode];
     if(chars_in_line == 1)
     {
-      HOST.write("Noise.\r\n");
+      // HOST.write("Noise.\r\n");
       c.reset();
       return;
     }
@@ -47,8 +47,8 @@ public:
       return;
     }
     codes.fakepush();
-    HOST.write("Added code to queue:");
-    c.dump_to_host();
+    //HOST.write("Added code to queue:");
+    //c.dump_to_host();
     if(codes.hasOverflow() || codes.hasUnderflow())
     {
       codes.reset();

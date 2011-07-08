@@ -189,11 +189,11 @@ public:
       return;
 
     // temporary - dump data to host
-    dumpMovedata(gcode.movedata);
+    // dumpMovedata(gcode.movedata);
     // NOT temporary - set axis move data, invalidate all precomputes if bad data
     for(int ax=0;ax<NUM_AXES;ax++)
     {
-      AXES[ax].dump_to_host();
+      // AXES[ax].dump_to_host();
       if(!AXES[ax].setupMove(gcode.movedata.startpos[ax], gcode.movedata.axisdirs[ax], gcode.movedata.axismovesteps[ax]))
       {
         GCODES.Invalidate();
