@@ -114,10 +114,8 @@ void MGcode::do_m_code()
   switch(cps[M].getInt())
   {
     case 0: // Finish up and shut down.
-      HOST.labelnum("done ", (unsigned long)linenum, false);
-      state = DONE;
-      break;
     case 84: // "Stop Idle Hold" == shut down motors.
+      MOTION.disableAllMotors();
       HOST.labelnum("done ", (unsigned long)linenum, false);
       state = DONE;
       break;
@@ -203,7 +201,11 @@ void MGcode::do_m_code()
       HOST.labelnum("done ", (unsigned long)linenum, false);
       state = DONE;
       break;
-
+    case 204: // NOT STANDARD - disable motors
+      MOTION.disableAllMotors();
+      HOST.labelnum("done ", (unsigned long)linenum, false);
+      state = DONE;
+      break;
     default:
       HOST.labelnum("done ", (unsigned long)linenum, false);
       HOST.write(" MCODE "); HOST.write(cps[M].getInt(), 10); HOST.write(" NOT SUPPORTED\r\n");

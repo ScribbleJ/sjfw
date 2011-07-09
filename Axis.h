@@ -14,7 +14,7 @@ class Axis
 	Axis(Pin step_pin, Pin dir_pin, Pin enable_pin, Pin min_pin, Pin max_pin, 
        float steps_per_unit, bool dir_inverted, float max_length,
        float max_feedrate, float avg_feedrate, float min_feedrate, 
-       float accel_distance_in_units,
+       float accel_distance_in_units, bool disable_after_move,
        int homing_dir);
 
   // Interval measured in clock ticks
@@ -39,6 +39,8 @@ class Axis
   void  setAverageFeedrate(float feedrate) { if(feedrate <= 0) return; avg_interval = interval_from_feedrate(feedrate); }
   // WARNING! BECAUSE OF THE WAY WE STORE ACCEL DATA< YOU MUST USE THE ABOVE THREE CALLS TO RESET THE FEEDRATES AFTER CHANGING THE STEPS
   void  setStepsPerUnit(float steps) { if(steps <= 0) return; steps_per_unit = steps; }
+  void  disable() { enable_pin.setValue(true); }
+  void  enable() { enable_pin.setValue(false); }
 
   float getMovesteps(float start, float end, bool& dir) 
   { 
@@ -91,6 +93,7 @@ class Axis
     {
       //HOST.labelnum("FINISH MOVE, ", steps_to_take, true);
       position += (float)((float)steps_to_take / steps_per_unit * (direction ? 1.0 : -1.0));
+      if(disable_after_move) disable();
     }
   }
 
@@ -103,6 +106,7 @@ class Axis
     steps_remaining = steps;
     if(direction) dir_pin.setValue(!dir_inverted);
     else dir_pin.setValue(dir_inverted);
+    if(steps != 0) enable();
     return true;
   }  
 
@@ -130,6 +134,7 @@ private:
 	Pin min_pin;
 	Pin max_pin;
 	bool relative;
+  bool disable_after_move;
 
 };
 

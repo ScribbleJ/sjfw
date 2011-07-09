@@ -4,11 +4,14 @@
 #include <stdlib.h>
 
 Axis::Axis(Pin step_pin, Pin dir_pin, Pin enable_pin, Pin min_pin, Pin max_pin, 
-           float steps_per_unit, bool dir_inverted, float max_length, float max_feedrate, float home_feedrate, float min_feedrate, float accel_distance_in_units, int homing_dir)
+           float steps_per_unit, bool dir_inverted, float max_length, 
+           float max_feedrate, float home_feedrate, float min_feedrate, 
+           float accel_distance_in_units, bool disable_after_move, int homing_dir)
            :step_pin(step_pin), dir_pin(dir_pin), enable_pin(enable_pin), min_pin(min_pin), max_pin(max_pin)
 {
 	// Initialize class data
 	this->steps_per_unit = steps_per_unit;
+  this->disable_after_move = disable_after_move;
   min_interval = interval_from_feedrate(max_feedrate);
   avg_interval = interval_from_feedrate(home_feedrate);
   max_interval = interval_from_feedrate(min_feedrate);
@@ -22,7 +25,7 @@ Axis::Axis(Pin step_pin, Pin dir_pin, Pin enable_pin, Pin min_pin, Pin max_pin,
 	// Initialize pins we control.
   step_pin.setDirection(true); step_pin.setValue(false);
   dir_pin.setDirection(true); dir_pin.setValue(false);
-  enable_pin.setDirection(true); enable_pin.setValue(false);
+  enable_pin.setDirection(true); enable_pin.setValue(true);
   if(!min_pin.isNull()) { min_pin.setDirection(false); min_pin.setValue(ENDSTOPPULLUPS); }
   if(!min_pin.isNull()) { max_pin.setDirection(false); max_pin.setValue(ENDSTOPPULLUPS); }
 

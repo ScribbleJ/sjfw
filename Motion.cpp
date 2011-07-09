@@ -78,6 +78,13 @@ void Motion::setStepsPerUnit(MGcode& gcode)
   }
 }
 
+void Motion::disableAllMotors()
+{
+  for(int ax=0;ax < NUM_AXES;ax++)
+    AXES[ax].disable();
+}
+
+
 void Motion::getMovesteps(MGcode& gcode)
 {
   for(int ax=0;ax < NUM_AXES;ax++)

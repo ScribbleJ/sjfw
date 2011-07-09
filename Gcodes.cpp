@@ -149,7 +149,7 @@ void Gcodes::parsebytes(char *bytes, uint8_t numbytes)
   {
     case 'N':
       l = atol(bytes+1);
-      HOST.labelnum("Starting line number:", (int) line_number + 1, true);
+      //HOST.labelnum("Starting line number:", (int) line_number + 1, true);
       if(line_number + 1 != l)
       {
         if(l != -1)
@@ -212,14 +212,14 @@ void Gcodes::parsebytes(char *bytes, uint8_t numbytes)
   if(packetdone)
   {
     // HOST.write("Packet parsed.\r\n");
-    HOST.labelnum("Ending line number:", (int) line_number, true);
+    //HOST.labelnum("Ending line number:", (int) line_number, true);
     switch(crc_state)
     {
       case CRCCOMPLETE:
         if(crc != ourcrc)
         {
-          HOST.labelnum("CRC COMPUTED: ", crc, true);
-          HOST.labelnum("CRC RECVD: ", ourcrc, true);
+          //HOST.labelnum("CRC COMPUTED: ", crc, true);
+          //HOST.labelnum("CRC RECVD: ", ourcrc, true);
           crc = 0;
           crc_state = NOCRC;
           line_number--;

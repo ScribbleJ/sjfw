@@ -21,6 +21,7 @@
 #define X_START_FEED    1800
 #define X_ACCEL_DIST    2.5
 #define X_LENGTH        110
+#define X_DISABLE       false
 
 #define Y_STEP_PIN      Pin(PortA,3)
 #define Y_DIR_PIN       Pin(PortA,2)
@@ -35,6 +36,7 @@
 #define Y_START_FEED    1800
 #define Y_ACCEL_DIST    2.5
 #define Y_LENGTH        110
+#define Y_DISABLE       false
 
 #define Z_STEP_PIN      Pin(PortA,0)
 #define Z_DIR_PIN       Pin(PortH,0)
@@ -49,6 +51,7 @@
 #define Z_START_FEED    150
 #define Z_ACCEL_DIST    5
 #define Z_LENGTH        110
+#define Z_DISABLE       true
 
 #define A_STEP_PIN      Pin(PortJ,0)
 #define A_DIR_PIN       Pin(PortJ,1)
@@ -61,6 +64,7 @@
 #define A_START_FEED    1800
 #define A_ACCEL_DIST    2.5
 #define A_LENGTH        110
+#define A_DISABLE       false
 
 #define B_STEP_PIN      Pin(PortG,5)
 #define B_DIR_PIN       Pin(PortE,3)
@@ -73,6 +77,7 @@
 #define B_START_FEED    1200
 #define B_ACCEL_DIST    5
 #define B_LENGTH        110
+#define B_DISABLE       true
 
 
 
