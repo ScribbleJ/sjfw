@@ -90,7 +90,7 @@ public:
     unsigned long mi = 0;
     for(int ax=0;ax < NUM_AXES;ax++)
     {
-      if(gcode[ax].isUnused()) continue;
+      if(gcode.movedata.axismovesteps[ax] == 0) continue;
       unsigned long t = AXES[ax].getStartInterval(gcode.movedata.feed);
       if(t > mi) mi = t;
     }
@@ -102,7 +102,7 @@ public:
     unsigned long mi = 0;
     for(int ax=0;ax < NUM_AXES;ax++)
     {
-      if(gcode[ax].isUnused()) continue;
+      if(gcode.movedata.axismovesteps[ax] == 0) continue;
       unsigned long t = AXES[ax].getEndInterval(gcode.movedata.feed);
       if(t > mi) mi = t;
     }
@@ -114,7 +114,7 @@ public:
       unsigned long ad = 0;
       for(int ax=0;ax < NUM_AXES;ax++)
       {
-        if(gcode[ax].isUnused()) continue;
+        if(gcode.movedata.axismovesteps[ax] == 0) continue;
         unsigned long t = AXES[ax].getAccelDistance();
         if(t > ad) ad = t;
       }
@@ -151,6 +151,7 @@ public:
     getMovesteps(gcode);
     md.startinterval = getLargestStartInterval(gcode);
     md.fullinterval = getLargestEndInterval(gcode);
+    md.currentinterval = md.startinterval;
     md.steps_to_accel = getLargestAccelDistance(gcode);
     getActualEndpos(gcode);
     md.accel_until = md.movesteps;
@@ -189,7 +190,7 @@ public:
       return;
 
     // temporary - dump data to host
-    // dumpMovedata(gcode.movedata);
+    dumpMovedata(gcode.movedata);
     // NOT temporary - set axis move data, invalidate all precomputes if bad data
     for(int ax=0;ax<NUM_AXES;ax++)
     {
@@ -201,6 +202,7 @@ public:
       }
       deltas[ax] = gcode.movedata.axismovesteps[ax];
       errors[ax] = gcode.movedata.movesteps / 2;
+      //AXES[ax].dump_to_host();
     }
     gcode.dump_to_host();
 
@@ -224,17 +226,14 @@ public:
   {
     HOST.labelnum("FEED:", md.feed, false);
     HOST.labelnum(" MS:", md.movesteps, false);
-    HOST.labelnum(" AMS[0]:", md.axismovesteps[0], false);
-    HOST.labelnum(" DIRS[0]:", md.axisdirs[0], false);
     HOST.labelnum(" LEAD:", md.leading_axis, false);
     HOST.labelnum(" SI:", md.startinterval, false);
     HOST.labelnum(" FI:", md.fullinterval, false);
+    HOST.labelnum(" CI:", md.currentinterval, false);
     HOST.labelnum(" STA:", md.steps_to_accel, false);
     HOST.labelnum(" AU:", md.accel_until, false);
     HOST.labelnum(" DF:", md.decel_from, false);
-    HOST.labelnum(" AI:", md.accel_inc, false);
-    HOST.labelnum(" start[0]:", md.startpos[0], false);
-    HOST.labelnum(" end[0]:", md.endpos[0],true);
+    HOST.labelnum(" AI:", md.accel_inc);
   }
 
   void writePositionToHost()
@@ -259,9 +258,15 @@ public:
     md.movesteps--;
 
     if(md.movesteps > md.accel_until)
-      OCR1A -= md.accel_inc;
+    {
+      md.currentinterval -= md.accel_inc;
+    }
     else if(md.movesteps < md.decel_from)
-      OCR1A += md.accel_inc;
+    {
+      md.currentinterval += md.accel_inc;
+    }
+
+    OCR1A = md.currentinterval;
 
     for(int ax=0;ax<NUM_AXES;ax++)
     {
@@ -301,25 +306,30 @@ public:
     // 16-bit registers that must be set/read with interrupts disabled:
     // TCNTn, OCRnA/B/C, ICRn
     // "Fast PWM" and no prescaler.
-    TCCR1A |= _BV(WGM10) | _BV(WGM11);
-    TCCR1B |= _BV(WGM12) | _BV(WGM13) | _BV(CS10);
+    //TCCR1A = _BV(WGM10) | _BV(WGM11);
+    //TCCR1B = _BV(WGM12) | _BV(WGM13) | _BV(CS10);
+    TCCR1A = 0;
+    TCCR1B = _BV(WGM12) | _BV(CS10);
   }
 
 
   void enableInterrupt() 
   {
     // reset counter in case.
-    TCNT1 = 0;
+    // TCNT1 = 0;
      // Enable timer
     PRR0 &= ~(_BV(PRTIM1));
-    // Outcompare Compare match A
+    // Outcompare Compare match A interrupt
     TIMSK1 |= _BV(OCIE1A);
+
   };
   void disableInterrupt() 
   {
-    // Outcompare Compare match A
+    // Outcompare Compare match A interrupt
     TIMSK1 &= ~(_BV(OCIE1A));
+    // Disable timer...
     PRR0 |= _BV(PRTIM1);
+
   };
   void setInterruptCycles(unsigned long cycles) 
   {

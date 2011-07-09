@@ -22,7 +22,7 @@ class Axis
   // F_CPU is clock ticks/second
   unsigned long interval_from_feedrate(float feedrate)
   {
-    return ((float)((unsigned long)60 * F_CPU) / (float)(feedrate * (float)steps_per_unit));
+    return (float)F_CPU / (feedrate / 60.0 * steps_per_unit);
   }
 
   void dump_to_host();

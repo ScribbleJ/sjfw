@@ -16,6 +16,8 @@ Axis::Axis(Pin step_pin, Pin dir_pin, Pin enable_pin, Pin min_pin, Pin max_pin,
   position = 0;
   relative = false;
   this->dir_inverted = dir_inverted;
+  steps_to_take = 0;
+  steps_remaining = 0;
 
 	// Initialize pins we control.
   step_pin.setDirection(true); step_pin.setValue(false);
@@ -28,7 +30,8 @@ Axis::Axis(Pin step_pin, Pin dir_pin, Pin enable_pin, Pin min_pin, Pin max_pin,
 	
 void Axis::dump_to_host()
 {
-  HOST.labelnum("position:",position,false);
-  HOST.labelnum(" steps_remain:",steps_remaining,false);
-  HOST.labelnum(" accel_dist:",accel_dist);
+  HOST.labelnum("p:",position,false);
+  HOST.labelnum(" sr:",steps_remaining,false);
+  HOST.labelnum(" stt:",steps_to_take,false);
+  HOST.labelnum(" ad:",accel_dist);
 }

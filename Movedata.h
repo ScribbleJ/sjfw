@@ -15,6 +15,7 @@ public:
   int           leading_axis;
 
   unsigned long startinterval;
+  unsigned long currentinterval;
   unsigned long fullinterval;
   unsigned long steps_to_accel;
   unsigned long accel_until;

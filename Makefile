@@ -40,7 +40,7 @@ CSTANDARD =
 CDEBUG = -g$(DEBUG)
 CWARN = -Wall -Winline
 CTUNING = -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
-CXXEXTRA = -fno-threadsafe-statics
+CXXEXTRA = -fno-threadsafe-statics -fwrapv
 
 CFLAGS = $(CDEBUG) $(CDEFS) $(CINCS) -O$(OPT) $(CWARN) $(CSTANDARD) $(CEXTRA)
 CXXFLAGS = $(CDEFS) $(CINCS) -O$(OPT) $(CXXEXTRA)
