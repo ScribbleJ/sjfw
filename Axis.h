@@ -34,6 +34,11 @@ class Axis
   void  setAbsolute() { relative = false; }
   void  setRelative() { relative = true; }
   bool  isRelative()  { return relative; }
+  void  setMinimumFeedrate(float feedrate) { if(feedrate <= 0) return; max_interval = interval_from_feedrate(feedrate); }
+  void  setMaximumFeedrate(float feedrate) { if(feedrate <= 0) return; min_interval = interval_from_feedrate(feedrate); }
+  void  setAverageFeedrate(float feedrate) { if(feedrate <= 0) return; avg_interval = interval_from_feedrate(feedrate); }
+  // WARNING! BECAUSE OF THE WAY WE STORE ACCEL DATA< YOU MUST USE THE ABOVE THREE CALLS TO RESET THE FEEDRATES AFTER CHANGING THE STEPS
+  void  setStepsPerUnit(float steps) { if(steps <= 0) return; steps_per_unit = steps; }
 
   float getMovesteps(float start, float end, bool& dir) 
   { 
@@ -57,7 +62,7 @@ class Axis
     return start + (float)((float)steps / steps_per_unit * (dir ? 1.0 : -1.0));
   }
 
-  void doStep()
+  inline void doStep()
   {
     if(steps_remaining == 0) return;
     if(direction)

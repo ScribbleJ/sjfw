@@ -9,7 +9,7 @@
 class Gcodes
 {
 public:
-  // Truly one-of-a-kind
+  // Singleton pattern... only one Gcode queue exists.
   static Gcodes& Instance() { static Gcodes instance; return instance; }
 private:
   explicit Gcodes()  :codes(GCODE_BUFSIZE, codes_buf,1), crc_state(NOCRC), crc(0), line_number(-1), chars_in_line(0), invalidate_codes(false) { };

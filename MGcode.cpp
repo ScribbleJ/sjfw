@@ -183,6 +183,27 @@ void MGcode::do_m_code()
         state = DONE;
       }
       break;
+    case 200: // NOT STANDARD - set Steps Per Unit
+      MOTION.setStepsPerUnit(*this);
+      HOST.labelnum("done ", (unsigned long)linenum, false);
+      state = DONE;
+      break;
+    case 201: // NOT STANDARD - set Feedrates
+      MOTION.setMinimumFeedrate(*this);
+      HOST.labelnum("done ", (unsigned long)linenum, false);
+      state = DONE;
+      break;
+    case 202: // NOT STANDARD - set Feedrates
+      MOTION.setMaximumFeedrate(*this);
+      HOST.labelnum("done ", (unsigned long)linenum, false);
+      state = DONE;
+      break;
+    case 203: // NOT STANDARD - set Feedrates
+      MOTION.setAverageFeedrate(*this);
+      HOST.labelnum("done ", (unsigned long)linenum, false);
+      state = DONE;
+      break;
+
     default:
       HOST.labelnum("done ", (unsigned long)linenum, false);
       HOST.write(" MCODE "); HOST.write(cps[M].getInt(), 10); HOST.write(" NOT SUPPORTED\r\n");
