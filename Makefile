@@ -3,7 +3,7 @@ TARGET = main
 INSTALL_DIR = /home/chris/arduino-0022
 UPLOAD_RATE = 38400
 AVRDUDE_PROGRAMMER = stk500v1
-PORT = /dev/ttyUSB?
+PORT = /dev/ttyUSB0
 MCU = atmega1280 
 F_CPU = 16000000
 
@@ -25,7 +25,7 @@ MAKEFILE = Makefile
 # AVR (extended) COFF requires stabs, plus an avr-objcopy run.
 DEBUG = stabs
 
-OPT = 2
+OPT = 0
 
 # Place -D or -U options here
 CDEFS = -DF_CPU=$(F_CPU)
@@ -50,10 +50,12 @@ LDFLAGS = -lm
 
 # Programming support using avrdude. Settings and variables.
 AVRDUDE_PORT = $(PORT)
+AVRDUDE_PATH = /home/chris/mb/orig/ReplicatorG/dist/linux/replicatorg-0024/tools/
 AVRDUDE_WRITE_FLASH = -U flash:w:$(TARGET).hex:i
-AVRDUDE_FLAGS = -D -C $(INSTALL_DIR)/hardware/tools/avrdude.conf \
+AVRDUDE_FLAGS = -F -V \
 -p $(MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER) \
--b $(UPLOAD_RATE)
+-b $(UPLOAD_RATE) \
+-C $(AVRDUDE_PATH)/avrdude.conf
 
 # Program settings
 CC = $(AVR_TOOLS_PATH)/avr-gcc
@@ -63,7 +65,7 @@ OBJDUMP = $(AVR_TOOLS_PATH)/avr-objdump
 AR  = $(AVR_TOOLS_PATH)/avr-ar
 SIZE = $(AVR_TOOLS_PATH)/avr-size
 NM = $(AVR_TOOLS_PATH)/avr-nm
-AVRDUDE = $(INSTALL_DIR)/hardware/tools/avrdude
+AVRDUDE = $(AVRDUDE_PATH)/avrdude
 REMOVE = rm -f
 MV = mv -f
 
@@ -93,7 +95,8 @@ sym: $(TARGET).sym
 
 # Program the device.  
 upload: $(TARGET).hex
-	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH)
+	./reset.pl /dev/ttyUSB0; /home/chris/mb/orig/ReplicatorG/dist/linux/replicatorg-0024/tools/avrdude -C/home/chris/mb/orig/ReplicatorG/dist/linux/replicatorg-0024/tools/avrdude.conf -cstk500v1 -P/dev/ttyUSB0 -b57600 -D -Uflash:w:main.hex:i -pm1280
+#	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH)
 
 
 	# Display size of file.

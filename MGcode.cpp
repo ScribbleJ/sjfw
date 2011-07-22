@@ -35,7 +35,9 @@ void MGcode::execute()
     return;
   }
   if(state == DONE)
+  {
     return;
+  }
 
 
   if(cps[G].isUnused())
@@ -57,6 +59,13 @@ void MGcode::dump_to_host()
     cps[x].dump_to_host();
   HOST.write("\r\n");
 }
+
+void MGcode::wrapupmove()
+{
+  if(!cps[G].isUnused())
+    HOST.labelnum("done ", (unsigned long)linenum, false); HOST.labelnum(" G", (unsigned long)cps[G].getInt());
+}
+
 
 
 void MGcode::do_g_code() 
@@ -94,11 +103,6 @@ void MGcode::do_g_code()
       HOST.labelnum("warning ",(int)linenum, false); HOST.write(" GCODE "); HOST.write(cps[G].getInt(), 10); HOST.write(" NOT SUPPORTED\r\n");
       state = DONE;
       break;
-  }
-
-  if(state == DONE)
-  {
-    HOST.labelnum("done ", (unsigned long)linenum, false); HOST.labelnum(" G", (unsigned long)cps[G].getInt());
   }
 
 }

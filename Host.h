@@ -13,7 +13,7 @@
 #include <stdlib.h>
 
 #define HOST_BUFSIZE 512
-#define HOST_BAUD 115200
+#define HOST_BAUD 57600
 #define MASK(PIN) (1 << PIN)
 
 class Host
@@ -92,7 +92,13 @@ class Host
 
     void rxerror(const char* errmsg)
     {
-      rxerror(errmsg, 0);
+      write("!! ");
+      write(errmsg);
+      write("\r\n");
+      cli();
+      rxring.reset();
+      input_ready=0;
+      sei();
     }
 
     void scan_input();

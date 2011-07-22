@@ -89,6 +89,8 @@ public:
   void execute();
   bool isDone() { return (state == DONE); };
   void dump_to_host();
+  // Called when move is completed (no good place to do it. :( )
+  void wrapupmove();
   // This is separated out so that eventually we could make it a union with data required
   // for other types of gcodes, or be on a path to something more drastic, like polymorphic gcode class.
   Movedata movedata;

@@ -61,8 +61,8 @@
 #define A_STEPS_PER_UNIT 44.169
 #define A_MAX_FEED      12000
 #define A_AVG_FEED      3000
-#define A_START_FEED    1800
-#define A_ACCEL_DIST    2.5
+#define A_START_FEED    3000
+#define A_ACCEL_DIST    1.5
 #define A_LENGTH        110
 #define A_DISABLE       false
 

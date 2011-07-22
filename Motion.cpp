@@ -152,6 +152,30 @@ void Motion::gcode_precalc(MGcode& gcode, float& feedin, Point& lastend)
   if(gcode.state >= MGcode::PREPARED)
     return;
 
+  
+  if(gcode[G].isUnused())
+    return;
+
+  if(gcode[G].getInt() == 92)
+  {
+    // Just carry over new position
+    for(int ax=0;ax<NUM_AXES;ax++)
+    {
+      if(!gcode[ax].isUnused())
+      {
+        lastend[ax] = gcode[ax].getFloat();
+      }
+    }
+    gcode.state = MGcode::PREPARED;
+    return;
+  }
+  if(gcode[G].getInt() != 1 and gcode[G].getInt() != 2)
+  {
+    // no precalc for anything but 92, 1, 2
+    gcode.state = MGcode::PREPARED;
+    return;
+  }
+
   // We want to carry over the previous ending position and feedrate if possible.
   md.startpos = lastend;
   if(gcode[F].isUnused())
@@ -297,6 +321,11 @@ void Motion::handleInterrupt()
       AXES[ax].doStep();
       errors[ax] = errors[ax] + deltas[md.leading_axis];
     }
+  }
+
+  if(!axesAreMoving())
+  {
+    md.movesteps = 0;
   }
       
   if(md.movesteps == 0)
