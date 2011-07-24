@@ -12,7 +12,7 @@ $p->write_settings || die("Can't write settings.\n");
 
 
 # Resets the printer:
-$p->pulse_dtr_on(1);
+$p->pulse_dtr_on(100);
 
 close PH || die("Close fail.\n");
 untie *PH;

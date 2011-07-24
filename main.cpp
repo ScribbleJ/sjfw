@@ -31,8 +31,14 @@ int main(void)
     // Gcodes.h for processing if so.
     HOST.scan_input();
 
+    // We'll interleave calls to this, since it's so important.
+    GCODES.handlenext();
+
     // Checks for data coming in from EC and handles it.
     EC.scan_input();
+
+    // We'll interleave calls to this, since it's so important.
+    GCODES.handlenext();
 
     // Runs regular temperature queries against the EC, also reports errors when
     // EC is unresponsive for too long.
