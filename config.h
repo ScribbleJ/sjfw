@@ -46,9 +46,9 @@
 #define Z_INVERT_DIR    false
 #define Z_HOME_DIR      1
 #define Z_STEPS_PER_UNIT 200
-#define Z_MAX_FEED      350
+#define Z_MAX_FEED      400
 #define Z_AVG_FEED      100
-#define Z_START_FEED    50
+#define Z_START_FEED    100
 #define Z_ACCEL_DIST    5
 #define Z_LENGTH        110
 #define Z_DISABLE       false
