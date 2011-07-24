@@ -1,6 +1,8 @@
 #ifndef _GLOBALS_H_
 #define _GLOBALS_H_
 
+#include "LiquidCrystal.h"
+
 inline int getFreeRam () {
   // These externs are defined and used in libavr
   extern int __heap_start, *__brkval; 
@@ -14,5 +16,7 @@ inline int getFreeRam () {
 // at any rate, it's CRITICAL the order here matches the array in MGcode.  We also
 // assume multiple places that T is the last item, and the major axis are in order at the start.
 enum { X=0, Y, Z, E, M, G, F, P, S, T };
+
+extern LiquidCrystal LCD;
 
 #endif

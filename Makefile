@@ -13,7 +13,8 @@ F_CPU = 16000000
 
 AVR_TOOLS_PATH = /usr/bin
 SRC =  
-CXXSRC = AvrPort.cpp Host.cpp MBIEC.cpp Time.cpp Gcodes.cpp MGcode.cpp Axis.cpp Motion.cpp Globals.cpp
+CXXSRC = AvrPort.cpp Host.cpp MBIEC.cpp Time.cpp Gcodes.cpp MGcode.cpp Axis.cpp Motion.cpp \
+Globals.cpp LiquidCrystal.cpp
 FORMAT = ihex
 
 
@@ -23,9 +24,10 @@ MAKEFILE = Makefile
 # Debugging format.
 # Native formats for AVR-GCC's -g are stabs [default], or dwarf-2.
 # AVR (extended) COFF requires stabs, plus an avr-objcopy run.
-DEBUG = stabs
+#DEBUG = stabs
+DEBUG =
 
-OPT = 0
+OPT = s
 
 # Place -D or -U options here
 CDEFS = -DF_CPU=$(F_CPU)
@@ -40,7 +42,7 @@ CSTANDARD =
 CDEBUG = -g$(DEBUG)
 CWARN = -Wall -Winline
 CTUNING = -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
-CXXEXTRA = -fno-threadsafe-statics -fwrapv
+CXXEXTRA = -fno-threadsafe-statics -fwrapv -fno-exceptions -ffunction-sections -fdata-sections
 
 CFLAGS = $(CDEBUG) $(CDEFS) $(CINCS) -O$(OPT) $(CWARN) $(CSTANDARD) $(CEXTRA)
 CXXFLAGS = $(CDEFS) $(CINCS) -O$(OPT) $(CXXEXTRA)

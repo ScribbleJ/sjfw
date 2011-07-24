@@ -80,6 +80,27 @@
 #define B_DISABLE       true
 
 
+#define HAS_LCD         1
+
+#define LCD_RS_PIN      Pin(PortC,3)
+#define LCD_RW_PIN      Pin(PortC,2)
+#define LCD_E_PIN       Pin(PortC,0)
+#define LCD_0_PIN       Pin(PortG,2)
+#define LCD_1_PIN       Pin(PortG,0)
+#define LCD_2_PIN       Pin(PortL,6)
+#define LCD_3_PIN       Pin(PortC,1)
+#define LCD_4_PIN       Pin(PortD,7)
+#define LCD_5_PIN       Pin(PortG,1)
+#define LCD_6_PIN       Pin(PortL,7)
+#define LCD_7_PIN       Pin(PortL,5)
+
+#define LCD_X 16
+#define LCD_Y 2
+
+#define LCD_LINESTARTS {0x0, 0x40}
+#define LCD_FULLADDRESS 1
+
+
 
 
 

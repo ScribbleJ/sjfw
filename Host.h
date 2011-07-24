@@ -12,7 +12,7 @@
 #include <avr/interrupt.h>
 #include <stdlib.h>
 
-#define HOST_BUFSIZE 1024
+#define HOST_BUFSIZE 256
 #define HOST_BAUD 57600
 #define MASK(PIN) (1 << PIN)
 
