@@ -286,6 +286,13 @@ void Motion::writePositionToHost()
 
 void Motion::handleInterrupt()
 {
+  if(interruptOverflow)
+  {
+    setInterruptCycles(60000);
+    interruptOverflow--;
+    return;
+  }
+
   volatile Movedata& md = current_gcode->movedata;
   if(md.movesteps == 0)
   {
@@ -304,7 +311,7 @@ void Motion::handleInterrupt()
     md.currentinterval += md.accel_inc;
   }
 
-  OCR1A = md.currentinterval;
+  setInterruptCycles(md.currentinterval);
 
   for(int ax=0;ax<NUM_AXES;ax++)
   {
@@ -376,8 +383,13 @@ void Motion::disableInterrupt()
 }
 void Motion::setInterruptCycles(unsigned long cycles) 
 {
-  // Reset timer to 0, target to cycles.
-  OCR1A = cycles;
+  if(cycles > 60000)
+  {
+    OCR1A = 60000;
+    interruptOverflow = cycles / 60000;
+  }
+  else
+    OCR1A = cycles;
 }
 
 

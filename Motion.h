@@ -23,6 +23,7 @@ private:
   })
   {
     setupInterrupt();
+    interruptOverflow=0;
   };
   Motion(Motion&);
   Motion& operator=(Motion&);
@@ -31,6 +32,7 @@ private:
   volatile MGcode* volatile current_gcode;
   volatile unsigned long deltas[NUM_AXES];
   volatile long errors[NUM_AXES];
+  volatile int interruptOverflow;
 
 public:
 
