@@ -28,7 +28,7 @@ public:
     switch(state)
     {
       case UNUSED:
-        HOST.write("UNUSED");
+        HOST.write("U");
         break;
       case FLOAT:
         HOST.write(f, 10,5);

@@ -63,7 +63,9 @@ void MGcode::dump_to_host()
 void MGcode::wrapupmove()
 {
   if(!cps[G].isUnused())
+  {
     HOST.labelnum("done ", (unsigned long)linenum, false); HOST.labelnum(" G", (unsigned long)cps[G].getInt());
+  }
 }
 
 

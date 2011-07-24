@@ -9,7 +9,6 @@
 
 
 
-Motion& MOTION = Motion::Instance();
 
 Point Motion::getCurrentPosition()
 {
@@ -228,9 +227,7 @@ void Motion::gcode_execute(MGcode& gcode)
   if(gcode.state > MGcode::PREPARED)
     return;
 
-  // temporary - dump data to host
-  //dumpMovedata(gcode.movedata);
-  // NOT temporary - set axis move data, invalidate all precomputes if bad data
+  // set axis move data, invalidate all precomputes if bad data
   for(int ax=0;ax<NUM_AXES;ax++)
   {
     // AXES[ax].dump_to_host();
@@ -243,6 +240,7 @@ void Motion::gcode_execute(MGcode& gcode)
     errors[ax] = gcode.movedata.movesteps / 2;
     //AXES[ax].dump_to_host();
   }
+  //dumpMovedata(gcode.movedata);
   //gcode.dump_to_host();
 
   // setup pointer to current move data for interrupt
@@ -273,6 +271,7 @@ void Motion::dumpMovedata(Movedata& md)
   HOST.labelnum(" AU:", md.accel_until, false);
   HOST.labelnum(" DF:", md.decel_from, false);
   HOST.labelnum(" AI:", md.accel_inc);
+  AXES[md.leading_axis].dump_to_host();
 }
 
 void Motion::writePositionToHost()

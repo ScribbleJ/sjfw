@@ -1,6 +1,6 @@
 #include "Time.h"
 #include <avr/interrupt.h>
-// Code stolen from Arduino libs
+#include <util/atomic.h>
 
 volatile unsigned long timer0_overflow_count = 0;
 volatile unsigned long timer0_clock_cycles = 0;
@@ -18,34 +18,34 @@ void init_time()
 unsigned long millis()
 {
   unsigned long m;
-  uint8_t oldSREG = SREG;
 
   // disable interrupts while we read timer0_millis or we might get an
   // inconsistent value (e.g. in the middle of the timer0_millis++)
-  cli();
-  m = timer0_millis;
-  SREG = oldSREG;
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+  {
+    m = timer0_millis;
+  }
 
   return m;
 }
 
 unsigned long micros() {
   unsigned long m, t;
-  uint8_t oldSREG = SREG;
 
-  cli();
-  t = TCNT0;
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+  {
+    t = TCNT0;
 
 #ifdef TIFR0
-  if ((TIFR0 & _BV(TOV0)) && (t == 0))
-    t = 256;
+    if ((TIFR0 & _BV(TOV0)) && (t == 0))
+      t = 256;
 #else
-  if ((TIFR & _BV(TOV0)) && (t == 0))
-    t = 256;
+    if ((TIFR & _BV(TOV0)) && (t == 0))
+      t = 256;
 #endif
 
   m = timer0_overflow_count;
-  SREG = oldSREG;
+  }
 
   return ((m << 8) + t) * (64 / cyclesPerMicro());
 }

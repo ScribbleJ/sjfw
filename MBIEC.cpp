@@ -205,31 +205,31 @@ bool MBIEC::dotoolreq(uint8_t command_id, uint16_t param)
 
   last_command = command_id;
 
-  EC.write(0xD5); // start byte
+  write(0xD5); // start byte
 
   if(param < 255)
     c = 4;
-  EC.write(c); // packet length
+  write(c); // packet length
 
   crc = crc_update(crc, toolnum);
-  EC.write(toolnum); // tool num
+  write(toolnum); // tool num
 
   c = command_id;
   crc = crc_update(crc, c);
-  EC.write(c); // Command num
+  write(c); // Command num
   if(param < 255)
   {
     c = param & 0xff;
     crc = crc_update(crc, c);
-    EC.write(c); // param byte1
+    write(c); // param byte1
 
     c = (param>>8) & 0xff;
     crc = crc_update(crc, c);
-    EC.write(c); // param byte2
+    write(c); // param byte2
   }
 
-  EC.write(crc); // crc
-  EC.speak();
+  write(crc); // crc
+  speak();
 
   return true;
 }

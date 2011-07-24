@@ -8,7 +8,7 @@
    Loosely based on Teacup serial library
 */
 
-#include "CircularBuffer.h"
+#include "RingBuffer.h"
 #include <avr/interrupt.h>
 #include <stdlib.h>
 
@@ -27,12 +27,11 @@ class Host
     Host& operator=(Host&);
   public:
 
-    // We do full-duplex here and fast too, so if cli() and sei() aren't called it will cause corruption.
-    uint8_t rxchars() { uint8_t l; unsigned char sreg=SREG; cli(); l = rxring.getLength(); SREG=sreg; return l; }
-    uint8_t popchar() { uint8_t c; unsigned char sreg=SREG; cli(); c = rxring.pop(); SREG=sreg; return c; }
-    uint8_t peekchar() { uint8_t c; unsigned char sreg=SREG; c = rxring[0]; SREG=sreg; return c; }
+    uint8_t rxchars() { uint8_t l = rxring.getCount(); return l; }
+    uint8_t popchar() { uint8_t c = rxring.pop(); return c; }
+    uint8_t peekchar() { uint8_t c = rxring.peek(0); return c; }
 
-    void write(uint8_t data) { unsigned char sreg=SREG; cli(); txring.push(data); SREG=sreg;   UCSR0B |= MASK(UDRIE0); }
+    void write(uint8_t data) { txring.push(data); UCSR0B |= MASK(UDRIE0); }
     void write(const char *data) { uint8_t i = 0, r; while ((r = data[i++])) write(r); }
     void write(unsigned long n, int radix)
     {
@@ -59,12 +58,19 @@ class Host
         write("\n");
     }
     void labelnum(const char *label, uint16_t num) { labelnum(label, num, true); };
+
+
+    void labelnum(const char *label, uint32_t num, bool endl)
+    {
+      write(label);
+      write(num,10);
+      if(endl)
+        write("\n");
+    }
+    void labelnum(const char *label, unsigned long num) { labelnum(label, num, true); };
+
     void labelnum(const char *label, int num) { labelnum(label, (uint16_t)num, true); };
-    void labelnum(const char *label, unsigned long num) { labelnum(label, (uint16_t)num, true); };
     void labelnum(const char *label, int num, bool endl) { labelnum(label, (uint16_t)num, endl); };
-    void labelnum(const char *label, unsigned long num,bool endl) { labelnum(label, (uint16_t)num, endl); };
-
-
 
     void labelnum(const char *label, float num, bool endl)
     {
@@ -76,7 +82,6 @@ class Host
     void labelnum(const char *label, float num) { labelnum(label, num, true); };
 
 
-
     void rxerror(const char*errmsg, uint16_t linenum)
     {
       write("rs ");
@@ -84,11 +89,8 @@ class Host
       write(' ');
       write(errmsg);
       write("\n");
-      unsigned char sreg=SREG;
-      cli();
       rxring.reset();
       input_ready=0;
-      SREG=sreg;
     }
 
     void rxerror(const char* errmsg)
@@ -96,11 +98,8 @@ class Host
       write("!! ");
       write(errmsg);
       write("\n");
-      unsigned char sreg=SREG;
-      cli();
       rxring.reset();
       input_ready=0;
-      SREG=sreg;
     }
 
     void scan_input();
@@ -115,7 +114,7 @@ class Host
 
     void udre_interrupt_handler()
     {
-      if(txring.getLength() > 0)
+      if(txring.getCount() > 0)
         UDR0 = txring.pop();
       else
         UCSR0B &= ~MASK(UDRIE0);
@@ -123,10 +122,10 @@ class Host
 
   private:
     uint8_t rxbuf[HOST_BUFSIZE];
-    CircularBufferTempl<uint8_t> rxring;
+    RingBufferT<uint8_t> rxring;
     uint8_t txbuf[HOST_BUFSIZE];
-    CircularBufferTempl<uint8_t> txring;
-    volatile unsigned int input_ready;
+    RingBufferT<uint8_t> txring;
+    volatile uint8_t input_ready;
 
 };
 

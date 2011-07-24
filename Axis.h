@@ -20,9 +20,10 @@ class Axis
   // Interval measured in clock ticks
   // feedrate in mm/min
   // F_CPU is clock ticks/second
-  unsigned long interval_from_feedrate(float feedrate)
+  uint32_t interval_from_feedrate(float feedrate)
   {
-    return (float)F_CPU / (feedrate / 60.0 * steps_per_unit);
+    float a = (float)(F_CPU * 60.0f) / (feedrate * steps_per_unit);
+    return a;
   }
 
   void dump_to_host();
@@ -56,10 +57,10 @@ class Axis
     
     return steps_per_unit * d; 
   }
-  float getStartInterval(float feed) { unsigned long i = interval_from_feedrate(feed); return i < max_interval ? max_interval : i; }
-  float getEndInterval(float feed) { unsigned long i = interval_from_feedrate(feed); return i < min_interval ? min_interval : i; }
-  unsigned long getAccelDistance() { return accel_dist; }
-  float getEndpos(float start, unsigned long steps, bool dir) 
+  uint32_t getStartInterval(float feed) { uint32_t i = interval_from_feedrate(feed); return i < max_interval ? max_interval : i; }
+  uint32_t getEndInterval(float feed) { uint32_t i = interval_from_feedrate(feed); return i < min_interval ? min_interval : i; }
+  uint32_t getAccelDistance() { return accel_dist; }
+  float getEndpos(float start, uint32_t steps, bool dir) 
   { 
     return start + (float)((float)steps / steps_per_unit * (dir ? 1.0 : -1.0));
   }
@@ -97,7 +98,7 @@ class Axis
     }
   }
 
-  bool setupMove(float supposed_position, bool dir, unsigned long steps)
+  bool setupMove(float supposed_position, bool dir, uint32_t steps)
   {
     if(supposed_position != position)
       return false;
@@ -110,19 +111,19 @@ class Axis
     return true;
   }  
 
-  unsigned long getRemainingSteps() { return steps_remaining; }
+  uint32_t getRemainingSteps() { return steps_remaining; }
 
 private:
   volatile float position;
 	volatile bool direction;
-	volatile unsigned long steps_to_take;
-	volatile unsigned long steps_remaining;
+	volatile uint32_t steps_to_take;
+	volatile uint32_t steps_remaining;
 
 	float steps_per_unit;
   float max_length;
 
-  unsigned long min_interval, avg_interval, max_interval;
-  unsigned long accel_dist;
+  uint32_t min_interval, avg_interval, max_interval;
+  uint32_t accel_dist;
 
   int homing_dir;
 	

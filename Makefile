@@ -13,7 +13,7 @@ F_CPU = 16000000
 
 AVR_TOOLS_PATH = /usr/bin
 SRC =  
-CXXSRC = AvrPort.cpp Host.cpp MBIEC.cpp Time.cpp Gcodes.cpp MGcode.cpp Axis.cpp Motion.cpp
+CXXSRC = AvrPort.cpp Host.cpp MBIEC.cpp Time.cpp Gcodes.cpp MGcode.cpp Axis.cpp Motion.cpp Globals.cpp
 FORMAT = ihex
 
 

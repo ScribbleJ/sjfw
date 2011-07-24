@@ -5,14 +5,14 @@
 
 #include "Host.h"
 #include <avr/interrupt.h>
+#include <util/atomic.h>
 #include "Gcodes.h"
 
-Host& HOST = Host::Instance();
 
 Host::Host(unsigned long BAUD)
   : rxring(HOST_BUFSIZE, rxbuf), txring(HOST_BUFSIZE, txbuf)
 {
-  input_ready = false;
+  input_ready = 0;
   if(BAUD > 38401)
   {
     UCSR0A = MASK(U2X0);
@@ -34,19 +34,6 @@ Host::Host(unsigned long BAUD)
 #define MAX_PARSEBYTES 64
 void Host::scan_input()
 {
-  if(rxring.hasOverflow())
-  {
-    rxerror("Recieve Buffer Overflow.");
-    return;
-  }
-  if(rxring.hasUnderflow())
-  {
-    rxerror("Recieve Buffer Overflow.");
-    return;
-  }
-
-
-
   if(input_ready == 0)
     return;
 
@@ -58,8 +45,8 @@ void Host::scan_input()
  
   // HOST.labelnum("Input fragments ready:", input_ready);
 
-  unsigned char sreg=SREG;
-  cli(); 
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+  {
   input_ready--;
   for(len=0;len<MAX_PARSEBYTES;len++)
   {
@@ -67,7 +54,7 @@ void Host::scan_input()
     if(buf[len] <= 32)
       break;
   }
-  SREG=sreg;
+  }
 
   // HOST.labelnum("Fragment length:", len);
 

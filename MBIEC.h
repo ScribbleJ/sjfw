@@ -14,11 +14,11 @@
 */
 
 #include "AvrPort.h"
-#include "CircularBuffer.h"
+#include "RingBuffer.h"
 #include "ExtruderCommands.h"
 #include <avr/interrupt.h>
 
-#define MBIEC_BUFSIZE 16
+#define MBIEC_BUFSIZE 32
 #define MASK(PIN) (1 << PIN)
 
 class MBIEC
@@ -33,7 +33,7 @@ class MBIEC
 
   // Ok, on with it.
   public:
-    uint8_t rxchars() { return rxring.getLength(); };
+    uint8_t rxchars() { return rxring.getCount(); };
     uint8_t popchar() { return rxring.pop(); };
     void write(uint8_t data) { txring.push(data); };
     uint16_t handle_rx_char(uint8_t c);
@@ -61,7 +61,7 @@ class MBIEC
 
     void tx_interrupt_handler()
     {
-      if(txring.getLength() == 0)
+      if(txring.isEmpty())
       {
         listen();
       }
@@ -88,9 +88,9 @@ class MBIEC
     Pin TX_ENABLE_PIN;
     Pin RX_ENABLE_PIN;
     uint8_t rxbuf[MBIEC_BUFSIZE];
-    CircularBufferTempl<uint8_t> rxring;
+    RingBufferT<uint8_t> rxring;
     uint8_t txbuf[MBIEC_BUFSIZE];
-    CircularBufferTempl<uint8_t> txring;
+    RingBufferT<uint8_t> txring;
     volatile uint8_t loopbytes;
     uint8_t last_command;
     void speak()

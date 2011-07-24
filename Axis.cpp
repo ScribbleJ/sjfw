@@ -34,7 +34,7 @@ Axis::Axis(Pin step_pin, Pin dir_pin, Pin enable_pin, Pin min_pin, Pin max_pin,
 void Axis::dump_to_host()
 {
   HOST.labelnum("p:",position,false);
-  HOST.labelnum(" sr:",steps_remaining,false);
-  HOST.labelnum(" stt:",steps_to_take,false);
+  HOST.labelnum(" mi:",min_interval,false);
+  HOST.labelnum(" mi:",max_interval,false);
   HOST.labelnum(" ad:",accel_dist);
 }
