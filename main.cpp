@@ -13,7 +13,7 @@ int main(void)
 {
   sei();
   init_time();
-  HOST.write("start\r\n");
+  HOST.write("start\n");
 
   unsigned long last_time = millis();
   for (;;) { 

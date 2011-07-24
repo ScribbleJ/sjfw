@@ -57,7 +57,7 @@ void MGcode::dump_to_host()
   HOST.write(' ');
   for(int x=0;x<T;x++)
     cps[x].dump_to_host();
-  HOST.write("\r\n");
+  HOST.write("\n");
 }
 
 void MGcode::wrapupmove()
@@ -100,7 +100,7 @@ void MGcode::do_g_code()
       state = DONE;
       break;
     default:
-      HOST.labelnum("warning ",(int)linenum, false); HOST.write(" GCODE "); HOST.write(cps[G].getInt(), 10); HOST.write(" NOT SUPPORTED\r\n");
+      HOST.labelnum("warning ",(int)linenum, false); HOST.write(" GCODE "); HOST.write(cps[G].getInt(), 10); HOST.write(" NOT SUPPORTED\n");
       state = DONE;
       break;
   }
@@ -126,12 +126,12 @@ void MGcode::do_m_code()
     case 104: // Set Extruder Temperature (Fast)
       if(EC.dotoolreq(SLAVE_CMD_SET_TEMP, cps[S].getInt()))
       {
-        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\r\n");
+        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
         state = DONE;
       }
       break;
     case 105: // Get Extruder Temperature
-      HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\r\n");
+      HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
       state = DONE;
       break;
     case 109: // Set Extruder Temperature
@@ -140,32 +140,33 @@ void MGcode::do_m_code()
 
       if(EC.getHotend() >= cps[S].getInt())
       {
-        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\r\n");
+        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
         state = DONE;
       }
 
       if(millis() - lastms > 1000)
       {
         lastms = millis();
-        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\r\n");
+        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
       }
       break;
     case 110: // Set Current Line Number
       GCODES.setLineNumber(cps[S].isUnused() ? 0 : cps[S].getInt());
       HOST.labelnum("done ", (unsigned long)linenum, false);
+      HOST.write("\n");
       state = DONE;
       break;
     case 114: // Get Current Position
       HOST.labelnum("done ", (unsigned long)linenum, false);
       MOTION.writePositionToHost();
-      HOST.write("\r\n");
+      HOST.write("\n");
       state = DONE;
       break; 
     case 115: // Get Firmware Version and Capabilities
       HOST.labelnum("done ", (unsigned long)linenum, false);
       HOST.write(" PROTOCOL_VERSION:SJ FIRMWARE_NAME:sjfw MACHINE_TYPE:ThingOMatic EXTRUDER_COUNT:1 FREE_RAM:");
       HOST.write(getFreeRam(),10);
-      HOST.write("\r\n");
+      HOST.write("\n");
       state = DONE;
       break;
     case 116: // Wait on temperatures
@@ -175,13 +176,13 @@ void MGcode::do_m_code()
       if(millis() - lastms > 1000)
       {
         lastms = millis();
-        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\r\n");
+        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
       }
       break;
     case 140: // Bed Temperature (Fast) 
       if(EC.dotoolreq(SLAVE_CMD_SET_PLATFORM_TEMP, cps[S].getInt()))
       {
-        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\r\n");
+        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
         state = DONE;
       }
       break;
@@ -212,7 +213,7 @@ void MGcode::do_m_code()
       break;
     default:
       HOST.labelnum("done ", (unsigned long)linenum, false);
-      HOST.write(" MCODE "); HOST.write(cps[M].getInt(), 10); HOST.write(" NOT SUPPORTED\r\n");
+      HOST.write(" MCODE "); HOST.write(cps[M].getInt(), 10); HOST.write(" NOT SUPPORTED\n");
       state = DONE;
       break;
   }

@@ -30,7 +30,7 @@ void Gcodes::handlenext()
       codes[x].state = MGcode::NEW;
 
     MGcode::resetlastpos(MOTION.getCurrentPosition());
-    HOST.write("\r\nINVALIDATED CODES\r\n");
+    HOST.write("\nINVALIDATED CODES\n");
     invalidate_codes = false;
     return;
   }
@@ -56,7 +56,7 @@ void Gcodes::parsecompleted()
   MGcode& c=codes[currentcode];
   if(chars_in_line == 1)
   {
-    // HOST.write("Noise.\r\n");
+    // HOST.write("Noise.\n");
     c.reset();
     return;
   }
@@ -64,7 +64,7 @@ void Gcodes::parsecompleted()
   if(c[M].isUnused() == c[G].isUnused()) // Both used or both unused is an error.
   {
     // For now, we will fail silently here, rather than work out a method for handling blank lines without erroring.
-    HOST.write("ok (nop)\r\n");
+    HOST.write("ok (nop)\n");
     c.dump_to_host();
     c.reset();
     return;
@@ -80,7 +80,7 @@ void Gcodes::parsecompleted()
   }
   else
   {
-    HOST.write("ok\r\n");
+    HOST.write("ok\n");
   }
   codes[codes.getLength()].reset();
   crc_state = NOCRC;
@@ -96,7 +96,7 @@ void Gcodes::parsebytes(char *bytes, uint8_t numbytes)
   bool packetdone = false;
   chars_in_line += numbytes+1;
 
-  HOST.labelnum("GCode parsing X bytes:", numbytes);
+  //HOST.labelnum("GCode parsing X bytes:", numbytes);
   
   
   if(crc_state == NOCRC && bytes[0] == 'N')
@@ -116,8 +116,9 @@ void Gcodes::parsebytes(char *bytes, uint8_t numbytes)
       }
 
       crc = crc ^ bytes[x];
-      //HOST.labelnum("CRC+=", bytes[x], true);
-      //HOST.labelnum("CRC=", crc, true);
+      char tempout[2] = {0,0};
+      tempout[0] = bytes[x];
+      //HOST.write("CRC+="); HOST.write(tempout); HOST.labelnum(" ",crc,true);
 
       if(bytes[x] < 32)
       {
@@ -139,7 +140,7 @@ void Gcodes::parsebytes(char *bytes, uint8_t numbytes)
     packetdone = true;
 
   bytes[numbytes] = 0;
-  HOST.write("did: "); HOST.write(bytes); HOST.write("\n");
+  //HOST.write("did: "); HOST.write(bytes); HOST.write("\n");
 
   if(numbytes == 0 and !packetdone)
     return;
@@ -215,15 +216,15 @@ void Gcodes::parsebytes(char *bytes, uint8_t numbytes)
 
   if(packetdone)
   {
-    //HOST.write("Packet parsed.\r\n");
+    //HOST.write("Packet parsed.\n");
     //HOST.labelnum("Ending line number:", (int) line_number, true);
     switch(crc_state)
     {
       case CRCCOMPLETE:
         if(crc != ourcrc)
         {
-          HOST.labelnum("CRC COMPUTED: ", crc, true);
-          HOST.labelnum("CRC RECVD: ", ourcrc, true);
+          //HOST.labelnum("CRC COMPUTED: ", crc, true);
+          //HOST.labelnum("CRC RECVD: ", ourcrc, true);
           crc = 0;
           crc_state = NOCRC;
           line_number--;
@@ -247,7 +248,7 @@ void Gcodes::parsebytes(char *bytes, uint8_t numbytes)
   }
   else
   {
-    //HOST.write("Fragment parsed.\r\n");
+    //HOST.write("Fragment parsed.\n");
   }
 
   return;

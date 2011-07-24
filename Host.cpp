@@ -39,6 +39,13 @@ void Host::scan_input()
     rxerror("Recieve Buffer Overflow.");
     return;
   }
+  if(rxring.hasUnderflow())
+  {
+    rxerror("Recieve Buffer Overflow.");
+    return;
+  }
+
+
 
   if(input_ready == 0)
     return;
@@ -51,6 +58,7 @@ void Host::scan_input()
  
   // HOST.labelnum("Input fragments ready:", input_ready);
 
+  unsigned char sreg=SREG;
   cli(); 
   input_ready--;
   for(len=0;len<MAX_PARSEBYTES;len++)
@@ -59,7 +67,7 @@ void Host::scan_input()
     if(buf[len] <= 32)
       break;
   }
-  sei();
+  SREG=sreg;
 
   // HOST.labelnum("Fragment length:", len);
 

@@ -140,7 +140,7 @@ void MBIEC::update()
   if(now - lastresponsetime > MAX_EC_INTERVAL_MS)
   {
     // TODO: Take some action.
-    HOST.write("!! EXTRUDER CONTROLLER NONRESPONSIVE\r\n");
+    HOST.write("!! EXTRUDER CONTROLLER NONRESPONSIVE\n");
     // Reset alarm.
     lastresponsetime = millis();
   }
