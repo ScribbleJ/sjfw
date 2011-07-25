@@ -9,8 +9,14 @@
 #include "Host.h"
 #include <avr/interrupt.h>
 
-MBIEC::MBIEC() 
-  : TX_ENABLE_PIN(RS485_TX_ENABLE), RX_ENABLE_PIN(RS485_RX_ENABLE),
+
+// Sloppy ifdef here just so it doesn't need to complain about missing params
+// when you aren't using it.  Sure, the makefile probably shouldn't include the
+// file in the first place in those case, but wtf.
+MBIEC::MBIEC() :
+#ifdef USE_MBIEC
+    TX_ENABLE_PIN(RS485_TX_ENABLE), RX_ENABLE_PIN(RS485_RX_ENABLE),
+#endif    
     rxring(MBIEC_BUFSIZE, rxbuf), txring(MBIEC_BUFSIZE, txbuf)
 {
   last_command=0;

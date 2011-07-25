@@ -3,8 +3,58 @@ ScribbleJ Firmware
 
 This is a firmware for 3D printers with an advance gcode pipeline, capable of running at high speeds efficiently.
 
-Currently, it's not capable of printing.
+This firmware includes some portions which are copped directly from the MBI firmware, and some code that is based on
+code in the Sprinter and Teacup firmwares.
 
-Tested and developed on Gen4.
+THIS COMES WITH NO WARRANTIES, GUARANTEES, PROMISES, OR CAKE.  I do not recommend that you, or anyone, uses this firmware.
+If you do, you do so at your own risk.
 
-Includes a little code from Teacup, Makerbot, and Sprinter firmwares.
+
+SUPPORTED HARDWARE:
+Prusa Reprap RAMPS1.3
+Thing-O-Matic Gen4
+
+FEATURES(now):
+* Advanced Gcode Pipeline
+* ISR driven movement
+* Acceleration
+* LCD Temperature Display
+* "Volumteric" Printing
+
+FEATURES(planned):
+* SD Card support
+* Control panel
+* Advanced movement calculations
+* Sanguinololu Support
+* Watchdog timer on Temperature control system
+
+COMPILING AND INSTALLING:
+
+Examine and edit the top of the Makefile to your satisfaction.  Optionally, look under
+ramps/config.h or gen4/config.h to change the firmware settings.
+
+make clean && make && make upload
+
+IMPORTANT NOTES ON USING THIS FIRMWARE:
+
+* There is no homing Gcode.  Make a move towards the endstops that is longer than the platform, then mark that spot 
+with a G92 and carry on.
+* This firmware does NOT follow the standard Reprap gcode communication protocol.  It's close enough that if it doesn't
+work with your reprap host software (Pronterface, RepSnapper) changing them to understand it will not be difficult, but
+I just don't have the time or inclination while I'm busy working on the firmware itself.  Therefore, there is an included 
+perl host you may (must?) use.
+
+CURRENTLY KNOWN BUGS/ISSUES:
+
+* If you set the firmware to disable a motor after moving, it will miss steps.
+
+* My RAMPS boot/serial connection is somehow flakey and the board resets a few times when I connect.  Therefore, I 
+have the host.pl set to look for the 'start' THREE TIMES before it begins sending anything.  You can just click 
+the reset button on your motherboard to generate the 'start' message if you need another one to get the print going,
+or change the code if you don't have this issue at all.
+
+* Some spurious warnings emitted at compile time due to the way I'm compiling stuff - no worries, but I'll clean it up.
+
+
+
+
