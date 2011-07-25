@@ -2,20 +2,25 @@
 // Licence: GPL or whatever.
 
 #include "Gcodes.h"
-#include "pins.h"
 #include "Host.h"
 #include "ExtruderCommands.h"
-#include "MBIEC.h"
+#include "Temperature.h"
 #include "Time.h"
 #include <avr/interrupt.h>
 #include "Globals.h"
+#include "config.h"
 
+#ifdef HAS_LCD
 uint8_t _lcd_linestarts[] = LCD_LINESTARTS;
+#endif
+
 int main(void)
 {
   sei();
   init_time();
   HOST.write("start\n");
+
+#ifdef HAS_LCD
   LCD.begin(LCD_X,LCD_Y,_lcd_linestarts);
   LCD.noAutoscroll();
   LCD.clear();
@@ -37,15 +42,18 @@ int main(void)
       last_lcdrefresh = now;
       LCD.setCursor(0,0);
       LCD.write('T');
-      LCD.writeint16(EC.getHotend(),100);
+      LCD.writeint16(TEMPERATURE.getHotend(),100);
       LCD.write(':');
-      LCD.writeint16(EC.getHotendST(),100);
+      LCD.writeint16(TEMPERATURE.getHotendST(),100);
       LCD.write('B');
-      LCD.writeint16(EC.getPlatform(),100);
+      LCD.writeint16(TEMPERATURE.getPlatform(),100);
       LCD.write(':');
-      LCD.writeint16(EC.getPlatformST(),100);
+      LCD.writeint16(TEMPERATURE.getPlatformST(),100);
 
     }
+#else
+  for (;;) { 
+#endif
 
 
 
@@ -59,15 +67,8 @@ int main(void)
     // We'll interleave calls to this, since it's so important.
     GCODES.handlenext();
 
-    // Checks for data coming in from EC and handles it.
-    EC.scan_input();
-
-    // We'll interleave calls to this, since it's so important.
-    GCODES.handlenext();
-
-    // Runs regular temperature queries against the EC, also reports errors when
-    // EC is unresponsive for too long.
-    EC.update();
+    // Updates temperature information; scans temperature sources
+    TEMPERATURE.update();
   }
 
   return 0;

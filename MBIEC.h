@@ -73,8 +73,8 @@ class MBIEC
       else  TX_ENABLE_PIN.setValue(true);
     }
 
-    void setHotend(uint16_t p);
-    void setPlatform(uint16_t p);
+    bool setHotend(uint16_t p);
+    bool setPlatform(uint16_t p);
     uint16_t getHotend();
     uint16_t getPlatform();
     uint16_t getHotendST();
@@ -108,8 +108,6 @@ class MBIEC
     unsigned long lastresponsetime;
     unsigned long lastrequesttime;
 };
-
-extern MBIEC& EC;
 
 
 #endif

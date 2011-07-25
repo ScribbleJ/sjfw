@@ -5,8 +5,9 @@
  *
  */
 
-#include "pins.h"
+#include "config.h"
 #include "Host.h"
+#include "AvrPort.h"
 
 class Axis
 {

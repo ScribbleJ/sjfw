@@ -1,10 +1,10 @@
 
 TARGET = main
 INSTALL_DIR = /home/chris/arduino-0022
-UPLOAD_RATE = 38400
-AVRDUDE_PROGRAMMER = stk500v1
-PORT = /dev/ttyUSB0
-MCU = atmega1280 
+UPLOAD_RATE = 115200
+AVRDUDE_PROGRAMMER = stk500v2
+PORT = /dev/ttyACM0
+MCU = atmega2560
 F_CPU = 16000000
 
 
@@ -13,8 +13,9 @@ F_CPU = 16000000
 
 AVR_TOOLS_PATH = /usr/bin
 SRC =  
-CXXSRC = AvrPort.cpp Host.cpp MBIEC.cpp Time.cpp Gcodes.cpp MGcode.cpp Axis.cpp Motion.cpp \
-Globals.cpp LiquidCrystal.cpp
+CXXSRC = AvrPort.cpp Host.cpp Time.cpp Gcodes.cpp MGcode.cpp Axis.cpp Motion.cpp \
+Globals.cpp LiquidCrystal.cpp Temperature.cpp AnalogPin.cpp ThermistorTable.cpp \
+Thermistor.cpp
 FORMAT = ihex
 
 
@@ -42,7 +43,7 @@ CSTANDARD =
 CDEBUG = -g$(DEBUG)
 CWARN = -Wall -Winline
 CTUNING = -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
-CXXEXTRA = -fno-threadsafe-statics -fwrapv -fno-exceptions -ffunction-sections -fdata-sections
+CXXEXTRA = -fno-threadsafe-statics -fwrapv -fno-exceptions 
 
 CFLAGS = $(CDEBUG) $(CDEFS) $(CINCS) -O$(OPT) $(CWARN) $(CSTANDARD) $(CEXTRA)
 CXXFLAGS = $(CDEFS) $(CINCS) -O$(OPT) $(CXXEXTRA)
@@ -97,7 +98,7 @@ sym: $(TARGET).sym
 
 # Program the device.  
 upload: $(TARGET).hex
-	./reset.pl /dev/ttyUSB0; /home/chris/mb/orig/ReplicatorG/dist/linux/replicatorg-0024/tools/avrdude -C/home/chris/mb/orig/ReplicatorG/dist/linux/replicatorg-0024/tools/avrdude.conf -cstk500v1 -P/dev/ttyUSB0 -b57600 -D -Uflash:w:main.hex:i -pm1280
+	/home/chris/mb/orig/ReplicatorG/dist/linux/replicatorg-0024/tools/avrdude -C/home/chris/mb/orig/ReplicatorG/dist/linux/replicatorg-0024/tools/avrdude.conf -c $(AVRDUDE_PROGRAMMER) -P $(PORT) -b $(UPLOAD_RATE) -D -Uflash:w:main.hex:i -p $(MCU)
 #	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH)
 
 

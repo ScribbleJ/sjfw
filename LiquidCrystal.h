@@ -86,7 +86,7 @@ public:
   void createChar(uint8_t, uint8_t[]);
   void setCursor(uint8_t, uint8_t); 
   void write(uint8_t);
-  void writestr(char *, uint8_t);
+  void writestr(char const *, uint8_t);
   void writeint16(uint16_t, uint16_t);
   void command(uint8_t);
   // To be called every ~100us when using queued sends.

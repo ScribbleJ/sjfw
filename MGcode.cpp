@@ -3,6 +3,7 @@
 #include "Time.h"
 #include "Globals.h"
 #include "Motion.h"
+#include "Temperature.h"
 
 Point MGcode::lastpos;
 float MGcode::lastfeed;
@@ -111,8 +112,8 @@ void MGcode::do_g_code()
 
 void MGcode::write_temps_to_host()
 {
-  HOST.write(" T:"); HOST.write(EC.getHotend(), 10); HOST.write('/'); HOST.write(EC.getHotendST(), 10);
-  HOST.write(" B:"); HOST.write(EC.getPlatform(), 10);  HOST.write('/'); HOST.write(EC.getPlatformST(), 10);
+  HOST.write(" T:"); HOST.write(TEMPERATURE.getHotend(), 10); HOST.write('/'); HOST.write(TEMPERATURE.getHotendST(), 10);
+  HOST.write(" B:"); HOST.write(TEMPERATURE.getPlatform(), 10);  HOST.write('/'); HOST.write(TEMPERATURE.getPlatformST(), 10);
 }
 
 void MGcode::do_m_code()
@@ -126,7 +127,7 @@ void MGcode::do_m_code()
       state = DONE;
       break;
     case 104: // Set Extruder Temperature (Fast)
-      if(EC.dotoolreq(SLAVE_CMD_SET_TEMP, cps[S].getInt()))
+      if(TEMPERATURE.setHotend(cps[S].getInt()))
       {
         HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
         state = DONE;
@@ -137,10 +138,10 @@ void MGcode::do_m_code()
       state = DONE;
       break;
     case 109: // Set Extruder Temperature
-      if(state != ACTIVE && EC.dotoolreq(SLAVE_CMD_SET_TEMP, cps[S].getInt()))
+      if(state != ACTIVE && TEMPERATURE.setHotend(cps[S].getInt()))
         state = ACTIVE;
 
-      if(EC.getHotend() >= cps[S].getInt())
+      if(TEMPERATURE.getHotend() >= cps[S].getInt())
       {
         HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
         state = DONE;
@@ -172,7 +173,7 @@ void MGcode::do_m_code()
       state = DONE;
       break;
     case 116: // Wait on temperatures
-      if(EC.getHotend() >= EC.getHotendST() && EC.getPlatform() >= EC.getPlatformST())
+      if(TEMPERATURE.getHotend() >= TEMPERATURE.getHotendST() && TEMPERATURE.getPlatform() >= TEMPERATURE.getPlatformST())
         state = DONE;
 
       if(millis() - lastms > 1000)
@@ -182,7 +183,7 @@ void MGcode::do_m_code()
       }
       break;
     case 140: // Bed Temperature (Fast) 
-      if(EC.dotoolreq(SLAVE_CMD_SET_PLATFORM_TEMP, cps[S].getInt()))
+      if(TEMPERATURE.setPlatform(cps[S].getInt()))
       {
         HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
         state = DONE;

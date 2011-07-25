@@ -4,12 +4,10 @@
 */
 
 #include "MBIEC.h"
-#include "pins.h"
+#include "config.h"
 #include "Time.h"
 #include "Host.h"
 #include <avr/interrupt.h>
-
-MBIEC& EC = MBIEC::Instance();
 
 MBIEC::MBIEC() 
   : TX_ENABLE_PIN(RS485_TX_ENABLE), RX_ENABLE_PIN(RS485_RX_ENABLE),
@@ -100,14 +98,14 @@ void MBIEC::handle_command_response(uint16_t p)
   lastresponsetime = millis();
 }
     
-void MBIEC::setHotend(uint16_t p)
+bool MBIEC::setHotend(uint16_t p)
 {
-  dotoolreq(SLAVE_CMD_SET_TEMP, p);
+  return dotoolreq(SLAVE_CMD_SET_TEMP, p);
 }
 
-void MBIEC::setPlatform(uint16_t p)
+bool MBIEC::setPlatform(uint16_t p)
 {
-  dotoolreq(SLAVE_CMD_SET_PLATFORM_TEMP, p);
+  return dotoolreq(SLAVE_CMD_SET_PLATFORM_TEMP, p);
 }
 
 uint16_t MBIEC::getHotend()
@@ -243,12 +241,12 @@ bool MBIEC::dotoolreq(uint8_t command_id)
 /*** INTERRUPT HANDLERS ***/
 ISR(USART1_RX_vect)
 {
-  EC.rx_interrupt_handler();
+  (MBIEC::Instance()).rx_interrupt_handler();
 }
 
 // Possibly should load UDR1 on UDRE interrupt handler - but am aping MBI's behavior for now.
 ISR(USART1_TX_vect)
 {
-  EC.tx_interrupt_handler();
+  (MBIEC::Instance()).tx_interrupt_handler();
 }
 

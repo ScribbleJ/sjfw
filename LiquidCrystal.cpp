@@ -271,7 +271,7 @@ void LiquidCrystal::write(uint8_t value) {
   sendQueued(value, true);
 }
 
-void LiquidCrystal::writestr(char *str, uint8_t len) {
+void LiquidCrystal::writestr(char const *str, uint8_t len) {
   for(int x = 0; x < len; x++) write(str[x]);
 }
 

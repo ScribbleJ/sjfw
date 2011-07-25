@@ -1,7 +1,11 @@
 #ifndef _GLOBALS_H_
 #define _GLOBALS_H_
 
+#include "config.h"
+#ifdef HAS_LCD
 #include "LiquidCrystal.h"
+extern LiquidCrystal LCD;
+#endif
 
 inline int getFreeRam () {
   // These externs are defined and used in libavr
@@ -17,6 +21,5 @@ inline int getFreeRam () {
 // assume multiple places that T is the last item, and the major axis are in order at the start.
 enum { X=0, Y, Z, E, M, G, F, P, S, T };
 
-extern LiquidCrystal LCD;
 
 #endif

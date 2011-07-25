@@ -1,5 +1,4 @@
-/*  MBI RS485 Extruder Controller comms class
-    To be used from the Gen3/4 host system to speak to the EC.
+/*  
     (c) 2011 Christopher "ScribbleJ" Jansen
 */
 
