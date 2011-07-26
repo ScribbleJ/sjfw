@@ -26,7 +26,6 @@ FEATURES(planned):
 * Control panel
 * Advanced movement calculations
 * Sanguinololu Support
-* Watchdog timer on Temperature control system
 
 COMPILING AND INSTALLING:
 

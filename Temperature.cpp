@@ -1,5 +1,7 @@
 #include "Temperature.h"
 
+#include "Time.h"
+
 #ifdef USE_MBIEC
 Temperature::Temperature()
   : EC(MBIEC::Instance())
@@ -57,12 +59,22 @@ Temperature::Temperature()
   
 }
 
+#define MIN_TEMP_INTERVAL 200
 void Temperature::update()
 {
-  // TODO: Which one of these actually gets to read the temperature is pretty random.
-  // hopefully random enough to not worry about...
-  hotend_therm.update();
-  platform_therm.update();
+  unsigned long now = millis();
+  static unsigned long lasttime = now;
+  if(now - lasttime > MIN_TEMP_INTERVAL)
+  {
+    static bool checkwhich=false;
+    if(checkwhich)
+      hotend_therm.update();
+    else
+      platform_therm.update();
+    lasttime = now;
+    checkwhich = !checkwhich;
+  }
+
 
   if(hotend_therm.getTemperature() >= hotend_setpoint)
   {

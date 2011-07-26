@@ -24,14 +24,17 @@ int main(void)
   LCD.begin(LCD_X,LCD_Y,_lcd_linestarts);
   LCD.noAutoscroll();
   LCD.clear();
+  LCD.home();
   LCD.writestr("start",5);
+  LCD.setCursor(0,1);
+  LCD.writestr("ScribbleJ",9);
 
 
   unsigned long last_lcdupdate = millis();
   unsigned long last_lcdrefresh = last_lcdupdate;
   for (;;) { 
     unsigned long now = millis();
-    if(now - last_lcdupdate > 100)
+    if(now - last_lcdupdate > 50)
     {
       last_lcdupdate = now;
       LCD.handleUpdates();
@@ -40,15 +43,16 @@ int main(void)
     if(now - last_lcdrefresh > 5000)
     {
       last_lcdrefresh = now;
-      LCD.setCursor(0,0);
+      LCD.home();
       LCD.write('T');
-      LCD.writeint16(TEMPERATURE.getHotend(),100);
+      LCD.writeint16(TEMPERATURE.getHotend(),1000);
       LCD.write(':');
-      LCD.writeint16(TEMPERATURE.getHotendST(),100);
+      LCD.writeint16(TEMPERATURE.getHotendST(),1000);
+      LCD.setCursor(0,1);
       LCD.write('B');
-      LCD.writeint16(TEMPERATURE.getPlatform(),100);
+      LCD.writeint16(TEMPERATURE.getPlatform(),1000);
       LCD.write(':');
-      LCD.writeint16(TEMPERATURE.getPlatformST(),100);
+      LCD.writeint16(TEMPERATURE.getPlatformST(),1000);
 
     }
 #else

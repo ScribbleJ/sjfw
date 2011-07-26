@@ -11,6 +11,7 @@
 #include "RingBuffer.h"
 #include <avr/interrupt.h>
 #include <stdlib.h>
+#include "config.h"
 
 #define HOST_BUFSIZE 256
 #define HOST_BAUD 57600
