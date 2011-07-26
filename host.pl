@@ -17,8 +17,8 @@ $p->handshake("none");
 $p->write_settings || die("Can't write settings.\n");
 
 # Resets the printer:
-#$p->pulse_dtr_on(100);
-#$p->pulse_dtr_off(100);
+$p->pulse_dtr_on(100);
+$p->pulse_dtr_off(100);
 
 my $s = IO::Select->new([\*STDIN]);
 
@@ -52,7 +52,7 @@ while(1)
       $bufsize++;
     }
   }
-  elsif($bufsize < $bufmax and scalar @ready and $started > 2 and defined(my $line=<STDIN>))
+  elsif($bufsize < $bufmax and scalar @ready and $started and defined(my $line=<STDIN>))
   {
     chomp $line;
     if($line =~ m/^(.*?)\s*(\(.*)?$/o)
@@ -117,8 +117,7 @@ while(1)
     }
     elsif($line =~ m/start/)
     {
-      $started++;
-
+      sleep(5) if(!$started++)
     }
   }
 }
