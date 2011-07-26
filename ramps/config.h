@@ -12,6 +12,10 @@
 #define HOTEND_HEAT_PIN Pin(PortB, 4)
 #define PLATFORM_HEAT_PIN Pin(PortH, 5)
 
+#define SD_DETECT_PIN   Pin()
+#define SD_WRITE_PIN    Pin()
+#define SD_SELECT_PIN   Pin(PortB, 0)
+
 
 #define X_STEP_PIN      Pin(PortF, 0)
 #define X_DIR_PIN       Pin(PortF, 1)

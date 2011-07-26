@@ -8,18 +8,18 @@ F_CPU = 16000000
 
 
 # Reasonable settings for ToM Gen4
-#UPLOAD_RATE = 57600
-#AVRDUDE_PROGRAMMER = stk500v1
-#PORT = /dev/ttyUSB0
-#MCU = atmega1280
-#CONFIG_PATH = gen4
+UPLOAD_RATE = 57600
+AVRDUDE_PROGRAMMER = stk500v1
+PORT = /dev/ttyUSB0
+MCU = atmega1280
+CONFIG_PATH = gen4
 
 # Reasonable settings for RAMPS
-UPLOAD_RATE = 115200
-AVRDUDE_PROGRAMMER = stk500v2
-PORT = /dev/ttyACM0
-MCU = atmega2560
-CONFIG_PATH = ramps
+#UPLOAD_RATE = 115200
+#AVRDUDE_PROGRAMMER = stk500v2
+#PORT = /dev/ttyACM0
+#MCU = atmega2560
+#CONFIG_PATH = ramps
 
 
 
@@ -29,10 +29,12 @@ CONFIG_PATH = ramps
 
 TARGET = main
 AVR_TOOLS_PATH = /usr/bin
-SRC =  
+SRC = 
 CXXSRC = AvrPort.cpp Host.cpp Time.cpp Gcodes.cpp MGcode.cpp Axis.cpp Motion.cpp \
 Globals.cpp LiquidCrystal.cpp Temperature.cpp AnalogPin.cpp ThermistorTable.cpp \
-Thermistor.cpp MBIEC.cpp
+Thermistor.cpp MBIEC.cpp \
+lib_sd/byteordering.cpp lib_sd/fat.cpp lib_sd/partition.cpp lib_sd/sd_raw.cpp SDCard.cpp
+
 FORMAT = ihex
 
 
@@ -97,8 +99,8 @@ LST = $(ASRC:.S=.lst) $(CXXSRC:.cpp=.lst) $(SRC:.c=.lst)
 
 # Combine all necessary flags and optional flags.
 # Add target processor to flags.
-ALL_CFLAGS = -mmcu=$(MCU) -I. -I$(CONFIG_PATH) $(CFLAGS)
-ALL_CXXFLAGS = -mmcu=$(MCU) -I. -I$(CONFIG_PATH) $(CXXFLAGS)
+ALL_CFLAGS = -mmcu=$(MCU) -I. -I$(CONFIG_PATH) -I./lib_sd $(CFLAGS)
+ALL_CXXFLAGS = -mmcu=$(MCU) -I. -I$(CONFIG_PATH) -I./lib_sd $(CXXFLAGS)
 ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 
@@ -116,7 +118,7 @@ sym: $(TARGET).sym
 # Program the device.  
 upload: $(TARGET).hex
 #	/home/chris/mb/orig/ReplicatorG/dist/linux/replicatorg-0024/tools/avrdude -C/home/chris/mb/orig/ReplicatorG/dist/linux/replicatorg-0024/tools/avrdude.conf -c $(AVRDUDE_PROGRAMMER) -P $(PORT) -b $(UPLOAD_RATE) -D -Uflash:w:main.hex:i -p $(MCU)
-	perl ./reset.pl $(PORT);$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH)
+	perl ./reset.pl $(PORT);$(AVRDUDE)  $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH)
 
 
 	# Display size of file.

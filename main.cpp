@@ -9,6 +9,7 @@
 #include <avr/interrupt.h>
 #include "Globals.h"
 #include "config.h"
+#include "SDCard.h"
 
 #ifdef HAS_LCD
 uint8_t _lcd_linestarts[] = LCD_LINESTARTS;
@@ -19,6 +20,37 @@ int main(void)
   sei();
   init_time();
   HOST.write("start\n");
+
+/*
+  sdcard::reset();
+  char cf[32];
+  memset(cf, 0, 32);
+  sdcard::SdErrorCode e;
+  e = sdcard::directoryReset();
+  if(e != sdcard::SD_SUCCESS)
+  {
+    HOST.labelnum("SD FAIL ", (uint8_t)e, true);
+  }
+
+
+  do {
+    e = sdcard::directoryNextEntry(cf,32);
+  } while (e == sdcard::SD_SUCCESS && cf[0] == '.');
+  if(e != sdcard::SD_SUCCESS)
+  {
+    HOST.labelnum("SDNEXT FAIL: ", (uint8_t)e, true);
+  }
+  else if(cf[0] == 0)
+  {
+    HOST.write("SD NO FILE.\n");
+  }
+  else
+  {
+    HOST.write("Read OK."); HOST.write("\n");
+    HOST.write(cf); HOST.write("\n");
+  }
+
+*/
 
 #ifdef HAS_LCD
   LCD.begin(LCD_X,LCD_Y,_lcd_linestarts);
@@ -44,15 +76,15 @@ int main(void)
     {
       last_lcdrefresh = now;
       LCD.home();
-      LCD.write('T');
+      LCD.writestr("Hotend:",7);
       LCD.writeint16(TEMPERATURE.getHotend(),1000);
       LCD.write(':');
-      LCD.writeint16(TEMPERATURE.getHotendST(),1000);
+      LCD.writeint16(TEMPERATURE.getHotendST(),100);
       LCD.setCursor(0,1);
-      LCD.write('B');
+      LCD.writestr("Bed   :",7);
       LCD.writeint16(TEMPERATURE.getPlatform(),1000);
       LCD.write(':');
-      LCD.writeint16(TEMPERATURE.getPlatformST(),1000);
+      LCD.writeint16(TEMPERATURE.getPlatformST(),100);
 
     }
 #else
