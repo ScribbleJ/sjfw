@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include "AvrPort.h"
-#include "CircularBuffer.h"
+#include "RingBuffer.h"
 
 // commands
 #define LCD_CLEARDISPLAY 0x01
@@ -44,8 +44,6 @@
 #define LCD_5x8DOTS 0x00
 
 #define LCD_BUFFER_SIZE 64
-
-typedef CircularBufferTempl<bool> CircularBoolBuffer;
 
 
 class LiquidCrystal {
@@ -118,8 +116,8 @@ private:
 
   uint8_t command_data[LCD_BUFFER_SIZE];
   bool    mode_data[LCD_BUFFER_SIZE];
-  CircularBuffer commandQueue;
-  CircularBoolBuffer modeQueue;
+  RingBufferT<uint8_t> commandQueue;
+  RingBufferT<bool> modeQueue;
   
 };
 

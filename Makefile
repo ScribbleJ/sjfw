@@ -45,7 +45,7 @@ MAKEFILE = Makefile
 #DEBUG = stabs
 DEBUG =
 
-OPT = s
+OPT = 2
 
 # Place -D or -U options here
 CDEFS = -DF_CPU=$(F_CPU)

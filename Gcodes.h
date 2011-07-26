@@ -1,7 +1,7 @@
 #ifndef _GCODES_H_
 #define _GCODES_H_
 
-#include "CircularBuffer.h"
+#include "RingBuffer.h"
 #include "MGcode.h"
 
 // Number of Gcodes we can fit in the buffer.

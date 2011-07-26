@@ -18,7 +18,6 @@
 #ifndef THERMISTOR_HH_
 #define THERMISTOR_HH_
 
-#include "CircularBuffer.h"
 #include "AvrPort.h"
 
 #define THERM_TABLE_SIZE 20
