@@ -14,11 +14,10 @@ void Gcodes::handlenext()
   if(codes.isEmpty())
     return;
 
-
-  if(codes[0].isDone())
+  if(codes.peek(0).isDone())
   {
-    codes[0].wrapupmove();
-    codes.fakepop();
+    codes.peek(0).wrapupmove();
+    codes.remove(1);
     loops = 0;
     if(codes.isEmpty())
       return;
@@ -26,83 +25,55 @@ void Gcodes::handlenext()
   // Oops, something went wrong
   if(invalidate_codes)
   {
-    for(unsigned int x=0;x<codes.getLength();x++)
-      codes[x].state = MGcode::NEW;
+    for(unsigned int x=0;x<codes.getCount();x++)
+      codes.peek(x).state = MGcode::NEW;
 
     MGcode::resetlastpos(MOTION.getCurrentPosition());
     HOST.write("\nINVALIDATED CODES\n");
     invalidate_codes = false;
     return;
   }
-  codes[0].execute();
+
+  codes.peek(0).execute();
 
   // If we just executed the code in front for the first time, then we just return.
   // If it's had some time to go, then we start preparing the next, and the one after, etc.
-  unsigned int codesinqueue = codes.getLength();
+  unsigned int codesinqueue = codes.getCount();
   unsigned int less = loops < codesinqueue ? loops : codesinqueue;
   for(unsigned int x=1;x<less;x++)
-    codes[x].prepare();
+    codes.peek(x).prepare();
 
   ++loops;
 }
 
-uint16_t Gcodes::queuelen() { return codes.getLength(); }
+uint16_t Gcodes::queuelen() { return codes.getCount(); }
 
-void Gcodes::setLineNumber(unsigned int l) { line_number = l - 1; }
+void Gcodes::setLineNumber(unsigned int l, uint8_t source) { line_number[source] = l - 1; }
 
-void Gcodes::parsecompleted()
+void Gcodes::enqueue(MGcode &c)
 {
-  int currentcode = codes.getLength();
-  MGcode& c=codes[currentcode];
-  if(chars_in_line == 1)
-  {
-    // HOST.write("Noise.\n");
-    c.reset();
-    return;
-  }
-
   if(c[M].isUnused() == c[G].isUnused()) // Both used or both unused is an error.
   {
-    // For now, we will fail silently here, rather than work out a method for handling blank lines without erroring.
-    HOST.write("ok (nop)\n");
     c.dump_to_host();
-    c.reset();
     return;
   }
-  codes.fakepush();
-  //HOST.write("Added code to queue:");
-  //c.dump_to_host();
-  if(codes.hasOverflow() || codes.hasUnderflow())
-  {
-    codes.reset();
-    HOST.rxerror("GCODE buffer FUBAR.", line_number + 1);
-    // Throw some nasty-ass error
-  }
-  else
-  {
-    HOST.write("ok\n");
-  }
-  codes[codes.getLength()].reset();
-  crc_state = NOCRC;
-  crc = 0;
-  chars_in_line = 0;
-}
+  codes.push(c);
 
-bool Gcodes::isFull() { return (codes.getRemainingCapacity() == 0); }
+ }
 
-void Gcodes::parsebytes(char *bytes, uint8_t numbytes)
+bool Gcodes::isFull() { return (codes.getCapacity() == 0); }
+
+void Gcodes::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
 {
   uint8_t ourcrc = 0;
   bool packetdone = false;
-  chars_in_line += numbytes+1;
+  chars_in_line[source] += numbytes+1;
 
-  //HOST.labelnum("GCode parsing X bytes:", numbytes);
   
-  
-  if(crc_state == NOCRC && bytes[0] == 'N')
-    crc_state = CRC;
+  if(crc_state[source] == NOCRC && bytes[0] == 'N')
+    crc_state[source] = CRC;
 
-  if(crc_state == CRC)
+  if(crc_state[source] == CRC)
   {
     uint8_t crcpos=0;
     for(int x=0;x<=numbytes;x++)
@@ -111,14 +82,11 @@ void Gcodes::parsebytes(char *bytes, uint8_t numbytes)
       {
         bytes[x] = 0;
         crcpos=x+1;
-        crc_state = CRCCOMPLETE;
+        crc_state[source] = CRCCOMPLETE;
         break;
       }
 
-      crc = crc ^ bytes[x];
-      char tempout[2] = {0,0};
-      tempout[0] = bytes[x];
-      //HOST.write("CRC+="); HOST.write(tempout); HOST.labelnum(" ",crc,true);
+      crc[source] = crc[source] ^ bytes[x];
 
       if(bytes[x] < 32)
       {
@@ -146,8 +114,7 @@ void Gcodes::parsebytes(char *bytes, uint8_t numbytes)
     return;
 
 
-  int idx = codes.getLength();
-  MGcode& c = codes[idx];
+  MGcode& c = sources[source];
   long l; 
   errno = 0;
   switch(bytes[0])
@@ -155,19 +122,19 @@ void Gcodes::parsebytes(char *bytes, uint8_t numbytes)
     case 'N':
       l = atol(bytes+1);
       //HOST.labelnum("Starting line number:", (int) line_number + 1, true);
-      if(line_number + 1 != l)
+      if(line_number[source] + 1 != l)
       {
         if(l != -1)
         {
-          crc = 0;
-          crc_state = NOCRC;
-          HOST.rxerror("Invalid line number.",line_number + 1);
+          crc[source] = 0;
+          crc_state[source] = NOCRC;
+          HOST.rxerror("Invalid line number.",line_number[source] + 1);
           return;
         }
         break;
       }
-      line_number++;
-      c.setLinenumber(line_number);
+      line_number[source]++;
+      c.setLinenumber(line_number[source]);
       break;
     case 'M':
       c[M].setInt(bytes+1);
@@ -208,27 +175,27 @@ void Gcodes::parsebytes(char *bytes, uint8_t numbytes)
   }
   if(errno)
   {
-    crc = 0;
-    crc_state = NOCRC;
-    line_number--;
-    HOST.rxerror("Number Conversion Error", line_number + 1);
+    crc[source] = 0;
+    crc_state[source] = NOCRC;
+    line_number[source]--;
+    HOST.rxerror("Number Conversion Error", line_number[source] + 1);
   }
 
   if(packetdone)
   {
     //HOST.write("Packet parsed.\n");
     //HOST.labelnum("Ending line number:", (int) line_number, true);
-    switch(crc_state)
+    switch(crc_state[source])
     {
       case CRCCOMPLETE:
-        if(crc != ourcrc)
+        if(crc[source] != ourcrc)
         {
           //HOST.labelnum("CRC COMPUTED: ", crc, true);
           //HOST.labelnum("CRC RECVD: ", ourcrc, true);
-          crc = 0;
-          crc_state = NOCRC;
-          line_number--;
-          HOST.rxerror("CRC mismatch.",line_number + 1);
+          crc[source] = 0;
+          crc_state[source] = NOCRC;
+          line_number[source]--;
+          HOST.rxerror("CRC mismatch.",line_number[source] + 1);
           return;
         }
         break;
@@ -237,14 +204,29 @@ void Gcodes::parsebytes(char *bytes, uint8_t numbytes)
         break;
       case CRC:
       default:
-        crc = 0;
-        crc_state = NOCRC;
-        line_number--;
+        crc[source] = 0;
+        crc_state[source] = NOCRC;
+        line_number[source]--;
         // Error out - no CRC before end of command or invalid state.
-        HOST.rxerror("Missing CRC.",line_number + 1);
+        HOST.rxerror("Missing CRC.",line_number[source] + 1);
         return;
     }
-    parsecompleted();
+    
+    crc_state[source] = NOCRC;
+    crc[source] = 0;
+
+    if(chars_in_line[source] == 1)
+    {
+      c.reset();
+      chars_in_line[source] = 0;
+      return;
+    }
+    chars_in_line[source] = 0;
+
+    enqueue(sources[source]);
+
+    if(source == 0)
+      HOST.write("ok\n");
   }
   else
   {

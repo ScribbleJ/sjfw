@@ -31,7 +31,7 @@ template<typename T> class RingBufferT
       }
     }
 
-    inline void push(DTYPE d)
+    inline void push(DTYPE const& d)
     {
       *tail = d;
       if(++tail == end)
