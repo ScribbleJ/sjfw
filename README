@@ -48,9 +48,7 @@ CURRENTLY KNOWN BUGS/ISSUES:
 * If you set the firmware to disable a motor after moving, it will miss steps.
 
 * My RAMPS boot/serial connection is somehow flakey and the board resets a few times when I connect.  Therefore, I 
-have the host.pl set to look for the 'start' THREE TIMES before it begins sending anything.  You can just click 
-the reset button on your motherboard to generate the 'start' message if you need another one to get the print going,
-or change the code if you don't have this issue at all.
+have the host.pl set to wait a few seconds after 'start' before it does anything.
 
 * Some spurious warnings emitted at compile time due to the way I'm compiling stuff - no worries, but I'll clean it up.
 
