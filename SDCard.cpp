@@ -23,6 +23,8 @@
 #include "fat.h"
 #include "sd_raw.h"
 #include "partition.h"
+#include "Gcodes.h"
+#include "config.h"
 
 #ifndef USE_DYNAMIC_MEMORY
 #error Dynamic memory should be explicitly disabled in the G3 mobo.
@@ -267,7 +269,7 @@ uint8_t readNext() {
   return rv;
 }
 
-SdErrorCode startRead(char* filename) {
+SdErrorCode startRead(char const* filename) {
   reset();
   SdErrorCode result = initCard();
   /* for playback it's ok if the card is locked */
@@ -317,5 +319,55 @@ void reset() {
 		partition = 0;
 	}
 }
+
+bool autorun() {
+  if (playing || capturing)
+    return false;
+
+  SdErrorCode e = startRead("sjfwauto.gcd");
+  if(e != SD_SUCCESS)
+  {
+    //HOST.labelnum("sRead: ", e);
+    return false;
+  }
+
+  return true;
+}
+
+void update() {
+  if(!playing)
+    return;
+  
+  if(GCODES.isFull())
+    return;
+    
+  if(!readHasNext())
+  {
+    //HOST.write("SD READ DONE.\n");
+    finishRead();
+    return;
+  }
+
+#define MAX_SD_FRAG_READ 16
+  char buf[MAX_SD_FRAG_READ] = {0};
+  int x=0;
+  for(;x < MAX_SD_FRAG_READ && readHasNext(); x++)
+  {
+    buf[x] = readNext();
+    if(buf[x] <= 32)
+      break;
+  }
+  if(buf[x] > 32)
+  {
+    HOST.write("SD READ OVERF\n");
+    // TODO: Buffer overrun... error out
+    return;
+  }
+
+  GCODES.parsebytes(buf, x, SD_SOURCE);
+}
+
+
+
 
 } // namespace sdcard

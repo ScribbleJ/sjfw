@@ -21,7 +21,7 @@ int main(void)
   init_time();
   HOST.write("start\n");
 
-/*
+
   sdcard::reset();
   char cf[32];
   memset(cf, 0, 32);
@@ -29,7 +29,14 @@ int main(void)
   e = sdcard::directoryReset();
   if(e != sdcard::SD_SUCCESS)
   {
-    HOST.labelnum("SD FAIL ", (uint8_t)e, true);
+    // If I change this line to HOST.labelnum("SD Card fail ", e) then it will timeout
+    // during upload of the firmware to RAMPS1.3.  No, I'm not kidding!  Somehow something
+    // in the code causes the UPLOAD of the code to fail.  This makes no sense, but is 
+    // absolutely true.
+    HOST.write("SD Card fail.\n");
+    if(e == 2)
+      HOST.write("ISTOO\n");
+
   }
 
 
@@ -38,7 +45,7 @@ int main(void)
   } while (e == sdcard::SD_SUCCESS && cf[0] == '.');
   if(e != sdcard::SD_SUCCESS)
   {
-    HOST.labelnum("SDNEXT FAIL: ", (uint8_t)e, true);
+    HOST.write("SDNEXT FAIL\n");
   }
   else if(cf[0] == 0)
   {
@@ -50,7 +57,25 @@ int main(void)
     HOST.write(cf); HOST.write("\n");
   }
 
-*/
+
+  // SD Card autorun only will occur if you also have an LCD.  
+  // Otherwise, it seems dangerous...
+#ifdef HAS_SD
+#ifdef HAS_LCD
+#ifdef SD_AUTORUN
+  if(sdcard::autorun())
+  {
+    HOST.write("AUTORUN START\n");
+  }
+  else
+  {
+    HOST.write("AUTORUN FAIL\n");
+  }
+#endif
+#endif
+#endif
+  
+
 
 #ifdef HAS_LCD
   LCD.begin(LCD_X,LCD_Y,_lcd_linestarts);
@@ -91,8 +116,6 @@ int main(void)
   for (;;) { 
 #endif
 
-
-
     // Checks to see if gcodes are waiting to run and runs them if so.
     GCODES.handlenext();
       
@@ -105,6 +128,11 @@ int main(void)
 
     // Updates temperature information; scans temperature sources
     TEMPERATURE.update();
+
+#ifdef HAS_SD
+    // Manage SD card operations
+    sdcard::update();
+#endif
   }
 
   return 0;

@@ -10,8 +10,12 @@
 #define ENDSTOPPULLUPS 1
 #define SAFE_DEFAULT_FEED 1500
 
-//#define SD_WRITE_PIN    Pin(PortD,0)
-//#define SD_DETECT_PIN   Pin(PortD,1)
+#define NUM_SOURCES     2
+#define HOST_SOURCE     0
+#define SD_SOURCE       1
+
+#define HAS_SD
+#define SD_AUTORUN
 #define SD_SELECT_PIN   Pin(PortB, 0)
 #define SD_WRITE_PIN    Pin()
 #define SD_DETECT_PIN   Pin()

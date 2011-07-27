@@ -54,6 +54,14 @@ SdErrorCode directoryReset();
  */
 SdErrorCode directoryNextEntry(char* buffer, uint8_t bufsize);
 
+/* support for sjfw functionality */
+
+// Checks for existence of 'sjfwauto.gcode' and executes it if present.
+bool autorun();
+
+// Called from mainloop to allow spooling reads
+void update();
+
 /**************************/
 /** Write File            */
 /**************************/

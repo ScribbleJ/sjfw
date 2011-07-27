@@ -59,9 +59,7 @@ void Host::scan_input()
 
   if(len == MAX_PARSEBYTES)
   {
-    rxerror("Fragment buffer overflow.");
-    buf[len] = 0;
-    write(buf); write("\n");
+    rxerror("Frag Over");
     return;
   }
 

@@ -225,7 +225,7 @@ void Gcodes::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
 
     enqueue(sources[source]);
 
-    if(source == 0)
+    if(source == HOST_SOURCE)
       HOST.write("ok\n");
   }
   else

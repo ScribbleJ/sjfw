@@ -52,6 +52,8 @@ have the host.pl set to wait a few seconds after 'start' before it does anything
 
 * Some spurious warnings emitted at compile time due to the way I'm compiling stuff - no worries, but I'll clean it up.
 
+* The Makefile I'm using started as an Arduino Makefile and it's a mess, needs rewriting badly.
+
 
 
 
