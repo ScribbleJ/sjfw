@@ -123,18 +123,17 @@ void MGcode::do_m_code()
     case 0: // Finish up and shut down.
     case 84: // "Stop Idle Hold" == shut down motors.
       MOTION.disableAllMotors();
-      HOST.labelnum("done ", (unsigned long)linenum, false);
       state = DONE;
       break;
     case 104: // Set Extruder Temperature (Fast)
       if(TEMPERATURE.setHotend(cps[S].getInt()))
       {
-        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
+        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
         state = DONE;
       }
       break;
     case 105: // Get Extruder Temperature
-      HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
+      HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
       state = DONE;
       break;
     case 109: // Set Extruder Temperature
@@ -143,30 +142,26 @@ void MGcode::do_m_code()
 
       if(TEMPERATURE.getHotend() >= cps[S].getInt())
       {
-        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
+        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
         state = DONE;
       }
 
       if(millis() - lastms > 1000)
       {
         lastms = millis();
-        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
+        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
       }
       break;
     case 110: // Set Current Line Number
       GCODES.setLineNumber(cps[S].isUnused() ? 0 : cps[S].getInt());
-      HOST.labelnum("done ", (unsigned long)linenum, false);
-      HOST.write("\n");
       state = DONE;
       break;
     case 114: // Get Current Position
-      HOST.labelnum("done ", (unsigned long)linenum, false);
       MOTION.writePositionToHost();
-      HOST.write("\n");
       state = DONE;
       break; 
     case 115: // Get Firmware Version and Capabilities
-      HOST.labelnum("done ", (unsigned long)linenum, false);
+      HOST.labelnum("prog ", (unsigned long)linenum, false);
       HOST.write(" PROTOCOL_VERSION:SJ FIRMWARE_NAME:sjfw MACHINE_TYPE:ThingOMatic EXTRUDER_COUNT:1 FREE_RAM:");
       HOST.write(getFreeRam(),10);
       HOST.write("\n");
@@ -179,46 +174,48 @@ void MGcode::do_m_code()
       if(millis() - lastms > 1000)
       {
         lastms = millis();
-        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
+        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
       }
       break;
     case 140: // Bed Temperature (Fast) 
       if(TEMPERATURE.setPlatform(cps[S].getInt()))
       {
-        HOST.labelnum("done ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
+        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
         state = DONE;
       }
       break;
     case 200: // NOT STANDARD - set Steps Per Unit
       MOTION.setStepsPerUnit(*this);
-      HOST.labelnum("done ", (unsigned long)linenum, false);
       state = DONE;
       break;
     case 201: // NOT STANDARD - set Feedrates
       MOTION.setMinimumFeedrate(*this);
-      HOST.labelnum("done ", (unsigned long)linenum, false);
       state = DONE;
       break;
     case 202: // NOT STANDARD - set Feedrates
       MOTION.setMaximumFeedrate(*this);
-      HOST.labelnum("done ", (unsigned long)linenum, false);
       state = DONE;
       break;
     case 203: // NOT STANDARD - set Feedrates
       MOTION.setAverageFeedrate(*this);
-      HOST.labelnum("done ", (unsigned long)linenum, false);
       state = DONE;
       break;
-    case 204: // NOT STANDARD - disable motors
-      MOTION.disableAllMotors();
-      HOST.labelnum("done ", (unsigned long)linenum, false);
-      state = DONE;
-      break;
+    case 204: // NOT STANDARD - get next filename from SD
+    case 205: // NOT STANDARD - print file from last 204
     default:
-      HOST.labelnum("done ", (unsigned long)linenum, false);
+      HOST.labelnum("warn ", (unsigned long)linenum, false);
       HOST.write(" MCODE "); HOST.write(cps[M].getInt(), 10); HOST.write(" NOT SUPPORTED\n");
       state = DONE;
       break;
+  }
+  if(state == DONE)
+  {
+    if(linenum != -1)
+      HOST.labelnum("done ", (unsigned long)linenum, false);
+    else
+      HOST.write("done ");
+
+    HOST.labelnum(" M", cps[M].getInt(), true);
   }
 }
 
