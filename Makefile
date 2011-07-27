@@ -1,44 +1,58 @@
-# This makefile is a mess.
-
-
-# "INSTALL_DIR" = path to your arduino installation.  May not be needed, we only
-# use avrdude from there, not any of the libraries or code.
-INSTALL_DIR = /home/chris/arduino-0022
-F_CPU = 16000000
-
+###########################
+# Settings particular to your system
+###########################
+USE_SD = 1
+USE_LCD = 1
 
 # Reasonable settings for ToM Gen4
-UPLOAD_RATE = 57600
-AVRDUDE_PROGRAMMER = stk500v1
-PORT = /dev/ttyUSB0
-MCU = atmega1280
-CONFIG_PATH = gen4
+#UPLOAD_RATE = 57600
+#AVRDUDE_PROGRAMMER = stk500v1
+#PORT = /dev/ttyUSB0
+#MCU = atmega1280
+#CONFIG_PATH = gen4
 
 # Reasonable settings for RAMPS
-#UPLOAD_RATE = 115200
-#AVRDUDE_PROGRAMMER = stk500v2
-#PORT = /dev/ttyACM0
-#MCU = atmega2560
-#CONFIG_PATH = ramps
+UPLOAD_RATE = 115200
+AVRDUDE_PROGRAMMER = stk500v2
+PORT = /dev/ttyACM0
+MCU = atmega2560
+CONFIG_PATH = ramps
 
 
 
 
-############################################################################
-# Below here nothing should be changed...
+########################
+# Stuff you prolly don't need to change from here down.
+########################
+ifeq ($(USE_LCD),1)
+ LCD_FILES = LiquidCrystal.cpp
+ LCD_DEFINES = -DHAS_LCD
+endif
+ifeq ($(USE_SD),1)
+ SD_FILES = lib_sd/byteordering.cpp lib_sd/fat.cpp lib_sd/partition.cpp lib_sd/sd_raw.cpp SDCard.cpp
+ SD_DEFINES = -DHAS_SD
+endif
+ifeq ($(CONFIG_PATH),gen4)
+ BOARD_FILES = MBIEC.cpp
+else
+ BOARD_FILES = Thermistor.cpp ThermistorTable.cpp AnalogPin.cpp
+endif
 
+EXTRA_FILES = $(LCD_FILES) $(SD_FILES) $(BOARD_FILES)
+EXTRA_DEFINES = $(LCD_DEFINES) $(SD_DEFINES) $(BOARD_DEFINES)
+
+
+F_CPU = 16000000
 AVR_TOOLS_PATH = /usr/bin
-SRC = 
-CXXSRC = AvrPort.cpp Host.cpp Time.cpp Gcodes.cpp MGcode.cpp Axis.cpp Motion.cpp \
-Globals.cpp LiquidCrystal.cpp Temperature.cpp AnalogPin.cpp ThermistorTable.cpp \
-Thermistor.cpp MBIEC.cpp\
-lib_sd/byteordering.cpp lib_sd/fat.cpp lib_sd/partition.cpp lib_sd/sd_raw.cpp SDCard.cpp
+CXXSRC = $(EXTRA_FILES) AvrPort.cpp Host.cpp Time.cpp Gcodes.cpp MGcode.cpp Axis.cpp Motion.cpp \
+Globals.cpp Temperature.cpp 
+
 
 FORMAT = ihex
-OPT = s
+OPT = 2
 
 # Place -D or -U options here
-CXXDEFS = -DF_CPU=$(F_CPU)
+CXXDEFS = -DF_CPU=$(F_CPU) $(EXTRA_DEFINES)
 CXXEXTRA = -fno-threadsafe-statics -fwrapv -fno-exceptions 
 CXXFLAGS = $(CXXDEFS) $(CXXINCS) -O$(OPT) $(CXXEXTRA)
 LDFLAGS = -lm

@@ -22,6 +22,7 @@ int main(void)
   HOST.write("start\n");
 
 
+#ifdef HAS_SD
   sdcard::reset();
   char cf[32];
   memset(cf, 0, 32);
@@ -57,10 +58,8 @@ int main(void)
     HOST.write(cf); HOST.write("\n");
   }
 
-
   // SD Card autorun only will occur if you also have an LCD.  
   // Otherwise, it seems dangerous...
-#ifdef HAS_SD
 #ifdef HAS_LCD
 #ifdef SD_AUTORUN
   if(sdcard::autorun())

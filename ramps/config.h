@@ -16,10 +16,8 @@
 #define HOST_SOURCE     0
 #define SD_SOURCE       1
 
-#define HAS_SD
 
 #define SD_AUTORUN 
-
 #define SD_DETECT_PIN   Pin()
 #define SD_WRITE_PIN    Pin()
 #define SD_SELECT_PIN   Pin(PortB, 0)
@@ -83,8 +81,6 @@
 #define A_LENGTH        110
 #define A_DISABLE       false
 
-
-#define HAS_LCD 
 
 #define LCD_RS_PIN      Pin(PortC,5)
 #define LCD_RW_PIN      Pin(PortL,2)
