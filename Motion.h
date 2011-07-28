@@ -37,7 +37,7 @@ private:
 public:
 
   // Returns current position of all Axes
-  Point getCurrentPosition();
+  Point& getCurrentPosition();
   // Sets current position; doesn't cause a move, just updates the current position variables.
   void setCurrentPosition(MGcode &gcode);
   // Interpret movement data as absolute
@@ -70,7 +70,7 @@ public:
 
 
   // Run all the math on a G0/G1 movement Gcode to deal with movement later
-  void gcode_precalc(MGcode& gcode, float& feedin, Point& lastend);
+  void gcode_precalc(MGcode& gcode, float& feedin, Point* lastend);
   // Actually execute a (precalculated) movement gcode.
   void gcode_execute(MGcode& gcode);
 

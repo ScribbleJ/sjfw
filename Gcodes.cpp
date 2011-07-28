@@ -115,6 +115,9 @@ void Gcodes::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
 
 
   MGcode& c = sources[source];
+  if(chars_in_line[source] == numbytes+1)
+    c.reset();
+
   long l; 
   errno = 0;
   switch(bytes[0])

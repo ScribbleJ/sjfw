@@ -10,9 +10,9 @@
 
 
 
-Point Motion::getCurrentPosition()
+Point& Motion::getCurrentPosition()
 {
-  Point p;
+  static Point p;
   for(int ax=0;ax<NUM_AXES;ax++)
     p[ax] = AXES[ax].getCurrentPosition();
   return p;
@@ -144,7 +144,7 @@ void Motion::getActualEndpos(MGcode& gcode)
 }
 
 
-void Motion::gcode_precalc(MGcode& gcode, float& feedin, Point& lastend)
+void Motion::gcode_precalc(MGcode& gcode, float& feedin, Point* lastend)
 {
   Movedata& md = gcode.movedata;
 
@@ -162,7 +162,7 @@ void Motion::gcode_precalc(MGcode& gcode, float& feedin, Point& lastend)
     {
       if(!gcode[ax].isUnused())
       {
-        lastend[ax] = gcode[ax].getFloat();
+        (*lastend)[ax] = gcode[ax].getFloat();
       }
     }
     gcode.state = MGcode::PREPARED;
@@ -176,7 +176,7 @@ void Motion::gcode_precalc(MGcode& gcode, float& feedin, Point& lastend)
   }
 
   // We want to carry over the previous ending position and feedrate if possible.
-  md.startpos = lastend;
+  md.startpos = *lastend;
   if(gcode[F].isUnused())
     md.feed = feedin;
   else
@@ -212,7 +212,7 @@ void Motion::gcode_precalc(MGcode& gcode, float& feedin, Point& lastend)
     md.accel_inc = intervaldiff / md.steps_to_accel;
   }  
 
-  lastend = md.endpos;
+  *lastend = md.endpos;
   feedin  = md.feed;
   gcode.state = MGcode::PREPARED;
 }

@@ -76,7 +76,7 @@ public:
     memset(&movedata, 0, sizeof(Movedata));
   }
 
-  static void resetlastpos(const Point& lp) { lastpos = lp; }
+  static void resetlastpos(Point& lp);
 
 
   // Stuff to do if it's a G move code, otherwise not I guess.

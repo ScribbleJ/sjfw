@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include "config.h"
 
-#define HOST_BUFSIZE 128
+#define HOST_BUFSIZE 256
 #define HOST_BAUD 57600
 #define MASK(PIN) (1 << PIN)
 

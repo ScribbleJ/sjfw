@@ -20,7 +20,7 @@ void MGcode::prepare()
   if(cps[G].isUnused())
     state = PREPARED;
   else
-    MOTION.gcode_precalc(*this,lastfeed,lastpos);
+    MOTION.gcode_precalc(*this,lastfeed,&lastpos);
 }
 
 // Do some stuff and return.  This function will be called repeatedly while 
@@ -236,6 +236,16 @@ void MGcode::do_m_code()
     HOST.labelnum(" M", cps[M].getInt(), true);
   }
 }
+
+void MGcode::resetlastpos(Point& lp) 
+{ 
+  HOST.labelnum("XP: ", lastpos[X], false);
+  HOST.labelnum(" XN: ", lp[X], true);
+  lastpos = lp; 
+  HOST.labelnum("PN: ", lastpos[X], true);
+}
+
+
 
 
 
