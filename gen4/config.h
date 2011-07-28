@@ -16,8 +16,9 @@
 
 #define SD_AUTORUN
 #define SD_SELECT_PIN   Pin(PortB, 0)
-#define SD_WRITE_PIN    Pin()
-#define SD_DETECT_PIN   Pin()
+#define SD_WRITE_PIN    Pin(PortD,0)
+#define SD_DETECT_PIN   Pin(PortD,1)
+
 
 #define X_STEP_PIN      Pin(PortA,6)
 #define X_DIR_PIN       Pin(PortA,5)

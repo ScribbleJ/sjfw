@@ -17,7 +17,7 @@
 #define SD_SOURCE       1
 
 
-#define SD_AUTORUN 
+//#define SD_AUTORUN 
 #define SD_DETECT_PIN   Pin()
 #define SD_WRITE_PIN    Pin()
 #define SD_SELECT_PIN   Pin(PortB, 0)

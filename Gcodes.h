@@ -5,7 +5,7 @@
 #include "MGcode.h"
 
 // Number of Gcodes we can fit in the buffer.
-#define GCODE_BUFSIZE 25
+#define GCODE_BUFSIZE 10
 #define GCODE_SOURCES 2
 class Gcodes
 {

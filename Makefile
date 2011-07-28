@@ -53,13 +53,13 @@ OPT = 2
 
 # Place -D or -U options here
 CXXDEFS = -DF_CPU=$(F_CPU) $(EXTRA_DEFINES)
-CXXEXTRA = -fno-threadsafe-statics -fwrapv -fno-exceptions 
+CXXEXTRA = -fno-threadsafe-statics -fwrapv -fno-exceptions -ffunction-sections -fdata-sections
 CXXFLAGS = $(CXXDEFS) $(CXXINCS) -O$(OPT) $(CXXEXTRA)
 LDFLAGS = -lm
 
 # Programming support using avrdude. Settings and variables.
 AVRDUDE_WRITE_FLASH = -U flash:w:main.hex:i
-AVRDUDE_FLAGS = -F -V -p $(MCU) -P $(PORT) -c $(AVRDUDE_PROGRAMMER) -b $(UPLOAD_RATE) 
+AVRDUDE_FLAGS = -F -V -p $(MCU) -P $(PORT) -c $(AVRDUDE_PROGRAMMER) -b $(UPLOAD_RATE) -D
 
 # Program settings
 CC = $(AVR_TOOLS_PATH)/avr-gcc

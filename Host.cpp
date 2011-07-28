@@ -30,7 +30,7 @@ Host::Host(unsigned long BAUD)
 }
 
 
-#define MAX_PARSEBYTES 64
+#define MAX_PARSEBYTES 128
 void Host::scan_input()
 {
   if(input_ready == 0)

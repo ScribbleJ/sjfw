@@ -25,6 +25,7 @@
 #include "partition.h"
 #include "Gcodes.h"
 #include "config.h"
+#include "Host.h"
 
 #ifndef USE_DYNAMIC_MEMORY
 #error Dynamic memory should be explicitly disabled in the G3 mobo.
@@ -34,12 +35,15 @@
 #error Dynamic memory should be explicitly disabled in the G3 mobo.
 #endif
 
+#define SD_MAX_FN 16
 namespace sdcard {
 
 struct partition_struct* partition = 0;
 struct fat_fs_struct* fs = 0;
 struct fat_dir_struct* dd = 0;
 struct fat_file_struct* file = 0;
+
+char currentfile[SD_MAX_FN] = {0};
 
 bool openPartition()
 {
@@ -327,7 +331,6 @@ bool autorun() {
   SdErrorCode e = startRead("sjfwauto.gcd");
   if(e != SD_SUCCESS)
   {
-    //HOST.labelnum("sRead: ", e);
     return false;
   }
 
@@ -343,12 +346,11 @@ void update() {
     
   if(!readHasNext())
   {
-    //HOST.write("SD READ DONE.\n");
     finishRead();
     return;
   }
 
-#define MAX_SD_FRAG_READ 16
+#define MAX_SD_FRAG_READ 32
   char buf[MAX_SD_FRAG_READ] = {0};
   int x=0;
   for(;x < MAX_SD_FRAG_READ && readHasNext(); x++)
@@ -359,7 +361,7 @@ void update() {
   }
   if(buf[x] > 32)
   {
-    HOST.write("SD READ OVERF\n");
+    HOST.write("SRO\n");
     // TODO: Buffer overrun... error out
     return;
   }
@@ -367,7 +369,44 @@ void update() {
   GCODES.parsebytes(buf, x, SD_SOURCE);
 }
 
+char const* getCurrentfile()
+{
+  return currentfile;
+}
 
+char const* getNextfile()
+{
+  sdcard::SdErrorCode e;
+  if(currentfile[0] == 0)
+  {
+    e = sdcard::directoryReset();
+    if(e != sdcard::SD_SUCCESS)
+      HOST.labelnum("dr: ", e, true);
+  }
+
+  do {
+    e = sdcard::directoryNextEntry(currentfile,SD_MAX_FN);
+  } while (e == sdcard::SD_SUCCESS && currentfile[0] == '.');
+  if(e != sdcard::SD_SUCCESS)
+  {
+    HOST.labelnum("dne: ", e, true);
+  }
+  return currentfile;
+}
+
+
+bool printcurrent() {
+  if (playing || capturing)
+    return false;
+
+  SdErrorCode e = startRead(currentfile);
+  if(e != SD_SUCCESS)
+  {
+    HOST.labelnum("pc: ", e, true);
+    return false;
+  }
+  return true;
+}
 
 
 } // namespace sdcard

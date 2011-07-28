@@ -4,6 +4,7 @@
 #include "Globals.h"
 #include "Motion.h"
 #include "Temperature.h"
+#include "SDCard.h"
 
 Point MGcode::lastpos;
 float MGcode::lastfeed;
@@ -58,7 +59,7 @@ void MGcode::dump_to_host()
   HOST.write(' ');
   for(int x=0;x<T;x++)
     cps[x].dump_to_host();
-  HOST.write("\n");
+  HOST.endl();
 }
 
 void MGcode::wrapupmove()
@@ -128,12 +129,12 @@ void MGcode::do_m_code()
     case 104: // Set Extruder Temperature (Fast)
       if(TEMPERATURE.setHotend(cps[S].getInt()))
       {
-        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
+        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.endl();
         state = DONE;
       }
       break;
     case 105: // Get Extruder Temperature
-      HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
+      HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.endl();
       state = DONE;
       break;
     case 109: // Set Extruder Temperature
@@ -142,14 +143,14 @@ void MGcode::do_m_code()
 
       if(TEMPERATURE.getHotend() >= cps[S].getInt())
       {
-        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
+        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.endl();
         state = DONE;
       }
 
       if(millis() - lastms > 1000)
       {
         lastms = millis();
-        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
+        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.endl();
       }
       break;
     case 110: // Set Current Line Number
@@ -164,7 +165,7 @@ void MGcode::do_m_code()
       HOST.labelnum("prog ", (unsigned long)linenum, false);
       HOST.write(" PROTOCOL_VERSION:SJ FIRMWARE_NAME:sjfw MACHINE_TYPE:ThingOMatic EXTRUDER_COUNT:1 FREE_RAM:");
       HOST.write(getFreeRam(),10);
-      HOST.write("\n");
+      HOST.endl();
       state = DONE;
       break;
     case 116: // Wait on temperatures
@@ -174,13 +175,13 @@ void MGcode::do_m_code()
       if(millis() - lastms > 1000)
       {
         lastms = millis();
-        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
+        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.endl();
       }
       break;
     case 140: // Bed Temperature (Fast) 
       if(TEMPERATURE.setPlatform(cps[S].getInt()))
       {
-        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.write("\n");
+        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.endl();
         state = DONE;
       }
       break;
@@ -200,8 +201,25 @@ void MGcode::do_m_code()
       MOTION.setAverageFeedrate(*this);
       state = DONE;
       break;
+#ifdef HAS_SD
     case 204: // NOT STANDARD - get next filename from SD
+      HOST.labelnum("out ", linenum, false);
+      HOST.write(sdcard::getNextfile());
+      HOST.endl();
+      state = DONE;
+      break;
     case 205: // NOT STANDARD - print file from last 204
+      HOST.labelnum("out ", linenum, false);
+      HOST.write(sdcard::getCurrentfile());
+      if(sdcard::printcurrent())
+        HOST.write(" START");
+      else
+        HOST.write(" FAIL");
+     
+      HOST.endl();
+      state = DONE;
+      break;
+#endif
     default:
       HOST.labelnum("warn ", (unsigned long)linenum, false);
       HOST.write(" MCODE "); HOST.write(cps[M].getInt(), 10); HOST.write(" NOT SUPPORTED\n");

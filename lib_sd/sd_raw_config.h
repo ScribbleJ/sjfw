@@ -58,7 +58,7 @@ extern "C"
  * \note When SD_RAW_WRITE_SUPPORT is 1, SD_RAW_SAVE_RAM will
  *       be reset to 0.
  */
-#define SD_RAW_SAVE_RAM 1
+#define SD_RAW_SAVE_RAM 0
 
 /**
  * \ingroup sd_raw_config
@@ -106,11 +106,18 @@ extern "C"
     #error "no sd/mmc pin mapping available!"
 #endif
 
-#define configure_pin_available() SD_DETECT_PIN.setDirection(false)
-#define configure_pin_locked() SD_WRITE_PIN.setDirection(false)
+#define configure_pin_available() /* no */
+#define configure_pin_locked() /* no */
 
-#define get_pin_available() SD_DETECT_PIN.getValue()
-#define get_pin_locked() !SD_WRITE_PIN.getValue()
+#define get_pin_available() 0
+#define get_pin_locked() 1
+
+//#define configure_pin_available() SD_DETECT_PIN.setDirection(false)
+//#define configure_pin_locked() SD_WRITE_PIN.setDirection(false)
+
+//#define get_pin_available() SD_DETECT_PIN.getValue()
+//#define get_pin_locked() !SD_WRITE_PIN.getValue()
+
 
 //#define configure_pin_ss() DDRB |= (1 << DDB0)
 //#define select_card() PORTB &= ~(1 << PORTB0)

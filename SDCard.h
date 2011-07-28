@@ -62,6 +62,16 @@ bool autorun();
 // Called from mainloop to allow spooling reads
 void update();
 
+// Updates 'current file' and returns it
+char const* getNextfile();
+
+// Just get current file
+char const* getCurrentfile();
+
+// print currentfile
+bool printcurrent();
+
+
 /**************************/
 /** Write File            */
 /**************************/
@@ -77,7 +87,7 @@ bool isWriting();
 /** Read File             */
 /**************************/
 
-SdErrorCode startRead(char* filename);
+SdErrorCode startRead(char const* filename);
 bool readHasNext();
 uint8_t readNext();
 void readRewind(uint8_t bytes);

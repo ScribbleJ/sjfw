@@ -23,41 +23,8 @@ int main(void)
 
 
 #ifdef HAS_SD
+
   sdcard::reset();
-  char cf[32];
-  memset(cf, 0, 32);
-  sdcard::SdErrorCode e;
-  e = sdcard::directoryReset();
-  if(e != sdcard::SD_SUCCESS)
-  {
-    // If I change this line to HOST.labelnum("SD Card fail ", e) then it will timeout
-    // during upload of the firmware to RAMPS1.3.  No, I'm not kidding!  Somehow something
-    // in the code causes the UPLOAD of the code to fail.  This makes no sense, but is 
-    // absolutely true.
-    HOST.write("SD Card fail.\n");
-    if(e == 2)
-      HOST.write("ISTOO\n");
-
-  }
-
-
-  do {
-    e = sdcard::directoryNextEntry(cf,32);
-  } while (e == sdcard::SD_SUCCESS && cf[0] == '.');
-  if(e != sdcard::SD_SUCCESS)
-  {
-    HOST.write("SDNEXT FAIL\n");
-  }
-  else if(cf[0] == 0)
-  {
-    HOST.write("SD NO FILE.\n");
-  }
-  else
-  {
-    HOST.write("Read OK."); HOST.write("\n");
-    HOST.write(cf); HOST.write("\n");
-  }
-
   // SD Card autorun only will occur if you also have an LCD.  
   // Otherwise, it seems dangerous...
 #ifdef HAS_LCD
