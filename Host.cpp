@@ -9,7 +9,7 @@
 
 
 Host::Host(unsigned long BAUD)
-  : rxring(HOST_BUFSIZE, rxbuf), txring(HOST_BUFSIZE, txbuf)
+  : rxring(HOST_RECV_BUFSIZE, rxbuf), txring(HOST_SEND_BUFSIZE, txbuf)
 {
   input_ready = 0;
   if(BAUD > 38401)

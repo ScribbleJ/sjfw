@@ -13,7 +13,8 @@
 #include <stdlib.h>
 #include "config.h"
 
-#define HOST_BUFSIZE 256
+#define HOST_SEND_BUFSIZE 512
+#define HOST_RECV_BUFSIZE 64
 #define HOST_BAUD 57600
 #define MASK(PIN) (1 << PIN)
 
@@ -151,9 +152,9 @@ class Host
     }
 
   private:
-    uint8_t rxbuf[HOST_BUFSIZE];
+    uint8_t rxbuf[HOST_RECV_BUFSIZE];
     RingBufferT<uint8_t> rxring;
-    uint8_t txbuf[HOST_BUFSIZE];
+    uint8_t txbuf[HOST_SEND_BUFSIZE];
     RingBufferT<uint8_t> txring;
     volatile uint8_t input_ready;
 
