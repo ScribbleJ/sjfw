@@ -89,9 +89,6 @@ int main(void)
     // Gcodes.h for processing if so.
     HOST.scan_input();
 
-    // We'll interleave calls to this, since it's so important.
-    GCODES.handlenext();
-
     // Updates temperature information; scans temperature sources
     TEMPERATURE.update();
 

@@ -6,21 +6,36 @@
 #include <stdlib.h>
 #include <errno.h>
 
+// REMOVEME
+#include "Time.h"
+
 
 
 void Gcodes::handlenext()
 {
   static unsigned int loops = 0;
-  if(codes.isEmpty())
+  static unsigned long last = millis();
+  if(codes.getCount() == 0)
+  {
+    unsigned long now = millis();
+    if(now - last > 1000)
+    {
+      last = now;
+      HOST.write("NOTHING IN QUEUE.\n");
+    }
+    
     return;
+  }
 
   if(codes.peek(0).isDone())
   {
     codes.peek(0).wrapupmove();
-    codes.remove(1);
+    codes.peek(0).reset();
+    codes.pop();
+    HOST.labelnum("RC-QL:", codes.getCount());
     loops = 0;
-    if(codes.isEmpty())
-      return;
+    //if(codes.isEmpty())
+    return;
   }
   // Oops, something went wrong
   if(invalidate_codes)
@@ -46,8 +61,6 @@ void Gcodes::handlenext()
   ++loops;
 }
 
-uint16_t Gcodes::queuelen() { return codes.getCount(); }
-
 void Gcodes::setLineNumber(unsigned int l, uint8_t source) { line_number[source] = l - 1; }
 
 void Gcodes::enqueue(MGcode &c)
@@ -58,10 +71,11 @@ void Gcodes::enqueue(MGcode &c)
     return;
   }
   codes.push(c);
+  HOST.labelnum("AC-QL:", codes.getCount());
 
  }
 
-bool Gcodes::isFull() { return (codes.getCapacity() == 0); }
+bool Gcodes::isFull() { return codes.isFull(); }
 
 void Gcodes::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
 {
@@ -176,13 +190,6 @@ void Gcodes::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
       ; // just noise
       break;
   }
-  if(errno)
-  {
-    crc[source] = 0;
-    crc_state[source] = NOCRC;
-    line_number[source]--;
-    HOST.rxerror("Number Conversion Error", line_number[source] + 1);
-  }
 
   if(packetdone)
   {
@@ -229,7 +236,7 @@ void Gcodes::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
     enqueue(sources[source]);
 
     if(source == HOST_SOURCE)
-      HOST.write("ok\n");
+      HOST.labelnum("ok ", codes.getCount(), true);
   }
   else
   {

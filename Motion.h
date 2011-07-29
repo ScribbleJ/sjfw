@@ -74,8 +74,7 @@ public:
   // Actually execute a (precalculated) movement gcode.
   void gcode_execute(MGcode& gcode);
 
-    // Debugging and output to host...
-  void dumpMovedata(Movedata& md);
+  // Debugging and output to host...
   void writePositionToHost();
 
   // Functions for handling pulsing motors using a timer interrupt for timing.

@@ -16,7 +16,10 @@ public:
       axes[ax] = tocopy.axes[ax];
     return *this;
   }
-  Point(const Point& tocopy);
+  Point(const Point& tocopy)
+  {
+    *this = tocopy;
+  }
   // No bounds checking
   float& operator[](int idx) { return axes[idx]; }
 };

@@ -342,7 +342,9 @@ void update() {
     return;
   
   if(GCODES.isFull())
+  {
     return;
+  }
     
   if(!readHasNext())
   {
@@ -356,6 +358,9 @@ void update() {
   for(;x < MAX_SD_FRAG_READ && readHasNext(); x++)
   {
     buf[x] = readNext();
+    HOST.write("S:");
+    HOST.write(buf[x]);
+    HOST.endl();
     if(buf[x] <= 32)
       break;
   }

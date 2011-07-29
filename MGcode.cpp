@@ -158,7 +158,10 @@ void MGcode::do_m_code()
       state = DONE;
       break;
     case 114: // Get Current Position
+      HOST.labelnum("prog ", (unsigned long)linenum, false);
+      HOST.write(' ');
       MOTION.writePositionToHost();
+      HOST.endl();
       state = DONE;
       break; 
     case 115: // Get Firmware Version and Capabilities

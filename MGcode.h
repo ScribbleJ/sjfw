@@ -6,6 +6,7 @@
 #include "Host.h"
 #include "Movedata.h"
 #include <string.h>
+#include "Point.h"
 
 class CodeParam
 {
@@ -67,13 +68,33 @@ public:
   void reset()
   {
     for(int x=0;x<T;x++)
+    {
       cps[x].unset();
+      if(x<=E)
+      {
+        axismovesteps[x] = 0;
+        axisdirs[x] = false;
+      }
+
+    }
+    
     state = NEW;
     preparecalls = 0;
     executecalls = 0;
     lastms = 0;
     linenum = -1;
-    memset(&movedata, 0, sizeof(Movedata));
+    feed=0;
+    movesteps=0;
+    leading_axis=0;
+
+    startinterval=0;
+    currentinterval=0;
+    fullinterval=0;
+    steps_to_accel=0;
+    accel_until=0;
+    decel_from=0;
+    accel_inc=0;
+
   }
 
   static void resetlastpos(Point& lp);
@@ -90,9 +111,6 @@ public:
   void dump_to_host();
   // Called when move is completed (no good place to do it. :( )
   void wrapupmove();
-  // This is separated out so that eventually we could make it a union with data required
-  // for other types of gcodes, or be on a path to something more drastic, like polymorphic gcode class.
-  Movedata movedata;
 
   // Just kept in case we need it.
   void setLinenumber(int32_t num) { linenum = num; };
@@ -109,6 +127,27 @@ private:
   void do_m_code();
   void do_g_code();
   void write_temps_to_host();
+
+public:
+  float feed;
+
+  uint32_t movesteps;
+  uint32_t axismovesteps[NUM_AXES];
+  bool          axisdirs[NUM_AXES];
+  int           leading_axis;
+
+  // This was separated out, maybe will be again...
+  uint32_t startinterval;
+  uint32_t currentinterval;
+  uint32_t fullinterval;
+  uint32_t steps_to_accel;
+  uint32_t accel_until;
+  uint32_t decel_from;
+  uint32_t accel_inc;
+
+  Point         endpos;
+  Point         startpos;
+
 };
 
 

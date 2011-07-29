@@ -8,6 +8,7 @@
 #include "Gcodes.h"
 
 
+
 Host::Host(unsigned long BAUD)
   : rxring(HOST_RECV_BUFSIZE, rxbuf), txring(HOST_SEND_BUFSIZE, txbuf)
 {
@@ -30,7 +31,7 @@ Host::Host(unsigned long BAUD)
 }
 
 
-#define MAX_PARSEBYTES 128
+#define MAX_PARSEBYTES 64
 void Host::scan_input()
 {
   if(input_ready == 0)
