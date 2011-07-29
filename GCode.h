@@ -53,10 +53,10 @@ public:
 // It would be a swell plan to make this class a polymorphic hierarchy and pop pointers to base
 // in the queue, use dynamic alloc... 
 // I might try it, dunno.
-class MGcode
+class GCode
 {
 public:
-  MGcode(): cps((CodeParam[10]){  CodeParam('X'), CodeParam('Y'), CodeParam('Z'), CodeParam('E'),
+  GCode(): cps((CodeParam[10]){  CodeParam('X'), CodeParam('Y'), CodeParam('Z'), CodeParam('E'),
                                   CodeParam('M'), CodeParam('G'), CodeParam('F'), CodeParam('P'),
                                   CodeParam('S'), CodeParam('T') }) { reset(); };
   CodeParam& operator[](int idx) { return cps[idx]; }

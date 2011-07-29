@@ -17,7 +17,7 @@ inline int getFreeRam () {
 }
 
 // Whether I should define such common letters as globals is a bit questionable, but...
-// at any rate, it's CRITICAL the order here matches the array in MGcode.  We also
+// at any rate, it's CRITICAL the order here matches the array in GCode.  We also
 // assume multiple places that T is the last item, and the major axis are in order at the start.
 enum { X=0, Y, Z, E, M, G, F, P, S, T };
 

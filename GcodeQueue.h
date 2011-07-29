@@ -2,7 +2,7 @@
 #define _GCODES_H_
 
 #include "RingBuffer.h"
-#include "MGcode.h"
+#include "GCode.h"
 #include "config.h"
 
 // Number of GcodeQueue we can fit in the buffer.
@@ -33,7 +33,7 @@ public:
   void setLineNumber(unsigned int l, uint8_t source);
   void setLineNumber(unsigned int l) { setLineNumber(l, 0); }
   // Drop a new gcode on the stack
-  void enqueue(MGcode& c);
+  void enqueue(GCode& c);
   // Tells us whether queue is full.
   bool isFull();
   // Decode a (partial) gcode string
@@ -43,10 +43,10 @@ public:
   void Invalidate();
 
 private:
-  MGcode codes_buf[GCODE_BUFSIZE];
-  RingBufferT<MGcode> codes;
+  GCode codes_buf[GCODE_BUFSIZE];
+  RingBufferT<GCode> codes;
 
-  MGcode sources[GCODE_SOURCES];
+  GCode sources[GCODE_SOURCES];
   enum crc_state_t { NOCRC, CRC, CRCCOMPLETE } crc_state[GCODE_SOURCES];
   uint8_t crc[GCODE_SOURCES];
   int32_t line_number[GCODE_SOURCES];

@@ -40,9 +40,9 @@ void GcodeQueue::handlenext()
   if(invalidate_codes)
   {
     for(unsigned int x=0;x<codes.getCount();x++)
-      codes.peek(x).state = MGcode::NEW;
+      codes.peek(x).state = GCode::NEW;
 
-    MGcode::resetlastpos(MOTION.getCurrentPosition());
+    GCode::resetlastpos(MOTION.getCurrentPosition());
     HOST.write("\nINVALIDATED CODES\n");
     invalidate_codes = false;
     return;
@@ -62,7 +62,7 @@ void GcodeQueue::handlenext()
 
 void GcodeQueue::setLineNumber(unsigned int l, uint8_t source) { line_number[source] = l - 1; }
 
-void GcodeQueue::enqueue(MGcode &c)
+void GcodeQueue::enqueue(GCode &c)
 {
   if(c[M].isUnused() == c[G].isUnused()) // Both used or both unused is an error.
   {
@@ -127,7 +127,7 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
     return;
 
 
-  MGcode& c = sources[source];
+  GCode& c = sources[source];
   if(chars_in_line[source] == numbytes+1)
     c.reset();
 

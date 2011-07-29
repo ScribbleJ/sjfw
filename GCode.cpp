@@ -1,4 +1,4 @@
-#include "MGcode.h"
+#include "GCode.h"
 #include "GcodeQueue.h"
 #include "Time.h"
 #include "Globals.h"
@@ -6,12 +6,12 @@
 #include "Temperature.h"
 #include "SDCard.h"
 
-Point MGcode::lastpos;
-float MGcode::lastfeed;
+Point GCode::lastpos;
+float GCode::lastfeed;
 // Stuff to do if it's a G move code, otherwise not I guess.
 // This function MAY get called repeatedly before the execute() function.
 // It WILL get called at least once.
-void MGcode::prepare()
+void GCode::prepare()
 {
   preparecalls++;
   if(state == PREPARED)
@@ -25,7 +25,7 @@ void MGcode::prepare()
 
 // Do some stuff and return.  This function will be called repeatedly while 
 // the state is still ACTIVE, and you can set up an interrupt for precise timings.
-void MGcode::execute()
+void GCode::execute()
 {
   if(startmillis == 0)
     startmillis = millis();
@@ -52,7 +52,7 @@ void MGcode::execute()
   }
 }
 
-void MGcode::dump_to_host()
+void GCode::dump_to_host()
 {
   HOST.write('P'); HOST.write(preparecalls, 10);
   HOST.write('E'); HOST.write(executecalls, 10);
@@ -62,7 +62,7 @@ void MGcode::dump_to_host()
   HOST.endl();
 }
 
-void MGcode::wrapupmove()
+void GCode::wrapupmove()
 {
   if(!cps[G].isUnused())
   {
@@ -72,7 +72,7 @@ void MGcode::wrapupmove()
 
 
 
-void MGcode::do_g_code() 
+void GCode::do_g_code() 
 {
   switch(cps[G].getInt())
   {
@@ -111,13 +111,13 @@ void MGcode::do_g_code()
 
 }
 
-void MGcode::write_temps_to_host()
+void GCode::write_temps_to_host()
 {
   HOST.write(" T:"); HOST.write(TEMPERATURE.getHotend(), 10); HOST.write('/'); HOST.write(TEMPERATURE.getHotendST(), 10);
   HOST.write(" B:"); HOST.write(TEMPERATURE.getPlatform(), 10);  HOST.write('/'); HOST.write(TEMPERATURE.getPlatformST(), 10);
 }
 
-void MGcode::do_m_code()
+void GCode::do_m_code()
 {
   switch(cps[M].getInt())
   {
@@ -241,7 +241,7 @@ void MGcode::do_m_code()
   }
 }
 
-void MGcode::resetlastpos(Point& lp) 
+void GCode::resetlastpos(Point& lp) 
 { 
   HOST.labelnum("XP: ", lastpos[X], false);
   HOST.labelnum(" XN: ", lp[X], true);

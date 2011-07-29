@@ -1,7 +1,7 @@
 #include "Motion.h"
 
 #include "config.h"
-#include "MGcode.h"
+#include "GCode.h"
 #include "Axis.h"
 #include "Globals.h"
 #include "GcodeQueue.h"
@@ -17,7 +17,7 @@ Point& Motion::getCurrentPosition()
   return p;
 }
 
-void Motion::setCurrentPosition(MGcode &gcode)
+void Motion::setCurrentPosition(GCode &gcode)
 {
   for(int ax=0;ax<NUM_AXES;ax++)
   {
@@ -40,7 +40,7 @@ void Motion::setRelative()
     AXES[ax].setRelative();
 }
 
-void Motion::setMinimumFeedrate(MGcode& gcode)
+void Motion::setMinimumFeedrate(GCode& gcode)
 {
   for(int ax=0;ax < NUM_AXES;ax++)
   {
@@ -49,7 +49,7 @@ void Motion::setMinimumFeedrate(MGcode& gcode)
   }
 }
 
-void Motion::setMaximumFeedrate(MGcode& gcode)
+void Motion::setMaximumFeedrate(GCode& gcode)
 {
   for(int ax=0;ax < NUM_AXES;ax++)
   {
@@ -58,7 +58,7 @@ void Motion::setMaximumFeedrate(MGcode& gcode)
   }
 }
 
-void Motion::setAverageFeedrate(MGcode& gcode)
+void Motion::setAverageFeedrate(GCode& gcode)
 {
   for(int ax=0;ax < NUM_AXES;ax++)
   {
@@ -67,7 +67,7 @@ void Motion::setAverageFeedrate(MGcode& gcode)
   }
 }
 
-void Motion::setStepsPerUnit(MGcode& gcode)
+void Motion::setStepsPerUnit(GCode& gcode)
 {
   for(int ax=0;ax < NUM_AXES;ax++)
   {
@@ -83,7 +83,7 @@ void Motion::disableAllMotors()
 }
 
 
-void Motion::getMovesteps(MGcode& gcode)
+void Motion::getMovesteps(GCode& gcode)
 {
   for(int ax=0;ax < NUM_AXES;ax++)
   {
@@ -98,7 +98,7 @@ void Motion::getMovesteps(MGcode& gcode)
   }
 }
 
-unsigned long Motion::getLargestStartInterval(MGcode& gcode)
+unsigned long Motion::getLargestStartInterval(GCode& gcode)
 {
   unsigned long mi = 0;
   for(int ax=0;ax < NUM_AXES;ax++)
@@ -110,7 +110,7 @@ unsigned long Motion::getLargestStartInterval(MGcode& gcode)
   return mi;
 }
 
-unsigned long Motion::getLargestEndInterval(MGcode& gcode)
+unsigned long Motion::getLargestEndInterval(GCode& gcode)
 {
   unsigned long mi = 0;
   for(int ax=0;ax < NUM_AXES;ax++)
@@ -122,7 +122,7 @@ unsigned long Motion::getLargestEndInterval(MGcode& gcode)
   return mi;
 }
 
-unsigned long Motion::getLargestAccelDistance(MGcode& gcode)
+unsigned long Motion::getLargestAccelDistance(GCode& gcode)
 {
     unsigned long ad = 0;
     for(int ax=0;ax < NUM_AXES;ax++)
@@ -134,7 +134,7 @@ unsigned long Motion::getLargestAccelDistance(MGcode& gcode)
     return ad;
 }
 
-void Motion::getActualEndpos(MGcode& gcode)
+void Motion::getActualEndpos(GCode& gcode)
 {
   for(int ax=0;ax<NUM_AXES;ax++)
   {
@@ -143,9 +143,9 @@ void Motion::getActualEndpos(MGcode& gcode)
 }
 
 
-void Motion::gcode_precalc(MGcode& gcode, float& feedin, Point* lastend)
+void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
 {
-  if(gcode.state >= MGcode::PREPARED)
+  if(gcode.state >= GCode::PREPARED)
     return;
 
   
@@ -162,13 +162,13 @@ void Motion::gcode_precalc(MGcode& gcode, float& feedin, Point* lastend)
         (*lastend)[ax] = gcode[ax].getFloat();
       }
     }
-    gcode.state = MGcode::PREPARED;
+    gcode.state = GCode::PREPARED;
     return;
   }
   if(gcode[G].getInt() != 1 and gcode[G].getInt() != 2)
   {
     // no precalc for anything but 92, 1, 2
-    gcode.state = MGcode::PREPARED;
+    gcode.state = GCode::PREPARED;
     return;
   }
 
@@ -211,17 +211,17 @@ void Motion::gcode_precalc(MGcode& gcode, float& feedin, Point* lastend)
 
   *lastend = gcode.endpos;
   feedin  = gcode.feed;
-  gcode.state = MGcode::PREPARED;
+  gcode.state = GCode::PREPARED;
 }
 
 
-void Motion::gcode_execute(MGcode& gcode)
+void Motion::gcode_execute(GCode& gcode)
 {
   // Only execute codes that are prepared.
-  if(gcode.state < MGcode::PREPARED)
+  if(gcode.state < GCode::PREPARED)
     return; // TODO: This should never happen now and is an error.
   // Don't execute codes that are ACTIVE or DONE (ACTIVE get handled by interrupt)
-  if(gcode.state > MGcode::PREPARED)
+  if(gcode.state > GCode::PREPARED)
     return;
 
   // set axis move data, invalidate all precomputes if bad data
@@ -241,7 +241,7 @@ void Motion::gcode_execute(MGcode& gcode)
   //gcode.dump_to_host();
 
   // setup pointer to current move data for interrupt
-  gcode.state = MGcode::ACTIVE;
+  gcode.state = GCode::ACTIVE;
   current_gcode = &gcode;
 
   setInterruptCycles(gcode.startinterval);
@@ -279,7 +279,7 @@ void Motion::handleInterrupt()
   if(current_gcode->movesteps == 0)
   {
     disableInterrupt();
-    current_gcode->state = MGcode::DONE;
+    current_gcode->state = GCode::DONE;
     return;
   }
   current_gcode->movesteps--;
@@ -329,7 +329,7 @@ void Motion::handleInterrupt()
     }
 
     disableInterrupt();
-    current_gcode->state = MGcode::DONE;
+    current_gcode->state = GCode::DONE;
   }
 }
 

@@ -3,7 +3,7 @@
 
 #include "config.h"
 #include "Movedata.h"
-#include "MGcode.h"
+#include "GCode.h"
 #include "Axis.h"
 
 class Motion
@@ -29,7 +29,7 @@ private:
   Motion& operator=(Motion&);
 
   Axis AXES[NUM_AXES];
-  volatile MGcode* volatile current_gcode;
+  volatile GCode* volatile current_gcode;
   volatile unsigned long deltas[NUM_AXES];
   volatile long errors[NUM_AXES];
   volatile int interruptOverflow;
@@ -39,7 +39,7 @@ public:
   // Returns current position of all Axes
   Point& getCurrentPosition();
   // Sets current position; doesn't cause a move, just updates the current position variables.
-  void setCurrentPosition(MGcode &gcode);
+  void setCurrentPosition(GCode &gcode);
   // Interpret movement data as absolute
   void setAbsolute();
   // Interpret movement data as relative
@@ -49,30 +49,30 @@ public:
   // Change stored feedrates/axis data
   // WARNING: if you change steps per unit without then changing/resetting all feedrates
   // after things will not go well for you!
-  void setMinimumFeedrate(MGcode& gcode);
-  void setMaximumFeedrate(MGcode& gcode);
-  void setAverageFeedrate(MGcode& gcode);
-  void setStepsPerUnit(MGcode& gcode);
+  void setMinimumFeedrate(GCode& gcode);
+  void setMaximumFeedrate(GCode& gcode);
+  void setAverageFeedrate(GCode& gcode);
+  void setStepsPerUnit(GCode& gcode);
   // Motors automatically enabled when used
   void disableAllMotors();
 
 
 
   // Calculate the number of steps for each axis in a move.
-  void getMovesteps(MGcode& gcode);
+  void getMovesteps(GCode& gcode);
   // These three functions select the data to use during a move
-  unsigned long getLargestStartInterval(MGcode& gcode);
-  unsigned long getLargestEndInterval(MGcode& gcode);
-  unsigned long getLargestAccelDistance(MGcode& gcode);
+  unsigned long getLargestStartInterval(GCode& gcode);
+  unsigned long getLargestEndInterval(GCode& gcode);
+  unsigned long getLargestAccelDistance(GCode& gcode);
   // Uses step data to determine the actual ending position of a move
   // (seldom /precisely/ the requested position)
-  void getActualEndpos(MGcode& gcode);
+  void getActualEndpos(GCode& gcode);
 
 
   // Run all the math on a G0/G1 movement Gcode to deal with movement later
-  void gcode_precalc(MGcode& gcode, float& feedin, Point* lastend);
+  void gcode_precalc(GCode& gcode, float& feedin, Point* lastend);
   // Actually execute a (precalculated) movement gcode.
-  void gcode_execute(MGcode& gcode);
+  void gcode_execute(GCode& gcode);
 
   // Debugging and output to host...
   void writePositionToHost();
