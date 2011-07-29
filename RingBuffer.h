@@ -11,7 +11,7 @@ template<typename T> class RingBufferT
     typedef T DTYPE;
   private:
     const RB_SIZE_TYPE size;
-    RB_SIZE_TYPE count;
+    volatile RB_SIZE_TYPE count;
     DTYPE* start;
     DTYPE* end;
     DTYPE* head;
@@ -78,12 +78,21 @@ template<typename T> class RingBufferT
 
     inline const bool isFull()
     {
-      return (getCount() == size);
+      return (getCount() >= size);
     }
     
     inline DTYPE& peek(RB_SIZE_TYPE index)
     {
-      return *(head+index);
+      //return *(head+index);
+      DTYPE *t = head;
+      for(;index > 0;index--)
+      {
+        t++;
+        if(t == end)
+          t = start;
+      }
+      return *(t);
+
     }
 
     inline void remove(RB_SIZE_TYPE count_in)
@@ -109,6 +118,7 @@ template<typename T> class RingBufferT
         dp++;
         if(dp == end) dp = start;
       }
+      return *dp;
     }
 
     inline void finishWrite()

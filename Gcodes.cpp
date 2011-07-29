@@ -30,9 +30,8 @@ void Gcodes::handlenext()
   if(codes.peek(0).isDone())
   {
     codes.peek(0).wrapupmove();
-    codes.peek(0).reset();
     codes.pop();
-    HOST.labelnum("RC-QL:", codes.getCount());
+    //HOST.labelnum("RC-QL:", codes.getCount());
     loops = 0;
     //if(codes.isEmpty())
     return;
@@ -71,9 +70,9 @@ void Gcodes::enqueue(MGcode &c)
     return;
   }
   codes.push(c);
-  HOST.labelnum("AC-QL:", codes.getCount());
+  //HOST.labelnum("AC-QL:", codes.getCount());
 
- }
+}
 
 bool Gcodes::isFull() { return codes.isFull(); }
 

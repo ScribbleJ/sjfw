@@ -1,7 +1,7 @@
 #ifndef _GCODES_H_
 #define _GCODES_H_
 
-#include "CircularBuffer.h"
+#include "RingBuffer.h"
 #include "MGcode.h"
 
 // Number of Gcodes we can fit in the buffer.
@@ -45,7 +45,7 @@ public:
 
 private:
   MGcode codes_buf[GCODE_BUFSIZE];
-  CircularBufferTempl<MGcode> codes;
+  RingBufferT<MGcode> codes;
 
   MGcode sources[GCODE_SOURCES];
   enum crc_state_t { NOCRC, CRC, CRCCOMPLETE } crc_state[GCODE_SOURCES];
