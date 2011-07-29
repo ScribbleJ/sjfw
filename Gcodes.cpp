@@ -14,16 +14,16 @@
 void Gcodes::handlenext()
 {
   static unsigned int loops = 0;
-  static unsigned long last = millis();
+  // static unsigned long last = millis();
   if(codes.getCount() == 0)
   {
-    unsigned long now = millis();
+/*  unsigned long now = millis();
     if(now - last > 1000)
     {
       last = now;
       HOST.write("NOTHING IN QUEUE.\n");
     }
-    
+*/    
     return;
   }
 

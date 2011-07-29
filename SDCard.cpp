@@ -352,15 +352,11 @@ void update() {
     return;
   }
 
-#define MAX_SD_FRAG_READ 32
-  char buf[MAX_SD_FRAG_READ] = {0};
+  char buf[MAX_GCODE_FRAG_SIZE] = {0};
   int x=0;
-  for(;x < MAX_SD_FRAG_READ && readHasNext(); x++)
+  for(;x < MAX_GCODE_FRAG_SIZE && readHasNext(); x++)
   {
     buf[x] = readNext();
-    HOST.write("S:");
-    HOST.write(buf[x]);
-    HOST.endl();
     if(buf[x] <= 32)
       break;
   }
@@ -385,17 +381,13 @@ char const* getNextfile()
   if(currentfile[0] == 0)
   {
     e = sdcard::directoryReset();
-    if(e != sdcard::SD_SUCCESS)
-      HOST.labelnum("dr: ", e, true);
+    //if(e != sdcard::SD_SUCCESS)  HOST.labelnum("dr: ", e, true);
   }
 
   do {
     e = sdcard::directoryNextEntry(currentfile,SD_MAX_FN);
   } while (e == sdcard::SD_SUCCESS && currentfile[0] == '.');
-  if(e != sdcard::SD_SUCCESS)
-  {
-    HOST.labelnum("dne: ", e, true);
-  }
+  //if(e != sdcard::SD_SUCCESS) HOST.labelnum("dne: ", e, true);
   return currentfile;
 }
 
@@ -407,7 +399,7 @@ bool printcurrent() {
   SdErrorCode e = startRead(currentfile);
   if(e != SD_SUCCESS)
   {
-    HOST.labelnum("pc: ", e, true);
+    // HOST.labelnum("pc: ", e, true);
     return false;
   }
   return true;

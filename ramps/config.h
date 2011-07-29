@@ -1,6 +1,8 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
+#include "config-common.h"
+
 #define NUM_AXES 4
 #define ENDSTOPS_INVERTING 1
 #define ENDSTOPPULLUPS 1
@@ -11,11 +13,6 @@
 
 #define HOTEND_HEAT_PIN Pin(PortB, 4)
 #define PLATFORM_HEAT_PIN Pin(PortH, 5)
-
-#define NUM_SOURCES     2
-#define HOST_SOURCE     0
-#define SD_SOURCE       1
-
 
 //#define SD_AUTORUN 
 #define SD_DETECT_PIN   Pin()

@@ -13,9 +13,6 @@
 #include <stdlib.h>
 #include "config.h"
 
-#define HOST_SEND_BUFSIZE 250
-#define HOST_RECV_BUFSIZE 250
-#define HOST_BAUD 57600
 #define MASK(PIN) (1 << PIN)
 
 class Host

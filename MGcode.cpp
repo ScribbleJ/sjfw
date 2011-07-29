@@ -66,7 +66,7 @@ void MGcode::wrapupmove()
 {
   if(!cps[G].isUnused())
   {
-    HOST.labelnum("done ", (unsigned long)linenum, false); HOST.labelnum(" G", (unsigned long)cps[G].getInt());
+    HOST.labelnum("done ", linenum, false); HOST.labelnum(" G", cps[G].getInt());
   }
 }
 
@@ -104,7 +104,7 @@ void MGcode::do_g_code()
       state = DONE;
       break;
     default:
-      HOST.labelnum("warning ",(int)linenum, false); HOST.write(" GCODE "); HOST.write(cps[G].getInt(), 10); HOST.write(" NOT SUPPORTED\n");
+      HOST.labelnum("warn ",linenum, false); HOST.write(" GCODE "); HOST.write(cps[G].getInt(), 10); HOST.write(" NOT SUPPORTED\n");
       state = DONE;
       break;
   }
@@ -129,12 +129,12 @@ void MGcode::do_m_code()
     case 104: // Set Extruder Temperature (Fast)
       if(TEMPERATURE.setHotend(cps[S].getInt()))
       {
-        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.endl();
+        HOST.labelnum("prog ", linenum, false); write_temps_to_host(); HOST.endl();
         state = DONE;
       }
       break;
     case 105: // Get Extruder Temperature
-      HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.endl();
+      HOST.labelnum("prog ", linenum, false); write_temps_to_host(); HOST.endl();
       state = DONE;
       break;
     case 109: // Set Extruder Temperature
@@ -143,14 +143,14 @@ void MGcode::do_m_code()
 
       if(TEMPERATURE.getHotend() >= cps[S].getInt())
       {
-        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.endl();
+        HOST.labelnum("prog ", linenum, false); write_temps_to_host(); HOST.endl();
         state = DONE;
       }
 
       if(millis() - lastms > 1000)
       {
         lastms = millis();
-        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.endl();
+        HOST.labelnum("prog ", linenum, false); write_temps_to_host(); HOST.endl();
       }
       break;
     case 110: // Set Current Line Number
@@ -158,14 +158,14 @@ void MGcode::do_m_code()
       state = DONE;
       break;
     case 114: // Get Current Position
-      HOST.labelnum("prog ", (unsigned long)linenum, false);
+      HOST.labelnum("prog ", linenum, false);
       HOST.write(' ');
       MOTION.writePositionToHost();
       HOST.endl();
       state = DONE;
       break; 
     case 115: // Get Firmware Version and Capabilities
-      HOST.labelnum("prog ", (unsigned long)linenum, false);
+      HOST.labelnum("prog ", linenum, false);
       HOST.write(" PROTOCOL_VERSION:SJ FIRMWARE_NAME:sjfw MACHINE_TYPE:ThingOMatic EXTRUDER_COUNT:1 FREE_RAM:");
       HOST.write(getFreeRam(),10);
       HOST.endl();
@@ -178,13 +178,13 @@ void MGcode::do_m_code()
       if(millis() - lastms > 1000)
       {
         lastms = millis();
-        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.endl();
+        HOST.labelnum("prog ", linenum, false); write_temps_to_host(); HOST.endl();
       }
       break;
     case 140: // Bed Temperature (Fast) 
       if(TEMPERATURE.setPlatform(cps[S].getInt()))
       {
-        HOST.labelnum("prog ", (unsigned long)linenum, false); write_temps_to_host(); HOST.endl();
+        HOST.labelnum("prog ", linenum, false); write_temps_to_host(); HOST.endl();
         state = DONE;
       }
       break;
@@ -206,13 +206,14 @@ void MGcode::do_m_code()
       break;
 #ifdef HAS_SD
     case 204: // NOT STANDARD - get next filename from SD
-      HOST.labelnum("out ", linenum, false);
+      HOST.labelnum("prog ", linenum, false);
+      HOST.write(' ');
       HOST.write(sdcard::getNextfile());
       HOST.endl();
       state = DONE;
       break;
     case 205: // NOT STANDARD - print file from last 204
-      HOST.labelnum("out ", linenum, false);
+      HOST.labelnum("prog ", linenum, false);
       HOST.write(sdcard::getCurrentfile());
       if(sdcard::printcurrent())
         HOST.write(" START");
@@ -224,7 +225,7 @@ void MGcode::do_m_code()
       break;
 #endif
     default:
-      HOST.labelnum("warn ", (unsigned long)linenum, false);
+      HOST.labelnum("warn ", linenum, false);
       HOST.write(" MCODE "); HOST.write(cps[M].getInt(), 10); HOST.write(" NOT SUPPORTED\n");
       state = DONE;
       break;
@@ -232,7 +233,7 @@ void MGcode::do_m_code()
   if(state == DONE)
   {
     if(linenum != -1)
-      HOST.labelnum("done ", (unsigned long)linenum, false);
+      HOST.labelnum("done ", linenum, false);
     else
       HOST.write("done ");
 

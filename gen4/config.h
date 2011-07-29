@@ -1,6 +1,9 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
+#include "config-common.h"
+
+
 #define USE_MBIEC
 #define RS485_TX_ENABLE   Pin(PortC,5)
 #define RS485_RX_ENABLE   Pin(PortC,7)
@@ -10,11 +13,7 @@
 #define ENDSTOPPULLUPS 1
 #define SAFE_DEFAULT_FEED 1500
 
-#define NUM_SOURCES     2
-#define HOST_SOURCE     0
-#define SD_SOURCE       1
-
-#define SD_AUTORUN
+// #define SD_AUTORUN
 #define SD_SELECT_PIN   Pin(PortB, 0)
 #define SD_WRITE_PIN    Pin(PortD,0)
 #define SD_DETECT_PIN   Pin(PortD,1)

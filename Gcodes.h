@@ -3,10 +3,9 @@
 
 #include "RingBuffer.h"
 #include "MGcode.h"
+#include "config.h"
 
 // Number of Gcodes we can fit in the buffer.
-#define GCODE_BUFSIZE 5
-#define GCODE_SOURCES 2
 class Gcodes
 {
 public:
