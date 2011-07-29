@@ -23,7 +23,7 @@
 #include "fat.h"
 #include "sd_raw.h"
 #include "partition.h"
-#include "Gcodes.h"
+#include "GcodeQueue.h"
 #include "config.h"
 #include "Host.h"
 

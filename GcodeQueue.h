@@ -5,14 +5,14 @@
 #include "MGcode.h"
 #include "config.h"
 
-// Number of Gcodes we can fit in the buffer.
-class Gcodes
+// Number of GcodeQueue we can fit in the buffer.
+class GcodeQueue
 {
 public:
   // Singleton pattern... only one Gcode queue exists.
-  static Gcodes& Instance() { static Gcodes instance; return instance; }
+  static GcodeQueue& Instance() { static GcodeQueue instance; return instance; }
 private:
-  explicit Gcodes()  :codes(GCODE_BUFSIZE, codes_buf) 
+  explicit GcodeQueue()  :codes(GCODE_BUFSIZE, codes_buf) 
   { 
     for(int x=0;x<GCODE_SOURCES;x++)
     {
@@ -23,8 +23,8 @@ private:
       chars_in_line[x] = 0;
     }
   }
-  Gcodes(Gcodes const&);
-  void operator=(const Gcodes&);
+  GcodeQueue(GcodeQueue const&);
+  void operator=(const GcodeQueue&);
 public:
 
   // Should be called from mainloop; handles gcode dispatch
@@ -54,7 +54,7 @@ private:
   bool invalidate_codes;
 };
   
-extern Gcodes& GCODES;  
+extern GcodeQueue& GCODES;  
 
 
 #endif // _GCODES_H_

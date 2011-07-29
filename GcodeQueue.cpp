@@ -1,4 +1,4 @@
-#include "Gcodes.h"
+#include "GcodeQueue.h"
 
 #include "Motion.h"
 #include "Host.h"
@@ -11,7 +11,7 @@
 
 
 
-void Gcodes::handlenext()
+void GcodeQueue::handlenext()
 {
   static unsigned int loops = 0;
   // static unsigned long last = millis();
@@ -60,9 +60,9 @@ void Gcodes::handlenext()
   ++loops;
 }
 
-void Gcodes::setLineNumber(unsigned int l, uint8_t source) { line_number[source] = l - 1; }
+void GcodeQueue::setLineNumber(unsigned int l, uint8_t source) { line_number[source] = l - 1; }
 
-void Gcodes::enqueue(MGcode &c)
+void GcodeQueue::enqueue(MGcode &c)
 {
   if(c[M].isUnused() == c[G].isUnused()) // Both used or both unused is an error.
   {
@@ -74,9 +74,9 @@ void Gcodes::enqueue(MGcode &c)
 
 }
 
-bool Gcodes::isFull() { return codes.isFull(); }
+bool GcodeQueue::isFull() { return codes.isFull(); }
 
-void Gcodes::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
+void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
 {
   uint8_t ourcrc = 0;
   bool packetdone = false;
@@ -246,9 +246,9 @@ void Gcodes::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
   
 }
 
-void Gcodes::Invalidate() { invalidate_codes = true; }
+void GcodeQueue::Invalidate() { invalidate_codes = true; }
 
 
 
 
-Gcodes& GCODES = Gcodes::Instance();
+GcodeQueue& GCODES = GcodeQueue::Instance();

@@ -44,7 +44,7 @@ EXTRA_DEFINES = $(LCD_DEFINES) $(SD_DEFINES) $(BOARD_DEFINES)
 
 F_CPU = 16000000
 AVR_TOOLS_PATH = /usr/bin
-CXXSRC = $(EXTRA_FILES) AvrPort.cpp Host.cpp Time.cpp Gcodes.cpp MGcode.cpp Axis.cpp Motion.cpp \
+CXXSRC = $(EXTRA_FILES) AvrPort.cpp Host.cpp Time.cpp GcodeQueue.cpp MGcode.cpp Axis.cpp Motion.cpp \
 Globals.cpp Temperature.cpp 
 
 

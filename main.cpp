@@ -1,7 +1,7 @@
 // (c) 2011, Christopher "ScribbleJ" Jansen
 // Licence: GPL or whatever.
 
-#include "Gcodes.h"
+#include "GcodeQueue.h"
 #include "Host.h"
 #include "ExtruderCommands.h"
 #include "Temperature.h"
@@ -86,7 +86,7 @@ int main(void)
     GCODES.handlenext();
       
     // Checks to see if recieve buffer has enough data to parse, and sends it to 
-    // Gcodes.h for processing if so.
+    // GcodeQueue.h for processing if so.
     HOST.scan_input();
 
     // Updates temperature information; scans temperature sources
