@@ -1,7 +1,7 @@
 ScribbleJ Firmware
 (c) 2011 Christopher "ScribbleJ" Jansen
 
-This is a firmware for 3D printers with an advance gcode pipeline, capable of running at high speeds efficiently.
+This is a firmware for 3D printers with an advanced gcode pipeline, capable of running at high speeds efficiently.
 
 This firmware includes some portions which are copped directly from the MBI firmware, and some code that is based on
 code in the Sprinter and Teacup firmwares.
@@ -11,6 +11,7 @@ If you do, you do so at your own risk.
 
 
 SUPPORTED HARDWARE:
+Prusa Reprap RAMPS1.2 (experimental!)
 Prusa Reprap RAMPS1.3
 Thing-O-Matic Gen4
 
@@ -20,9 +21,11 @@ FEATURES(now):
 * Acceleration
 * LCD Temperature Display
 * "Volumteric" Printing
+* SD Card support
+-- Tested and working with "Pronterface" Reprap host, the best Reprap host there is presently.
+-- This repository includes a perl-based "host.pl" which can be used as a host.
 
 FEATURES(planned):
-* SD Card support
 * Control panel
 * Advanced movement calculations
 * Sanguinololu Support
@@ -30,7 +33,7 @@ FEATURES(planned):
 COMPILING AND INSTALLING:
 
 Examine and edit the top of the Makefile to your satisfaction.  Optionally, look under
-ramps/config.h or gen4/config.h to change the firmware settings.
+rampsXX/config.h or gen4/config.h to change the firmware settings.
 
 make clean && make && make upload
 
@@ -38,15 +41,37 @@ IMPORTANT NOTES ON USING THIS FIRMWARE:
 
 * There is no homing Gcode.  Make a move towards the endstops that is longer than the platform, then mark that spot 
 with a G92 and carry on.
-* This firmware does NOT follow the standard Reprap gcode communication protocol.  It's close enough that if it doesn't
-work with your reprap host software (Pronterface, RepSnapper) changing them to understand it will not be difficult, but
-I just don't have the time or inclination while I'm busy working on the firmware itself.  Therefore, there is an included 
-perl host you may (must?) use.
+
+Here's my start.gcode from my Prusa:
+------
+M104 S180 (set extruder temperature to 180)
+G92 X0 Y0 Z0 E0 (set current position to 0)
+G1 X-300 Y-300 F2000 (move X+Y to endstops)
+G1 Z-200 F400 (move Z to endstop)
+G92 X0 Y0 Z0 E0 (set current position to 0)
+G1 X0 Y0 Z30 F2000 (move to 0,0,30 to heat up)
+M84 (disable all motors)
+M109 S180 (set extruder temperature, wait)
+------
+
+Here's the start.gcode from my ToM:
+------
+M104 S180 (extruder to 180)
+M140 S50 (bed to 50)
+G92 X0 Y0 Z0 E0 (position 0)
+G1 Z200 F400 (move Z to endstop)
+G1 X-200 Y-200 F2000 (move x+Y to endstop)
+G92 X-5 Y-25 Z116.68 E0 (set endstop positions)
+G1 X0 Y0 Z50 (move to 0,0,50 to heat up)
+M109 S180 (wait for hotend to reach 180)
+------
+
+* This firmware does NOT follow the standard Reprap gcode communication protocol, however the latest release has been
+tested to work with the EXCELLENT "Pronterface" Host by Kliment:
+https://github.com/kliment/Printrun
 
 CURRENTLY KNOWN BUGS/ISSUES:
 
-* If you set the firmware to disable a motor after moving, it will miss steps.
-
-* My RAMPS boot/serial connection is somehow flakey and the board resets a few times when I connect.  Therefore, I 
-have the host.pl set to wait a few seconds after 'start' before it does anything.
+* Motors that are set to disable after a move only get disabled a few moves thereafter.  This should work fine, but
+don't forget a M84 at the end of your gcode to turn off all motors.
 
