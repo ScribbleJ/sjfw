@@ -75,3 +75,10 @@ CURRENTLY KNOWN BUGS/ISSUES:
 * Motors that are set to disable after a move only get disabled a few moves thereafter.  This should work fine, but
 don't forget a M84 at the end of your gcode to turn off all motors.
 
+* SD card support works in the firmware, but is not compatible with the Gcodes that Pronterface emits.  This firmware
+presently has two Gcodes for SD access:
+M204 - fetch filename from SD
+M205 - print last fetched filename
+
+* THE SD CODE MAY FAIL ON LONG FILENAMES.  8.3 FILENAMES WORK FINE IN THE MEANTIME.
+
