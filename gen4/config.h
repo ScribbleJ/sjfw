@@ -3,7 +3,7 @@
 
 #include "config-common.h"
 
-
+// MBI Extruder Controller comm settings.
 #define USE_MBIEC
 #define RS485_TX_ENABLE   Pin(PortC,5)
 #define RS485_RX_ENABLE   Pin(PortC,7)
@@ -13,6 +13,7 @@
 #define ENDSTOPPULLUPS 1
 #define SAFE_DEFAULT_FEED 1500
 
+// SD AUTORUN looks for and runs 'sjfwauto.gcd' on boot.
 // #define SD_AUTORUN
 #define SD_SELECT_PIN   Pin(PortB, 0)
 #define SD_WRITE_PIN    Pin(PortD,0)
@@ -91,6 +92,9 @@
 #define B_DISABLE       true
 
 
+// LCD SETTINGS FROM MY LCD HACK, NOT OFFICIAL MBI
+// But I would sure love osmeone to change them to work for official MBI and
+// let me know. :)
 #define LCD_RS_PIN      Pin(PortC,3)
 #define LCD_RW_PIN      Pin(PortC,2)
 #define LCD_E_PIN       Pin(PortC,0)

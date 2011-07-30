@@ -33,7 +33,9 @@ FEATURES(planned):
 COMPILING AND INSTALLING:
 
 Examine and edit the top of the Makefile to your satisfaction.  Optionally, look under
-rampsXX/config.h or gen4/config.h to change the firmware settings.
+rampsXX/config.h or gen4/config.h to change the firmware settings.  You'll probably need to 
+change the steps per unit settings, as mine are odd on the Prusa.  ToM users, you should be
+fine.
 
 make clean && make && make upload
 

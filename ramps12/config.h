@@ -3,23 +3,29 @@
 
 #include "config-common.h"
 
+// Total number of axis in the machine
 #define NUM_AXES 4
+// Endstops inverting should be set for most systems.
 #define ENDSTOPS_INVERTING 1
+// Endstop pullups, too.
 #define ENDSTOPPULLUPS 1
 #define SAFE_DEFAULT_FEED 1500
 
+// The temperature-reading pins are defined by their analog pin number.
 #define HOTEND_TEMP_PIN 2
 #define PLATFORM_TEMP_PIN 1
 
+// These pins turn on the fets to supply power to heaters.
 #define HOTEND_HEAT_PIN Pin(PortB, 4)
 #define PLATFORM_HEAT_PIN Pin(PortH, 5)
 
+// SD_AUTORUN looks for and runs 'sjfwauto.gcd' on boot.
 //#define SD_AUTORUN 
 #define SD_DETECT_PIN   Pin()
 #define SD_WRITE_PIN    Pin()
 #define SD_SELECT_PIN   Pin(PortB, 0)
 
-
+// Steps_per_mm units below peculiar to my config, please examine them and change to match yours.
 #define X_STEP_PIN      Pin(PortA, 4)
 #define X_DIR_PIN       Pin(PortA, 6)
 #define X_ENABLE_PIN    Pin(PortA, 2)
