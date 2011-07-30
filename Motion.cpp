@@ -237,7 +237,6 @@ void Motion::gcode_execute(GCode& gcode)
     errors[ax] = gcode.movesteps / 2;
     //AXES[ax].dump_to_host();
   }
-  //dumpMovedata(gcode.;
   //gcode.dump_to_host();
 
   // setup pointer to current move data for interrupt

@@ -2,7 +2,6 @@
 #define _MOTION_H_
 
 #include "config.h"
-#include "Movedata.h"
 #include "GCode.h"
 #include "Axis.h"
 

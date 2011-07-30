@@ -33,9 +33,11 @@ ifeq ($(USE_SD),1)
  SD_DEFINES = -DHAS_SD
 endif
 ifeq ($(CONFIG_PATH),gen4)
- BOARD_FILES = MBIEC.cpp
+ BOARD_FILES = temperature/MBIEC.cpp
+ BOARD_DEFINES = -I./temperature/
 else
- BOARD_FILES = Thermistor.cpp ThermistorTable.cpp AnalogPin.cpp
+ BOARD_FILES = temperature/Thermistor.cpp temperature/ThermistorTable.cpp avr/AnalogPin.cpp
+ BOARD_DEFINES = -I./temperature/
 endif
 
 EXTRA_FILES = $(LCD_FILES) $(SD_FILES) $(BOARD_FILES)
@@ -44,7 +46,7 @@ EXTRA_DEFINES = $(LCD_DEFINES) $(SD_DEFINES) $(BOARD_DEFINES)
 
 F_CPU = 16000000
 AVR_TOOLS_PATH = /usr/bin
-CXXSRC = $(EXTRA_FILES) AvrPort.cpp Host.cpp Time.cpp GcodeQueue.cpp GCode.cpp Axis.cpp Motion.cpp \
+CXXSRC = $(EXTRA_FILES) avr/AvrPort.cpp Host.cpp Time.cpp GcodeQueue.cpp GCode.cpp Axis.cpp Motion.cpp \
 Globals.cpp Temperature.cpp 
 
 
@@ -78,7 +80,7 @@ OBJ = $(CXXSRC:.cpp=.o)
 
 # Combine all necessary flags and optional flags.
 # Add target processor to flags.
-ALL_CXXFLAGS = -mmcu=$(MCU) -I. -I$(CONFIG_PATH) -I./lib_sd $(CXXFLAGS)
+ALL_CXXFLAGS = -mmcu=$(MCU) -I. -I$(CONFIG_PATH) -I./lib_sd -I./avr $(CXXFLAGS)
 
 # Default target.
 all: build sizeafter
