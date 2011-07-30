@@ -33,8 +33,8 @@ void GcodeQueue::handlenext()
     codes.pop();
     //HOST.labelnum("RC-QL:", codes.getCount());
     loops = 0;
-    //if(codes.isEmpty())
-    return;
+    if(codes.isEmpty())
+      return;
   }
   // Oops, something went wrong
   if(invalidate_codes)
@@ -60,7 +60,7 @@ void GcodeQueue::handlenext()
   ++loops;
 }
 
-void GcodeQueue::setLineNumber(unsigned int l, uint8_t source) { line_number[source] = l - 1; }
+void GcodeQueue::setLineNumber(uint32_t l, uint8_t source) { line_number[source] = l - 1; }
 
 void GcodeQueue::enqueue(GCode &c)
 {

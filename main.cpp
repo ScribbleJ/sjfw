@@ -57,13 +57,13 @@ int main(void)
   unsigned long last_lcdrefresh = last_lcdupdate;
   for (;;) { 
     unsigned long now = millis();
-    if(now - last_lcdupdate > 50)
+    if(now - last_lcdupdate > 49)
     {
       last_lcdupdate = now;
       LCD.handleUpdates();
     }
 
-    if(now - last_lcdrefresh > 5000)
+    if(now - last_lcdrefresh > 5001)
     {
       last_lcdrefresh = now;
       LCD.home();
@@ -89,8 +89,14 @@ int main(void)
     // GcodeQueue.h for processing if so.
     HOST.scan_input();
 
+    // Checks to see if gcodes are waiting to run and runs them if so.
+    GCODES.handlenext();
+ 
     // Updates temperature information; scans temperature sources
     TEMPERATURE.update();
+
+    // Checks to see if gcodes are waiting to run and runs them if so.
+    GCODES.handlenext();
 
 #ifdef HAS_SD
     // Manage SD card operations

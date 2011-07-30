@@ -30,7 +30,7 @@ public:
   // Should be called from mainloop; handles gcode dispatch
   void handlenext();
   // Change current line number
-  void setLineNumber(unsigned int l, uint8_t source);
+  void setLineNumber(uint32_t l, uint8_t source);
   void setLineNumber(unsigned int l) { setLineNumber(l, 0); }
   // Drop a new gcode on the stack
   void enqueue(GCode& c);

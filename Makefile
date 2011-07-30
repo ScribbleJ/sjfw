@@ -2,7 +2,7 @@
 # Settings particular to your system
 ###########################
 USE_SD = 1
-USE_LCD = 1
+#USE_LCD = 1
 
 # Reasonable settings for ToM Gen4
 #UPLOAD_RATE = 57600
@@ -16,7 +16,8 @@ UPLOAD_RATE = 115200
 AVRDUDE_PROGRAMMER = stk500v2
 PORT = /dev/ttyACM0
 MCU = atmega2560
-CONFIG_PATH = ramps
+#CONFIG_PATH = ramps13
+CONFIG_PATH = ramps12
 
 
 

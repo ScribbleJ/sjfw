@@ -348,7 +348,7 @@ void LiquidCrystal::pulseEnable(void) {
 
 void LiquidCrystal::quickerPulseEnable(void) {
   _enable_pin.setValue(true);
-  _delay_us(1);    // enable pulse must be >450ns
+  //_delay_us(1);    // enable pulse must be >450ns
   _enable_pin.setValue(false);
   // This delay will be ensured elsewhere.
   //_delay_us(80);   // commands need > 72us to settle

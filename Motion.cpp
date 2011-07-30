@@ -82,6 +82,21 @@ void Motion::disableAllMotors()
     AXES[ax].disable();
 }
 
+void Motion::checkdisable(GCode& gcode)
+{
+  static uint8_t disable[NUM_AXES] = { 0 };
+  for(int ax=0;ax < NUM_AXES;ax++)
+  {
+    if(gcode[ax].isUnused())
+      disable[ax]++;
+
+    if(disable[ax] > 2)
+      AXES[ax].disableIfConfigured();
+  }
+}
+
+
+
 
 void Motion::getMovesteps(GCode& gcode)
 {

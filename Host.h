@@ -112,10 +112,11 @@ class Host
 
     void rxerror(const char*errmsg, int32_t linenum)
     {
-      write("rs ");
-      write((int32_t)linenum, 10);
+      labelnum("rs ", linenum, false);
+#ifndef REPRAP_COMPAT      
       write(' ');
       write(errmsg);
+#endif      
       endl();
       rxring.reset();
       input_ready=0;

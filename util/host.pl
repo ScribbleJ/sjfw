@@ -14,11 +14,12 @@ $p->parity("none");
 $p->databits(8);
 $p->stopbits(1);
 $p->handshake("none");
+$p->dtr_active(0);
 $p->write_settings || die("Can't write settings.\n");
 
 # Resets the printer:
-$p->pulse_dtr_on(100);
-$p->pulse_dtr_off(100);
+#$p->pulse_dtr_on(100);
+#$p->pulse_dtr_off(100);
 
 my $s = IO::Select->new([\*STDIN]);
 

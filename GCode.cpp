@@ -67,6 +67,7 @@ void GCode::wrapupmove()
   if(!cps[G].isUnused())
   {
     HOST.labelnum("done ", linenum, false); HOST.labelnum(" G", cps[G].getInt());
+    MOTION.wrapup(*this);
   }
 }
 
@@ -243,10 +244,7 @@ void GCode::do_m_code()
 
 void GCode::resetlastpos(Point& lp) 
 { 
-  HOST.labelnum("XP: ", lastpos[X], false);
-  HOST.labelnum(" XN: ", lp[X], true);
   lastpos = lp; 
-  HOST.labelnum("PN: ", lastpos[X], true);
 }
 
 

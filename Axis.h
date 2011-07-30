@@ -95,7 +95,7 @@ class Axis
     {
       //HOST.labelnum("FINISH MOVE, ", steps_to_take, true);
       position += (float)((float)steps_to_take / steps_per_unit * (direction ? 1.0 : -1.0));
-      if(disable_after_move) disable();
+      //if(disable_after_move) disable();
     }
   }
 
@@ -113,6 +113,8 @@ class Axis
   }  
 
   uint32_t getRemainingSteps() { return steps_remaining; }
+
+  void disableIfConfigured() { if(disable_after_move) disable(); }
 
 private:
   volatile float position;

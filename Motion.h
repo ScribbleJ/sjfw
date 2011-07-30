@@ -54,6 +54,8 @@ public:
   void setStepsPerUnit(GCode& gcode);
   // Motors automatically enabled when used
   void disableAllMotors();
+  void wrapup(GCode& gcode) { checkdisable(gcode); }
+  void checkdisable(GCode& gcode);
 
 
 
