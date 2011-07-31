@@ -71,7 +71,7 @@
 #define A_INVERT_DIR    false
 #define A_HOME_DIR      0
 #define A_STEPS_PER_UNIT 729.99
-#define A_MAX_FEED      120*60
+#define A_MAX_FEED      150*60
 #define A_AVG_FEED      60*60
 #define A_START_FEED    60*50
 #define A_ACCEL_DIST    .25

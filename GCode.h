@@ -6,6 +6,7 @@
 #include "Host.h"
 #include <string.h>
 #include "Point.h"
+#include "Time.h"
 
 class CodeParam
 {
@@ -93,6 +94,8 @@ public:
     accel_until=0;
     decel_from=0;
     accel_inc=0;
+    steps_acceled=0;
+    accel_remainder=0;
 
   }
 
@@ -111,8 +114,24 @@ public:
   // Called when move is completed (no good place to do it. :( )
   void wrapupmove();
 
-  // Just kept in case we need it.
   void setLinenumber(int32_t num) { linenum = num; };
+
+  void dump_movedata()
+  {
+    HOST.labelnum("L:",linenum,false);
+    HOST.labelnum(" T:",(millis() - startmillis),false);
+    HOST.labelnum(" F:",feed,false);
+    HOST.labelnum(" S:",movesteps,false);
+    HOST.labelnum(" LA:",leading_axis,false);
+    HOST.labelnum(" SI:",startinterval,false);
+    HOST.labelnum(" CI:",currentinterval,false);
+    HOST.labelnum(" FI:",fullinterval,false);
+    HOST.labelnum(" STA:",steps_to_accel,false);
+    HOST.labelnum(" ST:",steps_acceled,false);
+    HOST.labelnum(" AU:",accel_until,false);
+    HOST.labelnum(" DF:",decel_from,false);
+    HOST.labelnum(" AI:",accel_inc,true);
+  }
 
 private:
   CodeParam cps[T+1];                    
@@ -143,6 +162,8 @@ public:
   uint32_t accel_until;
   uint32_t decel_from;
   uint32_t accel_inc;
+  uint32_t steps_acceled;
+  uint32_t accel_remainder;
 
   Point         endpos;
   Point         startpos;

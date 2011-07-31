@@ -66,6 +66,7 @@ void GCode::wrapupmove()
 {
   if(!cps[G].isUnused())
   {
+    //dump_movedata();
     HOST.labelnum("done ", linenum, false); HOST.labelnum(" G", cps[G].getInt());
     MOTION.wrapup(*this);
   }
@@ -167,7 +168,7 @@ void GCode::do_m_code()
       break; 
     case 115: // Get Firmware Version and Capabilities
       HOST.labelnum("prog ", linenum, false);
-      HOST.write(" PROTOCOL_VERSION:SJ FIRMWARE_NAME:sjfw MACHINE_TYPE:ThingOMatic EXTRUDER_COUNT:1 FREE_RAM:");
+      HOST.write(" PROTOCOL_VERSION:SJ FIRMWARE_NAME:sjfw FREE_RAM:");
       HOST.write(getFreeRam(),10);
       HOST.endl();
       state = DONE;

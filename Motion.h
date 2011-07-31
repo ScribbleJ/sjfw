@@ -65,6 +65,7 @@ public:
   unsigned long getLargestStartInterval(GCode& gcode);
   unsigned long getLargestEndInterval(GCode& gcode);
   unsigned long getLargestAccelDistance(GCode& gcode);
+  unsigned long getLargestTimePerAccel(GCode& gcode);
   // Uses step data to determine the actual ending position of a move
   // (seldom /precisely/ the requested position)
   void getActualEndpos(GCode& gcode);

@@ -149,6 +149,19 @@ unsigned long Motion::getLargestAccelDistance(GCode& gcode)
     return ad;
 }
 
+unsigned long Motion::getLargestTimePerAccel(GCode& gcode)
+{
+  unsigned long mi = 0;
+  for(int ax=0;ax < NUM_AXES;ax++)
+  {
+    if(gcode.axismovesteps[ax] == 0) continue;
+    unsigned long t = AXES[ax].getTimePerAccel();
+    if(t > mi) mi = t;
+  }
+  return mi;
+}
+
+
 void Motion::getActualEndpos(GCode& gcode)
 {
   for(int ax=0;ax<NUM_AXES;ax++)
@@ -202,27 +215,19 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
   gcode.startinterval = getLargestStartInterval(gcode);
   gcode.fullinterval = getLargestEndInterval(gcode);
   gcode.currentinterval = gcode.startinterval;
-  gcode.steps_to_accel = getLargestAccelDistance(gcode);
   getActualEndpos(gcode);
-  gcode.accel_until = gcode.movesteps;
   gcode.decel_from  = 0;
-  gcode.accel_inc   = 0;
+  gcode.accel_inc   = getLargestTimePerAccel(gcode);
+  gcode.steps_to_accel = getLargestAccelDistance(gcode);
 
   long intervaldiff = gcode.startinterval - gcode.fullinterval;
   if(intervaldiff > 0)
-  {
-    if(gcode.steps_to_accel > gcode.movesteps / 2)
-    {
-      gcode.accel_until = gcode.movesteps / 2;
-      gcode.decel_from  = gcode.accel_until - 1;
-    }
-    else
-    {
-      gcode.accel_until = gcode.movesteps - gcode.steps_to_accel;
-      gcode.decel_from  = gcode.steps_to_accel;
-    }
-    gcode.accel_inc = intervaldiff / gcode.steps_to_accel;
-  }  
+    gcode.decel_from  = gcode.movesteps / 2;
+  else
+    gcode.steps_to_accel = 0;
+ 
+  gcode.steps_acceled=0;
+  gcode.accel_remainder=0;
 
   *lastend = gcode.endpos;
   feedin  = gcode.feed;
@@ -252,7 +257,7 @@ void Motion::gcode_execute(GCode& gcode)
     errors[ax] = gcode.movesteps / 2;
     //AXES[ax].dump_to_host();
   }
-  //gcode.dump_to_host();
+  //gcode.dump_movedata();
 
   // setup pointer to current move data for interrupt
   gcode.state = GCode::ACTIVE;
@@ -298,17 +303,29 @@ void Motion::handleInterrupt()
   }
   current_gcode->movesteps--;
 
-  if(current_gcode->movesteps > current_gcode->accel_until)
+  uint32_t lastinterval = current_gcode->currentinterval + current_gcode->accel_remainder;
+  current_gcode->accel_remainder=0;
+  if(current_gcode->movesteps <= current_gcode->steps_acceled)
   {
-    current_gcode->currentinterval -= current_gcode->accel_inc;
-  }
-  else if(current_gcode->movesteps < current_gcode->decel_from)
-  {
-    current_gcode->currentinterval += current_gcode->accel_inc;
-  }
+    if(current_gcode->movesteps == current_gcode->steps_acceled)
+      current_gcode->fullinterval = lastinterval;
 
+    // Decelerate!
+    current_gcode->currentinterval += lastinterval / current_gcode->accel_inc;
+    current_gcode->accel_remainder = lastinterval % current_gcode->accel_inc;
+  }
+  else if((current_gcode->currentinterval > current_gcode->fullinterval) && 
+          (current_gcode->movesteps > current_gcode->decel_from))
+          //(current_gcode->steps_acceled < current_gcode->steps_to_accel))
+  {
+    // Accelerate!
+    current_gcode->currentinterval -= lastinterval / current_gcode->accel_inc;
+    current_gcode->accel_remainder = lastinterval % current_gcode->accel_inc;
+    current_gcode->steps_acceled++;
+  }
   setInterruptCycles(current_gcode->currentinterval);
 
+  // Bresenham-style axis alignment algorithm
   for(int ax=0;ax<NUM_AXES;ax++)
   {
     if(ax == current_gcode->leading_axis)

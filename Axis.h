@@ -61,6 +61,8 @@ class Axis
   uint32_t getStartInterval(float feed) { uint32_t i = interval_from_feedrate(feed); return i < max_interval ? max_interval : i; }
   uint32_t getEndInterval(float feed) { uint32_t i = interval_from_feedrate(feed); return i < min_interval ? min_interval : i; }
   uint32_t getAccelDistance() { return accel_dist; }
+  uint32_t getAccelTime() { return (((min_interval+max_interval)/2) * accel_dist); }
+  uint32_t getTimePerAccel() { return (getAccelTime() / (max_interval - min_interval)); }
   float getEndpos(float start, uint32_t steps, bool dir) 
   { 
     return start + (float)((float)steps / steps_per_unit * (dir ? 1.0 : -1.0));
