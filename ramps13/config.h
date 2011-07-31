@@ -28,10 +28,10 @@
 #define X_INVERT_DIR    false
 #define X_HOME_DIR      -1
 #define X_STEPS_PER_UNIT 62.745
-#define X_MAX_FEED      60*100
-#define X_AVG_FEED      60*30
-#define X_START_FEED    60*25
-#define X_ACCEL_DIST    1.5
+#define X_MAX_FEED      12000
+#define X_AVG_FEED      6000
+#define X_START_FEED    2000
+#define X_ACCEL_DIST    20
 #define X_LENGTH        110
 #define X_DISABLE       false
 
@@ -43,10 +43,10 @@
 #define Y_INVERT_DIR    false
 #define Y_HOME_DIR      -1
 #define Y_STEPS_PER_UNIT 62.745
-#define Y_MAX_FEED      60*100
-#define Y_AVG_FEED      60*30
-#define Y_START_FEED    60*25
-#define Y_ACCEL_DIST    1.5
+#define Y_MAX_FEED      12000
+#define Y_AVG_FEED      6000
+#define Y_START_FEED    2000
+#define Y_ACCEL_DIST    20
 #define Y_LENGTH        110
 #define Y_DISABLE       false
 
@@ -58,10 +58,10 @@
 #define Z_INVERT_DIR    true
 #define Z_HOME_DIR      1
 #define Z_STEPS_PER_UNIT 2267.718
-#define Z_MAX_FEED      400
+#define Z_MAX_FEED      150
 #define Z_AVG_FEED      100
-#define Z_START_FEED    100
-#define Z_ACCEL_DIST    1.5
+#define Z_START_FEED    75
+#define Z_ACCEL_DIST    0.25
 #define Z_LENGTH        110
 #define Z_DISABLE       true
 
@@ -71,10 +71,10 @@
 #define A_INVERT_DIR    false
 #define A_HOME_DIR      0
 #define A_STEPS_PER_UNIT 729.99
-#define A_MAX_FEED      150*60
-#define A_AVG_FEED      60*60
-#define A_START_FEED    60*50
-#define A_ACCEL_DIST    .25
+#define A_MAX_FEED      24000
+#define A_AVG_FEED      12000
+#define A_START_FEED    6000
+#define A_ACCEL_DIST    .1
 #define A_LENGTH        110
 #define A_DISABLE       false
 

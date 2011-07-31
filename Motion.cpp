@@ -218,13 +218,10 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
   getActualEndpos(gcode);
   gcode.decel_from  = 0;
   gcode.accel_inc   = getLargestTimePerAccel(gcode);
-  gcode.steps_to_accel = getLargestAccelDistance(gcode);
 
   long intervaldiff = gcode.startinterval - gcode.fullinterval;
   if(intervaldiff > 0)
     gcode.decel_from  = gcode.movesteps / 2;
-  else
-    gcode.steps_to_accel = 0;
  
   gcode.steps_acceled=0;
   gcode.accel_remainder=0;
@@ -247,7 +244,6 @@ void Motion::gcode_execute(GCode& gcode)
   // set axis move data, invalidate all precomputes if bad data
   for(int ax=0;ax<NUM_AXES;ax++)
   {
-    // AXES[ax].dump_to_host();
     if(!AXES[ax].setupMove(gcode.startpos[ax], gcode.axisdirs[ax], gcode.axismovesteps[ax]))
     {
       GCODES.Invalidate();
@@ -288,6 +284,7 @@ void Motion::writePositionToHost()
 
 void Motion::handleInterrupt()
 {
+  // interruptOverflow for step intervals > 16bit
   if(interruptOverflow)
   {
     setInterruptCycles(60000);
@@ -301,8 +298,10 @@ void Motion::handleInterrupt()
     current_gcode->state = GCode::DONE;
     return;
   }
+
   current_gcode->movesteps--;
 
+  // Handle acceleration and deceleration
   uint32_t lastinterval = current_gcode->currentinterval + current_gcode->accel_remainder;
   current_gcode->accel_remainder=0;
   if(current_gcode->movesteps <= current_gcode->steps_acceled)
@@ -316,7 +315,6 @@ void Motion::handleInterrupt()
   }
   else if((current_gcode->currentinterval > current_gcode->fullinterval) && 
           (current_gcode->movesteps > current_gcode->decel_from))
-          //(current_gcode->steps_acceled < current_gcode->steps_to_accel))
   {
     // Accelerate!
     current_gcode->currentinterval -= lastinterval / current_gcode->accel_inc;
@@ -349,16 +347,6 @@ void Motion::handleInterrupt()
       
   if(current_gcode->movesteps == 0)
   {
-    // Finish up any remaining axis - I don't know this will ever actually happen
-    for(int ax=0;ax<NUM_AXES;ax++)
-    {
-      while(AXES[ax].isMoving())
-      {
-        HOST.labelnum("SR:",AXES[ax].getRemainingSteps(), true);
-        AXES[ax].doStep();
-      }
-    }
-
     disableInterrupt();
     current_gcode->state = GCode::DONE;
   }
