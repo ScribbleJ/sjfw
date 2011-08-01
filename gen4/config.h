@@ -28,10 +28,10 @@
 #define X_INVERT_DIR    true
 #define X_HOME_DIR      -1
 #define X_STEPS_PER_UNIT 47.069852
-#define X_MAX_FEED      9000
+#define X_MAX_FEED      12000
 #define X_AVG_FEED      6000
 #define X_START_FEED    2000
-#define X_ACCEL_DIST    15
+#define X_ACCEL_DIST    25
 #define X_LENGTH        110
 #define X_DISABLE       false
 
@@ -43,10 +43,10 @@
 #define Y_INVERT_DIR    true
 #define Y_HOME_DIR      -1
 #define Y_STEPS_PER_UNIT 47.069852
-#define Y_MAX_FEED      9000
+#define Y_MAX_FEED      12000
 #define Y_AVG_FEED      6000
 #define Y_START_FEED    2000
-#define Y_ACCEL_DIST    15
+#define Y_ACCEL_DIST    25
 #define Y_LENGTH        110
 #define Y_DISABLE       false
 

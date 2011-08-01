@@ -15,7 +15,7 @@ class Axis
 	Axis(Pin step_pin, Pin dir_pin, Pin enable_pin, Pin min_pin, Pin max_pin, 
        float steps_per_unit, bool dir_inverted, float max_length,
        float max_feedrate, float avg_feedrate, float min_feedrate, 
-       float accel_distance_in_units, bool disable_after_move,
+       float accel_rate_in_units, bool disable_after_move,
        int homing_dir);
 
   // Interval measured in clock ticks
@@ -60,9 +60,9 @@ class Axis
   }
   uint32_t getStartInterval(float feed) { uint32_t i = interval_from_feedrate(feed); return i < max_interval ? max_interval : i; }
   uint32_t getEndInterval(float feed) { uint32_t i = interval_from_feedrate(feed); return i < min_interval ? min_interval : i; }
-  uint32_t getAccelDistance() { return accel_dist; }
-  uint32_t getAccelTime() { return (((min_interval+max_interval)/2) * accel_dist); }
-  uint32_t getTimePerAccel() { return (getAccelTime() / (max_interval - min_interval)); }
+  uint32_t getAccelRate() { return accel_rate; }
+  uint32_t getAccelTime() { return ((max_interval - min_interval) / accel_rate); }
+  uint32_t getTimePerAccel() { return ((float)1 / (float)((accel_rate * steps_per_unit) / ((float)F_CPU))); }
   float getEndpos(float start, uint32_t steps, bool dir) 
   { 
     return start + (float)((float)steps / steps_per_unit * (dir ? 1.0 : -1.0));
@@ -128,7 +128,7 @@ private:
   float max_length;
 
   uint32_t min_interval, avg_interval, max_interval;
-  uint32_t accel_dist;
+  uint32_t accel_rate;
 
   int homing_dir;
 	

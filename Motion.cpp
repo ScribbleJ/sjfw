@@ -137,18 +137,6 @@ unsigned long Motion::getLargestEndInterval(GCode& gcode)
   return mi;
 }
 
-unsigned long Motion::getLargestAccelDistance(GCode& gcode)
-{
-    unsigned long ad = 0;
-    for(int ax=0;ax < NUM_AXES;ax++)
-    {
-      if(gcode.axismovesteps[ax] == 0) continue;
-      unsigned long t = AXES[ax].getAccelDistance();
-      if(t > ad) ad = t;
-    }
-    return ad;
-}
-
 unsigned long Motion::getLargestTimePerAccel(GCode& gcode)
 {
   unsigned long mi = 0;
@@ -306,19 +294,28 @@ void Motion::handleInterrupt()
   current_gcode->accel_remainder=0;
   if(current_gcode->movesteps <= current_gcode->steps_acceled)
   {
+    // This is just here to log the data of the minimum steptime
     if(current_gcode->movesteps == current_gcode->steps_acceled)
       current_gcode->fullinterval = lastinterval;
 
     // Decelerate!
-    current_gcode->currentinterval += lastinterval / current_gcode->accel_inc;
-    current_gcode->accel_remainder = lastinterval % current_gcode->accel_inc;
+    while(lastinterval >= current_gcode->accel_inc)
+    {
+      current_gcode->currentinterval++;
+      lastinterval -= current_gcode->accel_inc;
+    }
+    current_gcode->accel_remainder = lastinterval;
   }
   else if((current_gcode->currentinterval > current_gcode->fullinterval) && 
           (current_gcode->movesteps > current_gcode->decel_from))
   {
     // Accelerate!
-    current_gcode->currentinterval -= lastinterval / current_gcode->accel_inc;
-    current_gcode->accel_remainder = lastinterval % current_gcode->accel_inc;
+    while(lastinterval >= current_gcode->accel_inc)
+    {
+      current_gcode->currentinterval--;
+      lastinterval -= current_gcode->accel_inc;
+    }
+    current_gcode->accel_remainder = lastinterval;
     current_gcode->steps_acceled++;
   }
   setInterruptCycles(current_gcode->currentinterval);
