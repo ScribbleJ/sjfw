@@ -43,7 +43,8 @@ IMPORTANT NOTES ON USING THIS FIRMWARE:
 
 * The Gen4 Support is perfectly useable on a Reprap, but it is designed for use by the Thing O Matic.  The important
 part is this; the Gen4 support ASSUMES you are using the Makerbot Thing-O-Matic EC Firmware on your EC.  If you are
-not, you must install that on your EC first!
+not, you must install that on your EC first!  If you are not using a ToM on Gen4 you will also need to edit the 
+steps settings and speeds/accel in the config file to suit.
 
 
 * The latest release has been tested to work with the EXCELLENT "Pronterface" Host by Kliment:
