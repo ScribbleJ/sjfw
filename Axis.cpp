@@ -27,7 +27,7 @@ Axis::Axis(Pin step_pin, Pin dir_pin, Pin enable_pin, Pin min_pin, Pin max_pin,
   dir_pin.setDirection(true); dir_pin.setValue(false);
   enable_pin.setDirection(true); enable_pin.setValue(true);
   if(!min_pin.isNull()) { min_pin.setDirection(false); min_pin.setValue(ENDSTOPPULLUPS); }
-  if(!min_pin.isNull()) { max_pin.setDirection(false); max_pin.setValue(ENDSTOPPULLUPS); }
+  if(!max_pin.isNull()) { max_pin.setDirection(false); max_pin.setValue(ENDSTOPPULLUPS); }
 
 }
 	
