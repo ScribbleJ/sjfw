@@ -7,8 +7,6 @@
 #include "AvrPort.h"
 #include "RingBuffer.h"
 
-#include "Time.h"
-
 #define LCD_BUFFER_SIZE 100
 
 class LiquidCrystal {
@@ -140,17 +138,6 @@ LiquidCrystal(Pin rs, Pin rw, Pin enable,
 
   bool isBusy()
   {
-  /*
-    static unsigned long prev = millis();
-    unsigned long now = millis();
-    if(now - prev > 50)
-    {
-      prev = now;
-      return false;
-    }
-    return true;
-  */
-   
     _data_pins[7].setDirection(false);
     _rs_pin.setValue(false);
     _rw_pin.setValue(true);
