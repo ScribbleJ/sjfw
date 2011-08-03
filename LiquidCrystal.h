@@ -2,102 +2,204 @@
 #define LIQUID_CRYSTAL_HH
 
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 #include "AvrPort.h"
 #include "RingBuffer.h"
 
-// commands
-#define LCD_CLEARDISPLAY 0x01
-#define LCD_RETURNHOME 0x02
-#define LCD_ENTRYMODESET 0x04
-#define LCD_DISPLAYCONTROL 0x08
-#define LCD_CURSORSHIFT 0x10
-#define LCD_FUNCTIONSET 0x20
-#define LCD_SETCGRAMADDR 0x40
-#define LCD_SETDDRAMADDR 0x80
+#include "Time.h"
 
-// flags for display entry mode
-#define LCD_ENTRYRIGHT 0x00
-#define LCD_ENTRYLEFT 0x02
-#define LCD_ENTRYSHIFTINCREMENT 0x01
-#define LCD_ENTRYSHIFTDECREMENT 0x00
-
-// flags for display on/off control
-#define LCD_DISPLAYON 0x04
-#define LCD_DISPLAYOFF 0x00
-#define LCD_CURSORON 0x02
-#define LCD_CURSOROFF 0x00
-#define LCD_BLINKON 0x01
-#define LCD_BLINKOFF 0x00
-
-// flags for display/cursor shift
-#define LCD_DISPLAYMOVE 0x08
-#define LCD_CURSORMOVE 0x00
-#define LCD_MOVERIGHT 0x04
-#define LCD_MOVELEFT 0x00
-
-// flags for function set
-#define LCD_8BITMODE 0x10
-#define LCD_4BITMODE 0x00
-#define LCD_2LINE 0x08
-#define LCD_1LINE 0x00
-#define LCD_5x10DOTS 0x04
-#define LCD_5x8DOTS 0x00
-
-#define LCD_BUFFER_SIZE 64
-
+#define LCD_BUFFER_SIZE 100
 
 class LiquidCrystal {
 public:
-  LiquidCrystal(Pin rs, Pin enable,
-		Pin d0, Pin d1, Pin d2, Pin d3,
-		Pin d4, Pin d5, Pin d6, Pin d7);
-  LiquidCrystal(Pin rs, Pin rw, Pin enable,
-		Pin d0, Pin d1, Pin d2, Pin d3,
-		Pin d4, Pin d5, Pin d6, Pin d7);
-  LiquidCrystal(Pin rs, Pin rw, Pin enable,
-		Pin d0, Pin d1, Pin d2, Pin d3);
-  LiquidCrystal(Pin rs, Pin enable,
-		Pin d0, Pin d1, Pin d2, Pin d3);
+ 
+LiquidCrystal(Pin rs, Pin rw, Pin enable,
+			     Pin d0, Pin d1, Pin d2, Pin d3,
+			     Pin d4, Pin d5, Pin d6, Pin d7,
+           uint8_t cols, 
+           uint8_t lines, 
+           uint8_t linestarts[] 
+           ) : commandQueue(LCD_BUFFER_SIZE, command_data),
+							       modeQueue(LCD_BUFFER_SIZE, mode_data) 
+{                    
+  _rs_pin = rs;
+  _rw_pin = rw;
+  _enable_pin = enable;
+  
+  _data_pins[0] = d0;
+  _data_pins[1] = d1;
+  _data_pins[2] = d2;
+  _data_pins[3] = d3; 
+  _data_pins[4] = d4;
+  _data_pins[5] = d5;
+  _data_pins[6] = d6;
+  _data_pins[7] = d7; 
 
-  void init(uint8_t fourbitmode, Pin rs, Pin rw, Pin enable,
-	    Pin d0, Pin d1, Pin d2, Pin d3,
-	    Pin d4, Pin d5, Pin d6, Pin d7);
-    
-  void begin(uint8_t cols, uint8_t rows, uint8_t rowstarts[], uint8_t charsize = LCD_5x8DOTS);
+  _rs_pin.setDirection(true);
+  _rs_pin.setValue(false);
+  _rw_pin.setDirection(true); 
+  _rw_pin.setValue(true);
+  _enable_pin.setDirection(true);
+  _enable_pin.setValue(false);
 
-  void clear();
-  void home();
+  _numlines = lines;
+  _numcols  = cols;
+  _currline = 0;
+  _linestarts = linestarts;
 
-  void noDisplay();
-  void display();
-  void noBlink();
-  void blink();
-  void noCursor();
-  void cursor();
-  void scrollDisplayLeft();
-  void scrollDisplayRight();
-  void leftToRight();
-  void rightToLeft();
-  void autoscroll();
-  void noAutoscroll();
+  for (int i = 0; i < 8; i++) {
+    _data_pins[i].setDirection(false);
+    _data_pins[i].setValue(false);
+  }
 
-  void createChar(uint8_t, uint8_t[]);
-  void setCursor(uint8_t, uint8_t); 
-  void write(uint8_t);
-  void writestr(char const *, uint8_t);
-  void writeint16(uint16_t, uint16_t);
-  void command(uint8_t);
-  // To be called every ~100us when using queued sends.
-  void handleUpdates();
+  setFunction(true, true, false);
+  setFunction(true, true, false);
+  setFunction(true, true, false);
+  setFunction(true, true, false);
+  setDisplayControls(true, false, false);
+  setEntryMode(false, false);
+  writeDDRAM(0);
+
+}
+
+   
+  void clear() { command(0x01); }
+  void home() { command(0x02); }
+
+  // false, false means shift right don't scroll display
+  void setEntryMode(bool left, bool displayscroll) 
+  {
+    command(0x04 |
+           (left ? 0x02 : 0) |
+           (displayscroll ? 0x01 : 0));
+  }
+
+  void setDisplayControls(bool displayon, bool cursoron, bool blinkon) 
+  {
+    command(0x08 |
+           (displayon ? 0x04 : 0) |
+           (cursoron  ? 0x02 : 0) |
+           (blinkon   ? 0x01 : 0) );
+  }
+
+  // shifts cursor left by default.
+  void shift(bool display, bool right)
+  {
+    command(0x10 |
+           (display ? 0x08 : 0) |
+           (right   ? 0x04 : 0));
+  }         
+
+  void setFunction(bool is8bit, bool is2line, bool fontselect)
+  {
+    command(0x20 |
+           (is8bit      ? 0x10 : 0) |
+           (is2line     ? 0x08 : 0) |
+           (fontselect? 0x04 : 0));
+  }           
+
+  void writeCGRAM(uint8_t location) 
+  {
+    command(0x40 | location );
+  }
+
+  void writeDDRAM(uint8_t location)
+  {
+    command(0x80 | location );
+  }
+
+  void setCursor(uint8_t col, uint8_t row)
+  {
+    int offset   = _linestarts[row] + col;
+    writeDDRAM(offset);
+  }
+
+  void write(uint8_t value) { enqueue(value, true); }
+  void write(char const *str, uint8_t len) 
+  {
+    for(int x = 0; x < len; x++) write(str[x]);
+  }
+  void write(uint16_t d, uint16_t maxradix)
+  {
+    uint16_t n = d;
+    for(uint16_t i = maxradix; i >= 1; i = i/10)
+    {
+      write((uint8_t)(n/i) + '0');
+      n -= (n/i) * i; // This looks like nonsense but it chops off the remainder.
+    }
+  }
+
+  void handleUpdates()
+  {
+    if(isBusy())
+      return;
+
+    dequeue();
+  }
+
+  bool isBusy()
+  {
+  /*
+    static unsigned long prev = millis();
+    unsigned long now = millis();
+    if(now - prev > 50)
+    {
+      prev = now;
+      return false;
+    }
+    return true;
+  */
+   
+    _data_pins[7].setDirection(false);
+    _rs_pin.setValue(false);
+    _rw_pin.setValue(true);
+
+    for (int i = 0; i < 8; i++) {
+      _data_pins[i].setDirection(false);
+      _data_pins[i].setValue(false);
+    }
+
+    // Pulsing enable causes LCD to read this command.
+    _enable_pin.setValue(true);
+    bool v = _data_pins[7].getValue();
+    _enable_pin.setValue(false);
+
+    return v;
+  }
+
 
 private:
-  void send(uint8_t, bool);
-  void sendQueued(uint8_t, bool);
-  void deQueue();
-  void write4bits(uint8_t);
-  void write8bits(uint8_t);
-  void pulseEnable();
-  void quickerPulseEnable();
+  void command(uint8_t value) { enqueue(value, false); }
+  void enqueue(uint8_t value, bool mode) {
+    if(commandQueue.isFull())
+      return;  // TODO: Silent fail.
+
+    commandQueue.push(value);
+    modeQueue.push(mode); 
+  }
+
+  void dequeue()
+  {
+    if(commandQueue.isEmpty())
+      return;
+
+    // Pull next command off stack
+    uint8_t value = commandQueue.pop();
+    uint8_t mode  = modeQueue.pop();
+
+    _rw_pin.setValue(false);
+    _rs_pin.setValue(mode);
+
+    for (int i = 0; i < 8; i++) {
+      _data_pins[i].setDirection(true);
+      _data_pins[i].setValue(((value >> i) & 0x01) != 0);
+    }
+
+    // Pulsing enable causes LCD to read this command.
+    _enable_pin.setValue(true);
+    _enable_pin.setValue(false);
+  }
 
   Pin _rs_pin; // LOW: command.  HIGH: character.
   Pin _rw_pin; // LOW: write to LCD.  HIGH: read from LCD.
@@ -118,7 +220,6 @@ private:
   bool    mode_data[LCD_BUFFER_SIZE];
   RingBufferT<uint8_t> commandQueue;
   RingBufferT<bool> modeQueue;
-  
 };
 
 #endif // LIQUID_CRYSTAL_HH

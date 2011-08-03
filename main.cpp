@@ -10,20 +10,13 @@
 #include "Globals.h"
 #include "config.h"
 #include "SDCard.h"
-
-#ifdef HAS_LCD
-uint8_t _lcd_linestarts[] = LCD_LINESTARTS;
-#endif
-
 int main(void)
 {
   sei();
   init_time();
   HOST.write("start\n");
 
-
 #ifdef HAS_SD
-
   sdcard::reset();
   // SD Card autorun only will occur if you also have an LCD.  
   // Otherwise, it seems dangerous...
@@ -41,43 +34,32 @@ int main(void)
 #endif
 #endif
   
-
-
 #ifdef HAS_LCD
-  LCD.begin(LCD_X,LCD_Y,_lcd_linestarts);
-  LCD.noAutoscroll();
   LCD.clear();
-  LCD.home();
-  LCD.writestr("start",5);
+  LCD.write("start",5);
   LCD.setCursor(0,1);
-  LCD.writestr("ScribbleJ",9);
+  LCD.write("ScribbleJ",9);
 
-
-  unsigned long last_lcdupdate = millis();
-  unsigned long last_lcdrefresh = last_lcdupdate;
+  unsigned long last_lcdrefresh = millis();
   for (;;) { 
     unsigned long now = millis();
-    if(now - last_lcdupdate > 49)
-    {
-      last_lcdupdate = now;
-      LCD.handleUpdates();
-    }
 
     if(now - last_lcdrefresh > 5001)
     {
       last_lcdrefresh = now;
       LCD.home();
-      LCD.writestr("Hotend:",7);
-      LCD.writeint16(TEMPERATURE.getHotend(),1000);
+      LCD.write("Hotend:",7);
+      LCD.write(TEMPERATURE.getHotend(),1000);
       LCD.write(':');
-      LCD.writeint16(TEMPERATURE.getHotendST(),100);
+      LCD.write(TEMPERATURE.getHotendST(),100);
       LCD.setCursor(0,1);
-      LCD.writestr("Bed   :",7);
-      LCD.writeint16(TEMPERATURE.getPlatform(),1000);
+      LCD.write("Bed   :",7);
+      LCD.write(TEMPERATURE.getPlatform(),1000);
       LCD.write(':');
-      LCD.writeint16(TEMPERATURE.getPlatformST(),100);
-
+      LCD.write(TEMPERATURE.getPlatformST(),100);
     }
+
+    LCD.handleUpdates();
 #else
   for (;;) { 
 #endif

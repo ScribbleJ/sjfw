@@ -26,7 +26,7 @@ CONFIG_PATH = ramps13
 # Stuff you prolly don't need to change from here down.
 ########################
 ifeq ($(USE_LCD),1)
- LCD_FILES = LiquidCrystal.cpp
+ LCD_FILES = 
  LCD_DEFINES = -DHAS_LCD
 endif
 ifeq ($(USE_SD),1)
