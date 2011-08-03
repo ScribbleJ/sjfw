@@ -12,57 +12,59 @@
 class LiquidCrystal {
 public:
  
-LiquidCrystal(Pin rs, Pin rw, Pin enable,
-			     Pin d0, Pin d1, Pin d2, Pin d3,
-			     Pin d4, Pin d5, Pin d6, Pin d7,
-           uint8_t cols, 
-           uint8_t lines, 
-           uint8_t linestarts[] 
-           ) : commandQueue(LCD_BUFFER_SIZE, command_data),
-							       modeQueue(LCD_BUFFER_SIZE, mode_data) 
-{                    
-  _rs_pin = rs;
-  _rw_pin = rw;
-  _enable_pin = enable;
-  
-  _data_pins[0] = d0;
-  _data_pins[1] = d1;
-  _data_pins[2] = d2;
-  _data_pins[3] = d3; 
-  _data_pins[4] = d4;
-  _data_pins[5] = d5;
-  _data_pins[6] = d6;
-  _data_pins[7] = d7; 
+  LiquidCrystal(Pin rs, Pin rw, Pin enable,
+             Pin d0, Pin d1, Pin d2, Pin d3,
+             Pin d4, Pin d5, Pin d6, Pin d7,
+             uint8_t cols, 
+             uint8_t lines, 
+             uint8_t linestarts[] 
+             ) : commandQueue(LCD_BUFFER_SIZE, command_data),
+                       modeQueue(LCD_BUFFER_SIZE, mode_data) 
+  {                    
+    _rs_pin = rs;
+    _rw_pin = rw;
+    _enable_pin = enable;
+    
+    _data_pins[0] = d0;
+    _data_pins[1] = d1;
+    _data_pins[2] = d2;
+    _data_pins[3] = d3; 
+    _data_pins[4] = d4;
+    _data_pins[5] = d5;
+    _data_pins[6] = d6;
+    _data_pins[7] = d7; 
 
-  _rs_pin.setDirection(true);
-  _rs_pin.setValue(false);
-  _rw_pin.setDirection(true); 
-  _rw_pin.setValue(true);
-  _enable_pin.setDirection(true);
-  _enable_pin.setValue(false);
+    _rs_pin.setDirection(true);
+    _rs_pin.setValue(false);
+    _rw_pin.setDirection(true); 
+    _rw_pin.setValue(true);
+    _enable_pin.setDirection(true);
+    _enable_pin.setValue(false);
 
-  _numlines = lines;
-  _numcols  = cols;
-  _currline = 0;
-  _linestarts = linestarts;
+    _numlines = lines;
+    _numcols  = cols;
+    _currline = 0;
+    _linestarts = linestarts;
 
-  for (int i = 0; i < 8; i++) {
-    _data_pins[i].setDirection(false);
-    _data_pins[i].setValue(false);
+    for (int i = 0; i < 8; i++) {
+      _data_pins[i].setDirection(false);
+      _data_pins[i].setValue(false);
+    }
+
+    // Set 8-bit operation, multiline mode
+    setFunction(true, (_numlines > 1) ? true : false, false);
+    // display on, cursor and blink off
+    setDisplayControls(true, false, false);
+    // No scrolling, shift right
+    setEntryMode(false, false);
+    // Set start write address
+    writeDDRAM(0);
   }
-
-  setFunction(true, true, false);
-  setFunction(true, true, false);
-  setFunction(true, true, false);
-  setFunction(true, true, false);
-  setDisplayControls(true, false, false);
-  setEntryMode(false, false);
-  writeDDRAM(0);
-
-}
-
    
+  // Clears the screen AND resets cursor to "home"
   void clear() { command(0x01); }
+
+  // Sends cursor to "home"
   void home() { command(0x02); }
 
   // false, false means shift right don't scroll display
@@ -73,6 +75,7 @@ LiquidCrystal(Pin rs, Pin rw, Pin enable,
            (displayscroll ? 0x01 : 0));
   }
 
+  // display, cursor, and blink on
   void setDisplayControls(bool displayon, bool cursoron, bool blinkon) 
   {
     command(0x08 |
@@ -81,7 +84,7 @@ LiquidCrystal(Pin rs, Pin rw, Pin enable,
            (blinkon   ? 0x01 : 0) );
   }
 
-  // shifts cursor left by default.
+  // shifts cursor left if "right" is false
   void shift(bool display, bool right)
   {
     command(0x10 |
@@ -89,6 +92,8 @@ LiquidCrystal(Pin rs, Pin rw, Pin enable,
            (right   ? 0x04 : 0));
   }         
 
+  // named "setFunction" only to match Hitachi docs.
+  // select bitmode, multiline, 5x10 font
   void setFunction(bool is8bit, bool is2line, bool fontselect)
   {
     command(0x20 |
@@ -97,22 +102,26 @@ LiquidCrystal(Pin rs, Pin rw, Pin enable,
            (fontselect? 0x04 : 0));
   }           
 
+  // Misleading name; sets address of next write.  does no writing.
   void writeCGRAM(uint8_t location) 
   {
     command(0x40 | location );
   }
 
+  // Misleading name; sets address of next write.  does no writing.
   void writeDDRAM(uint8_t location)
   {
     command(0x80 | location );
   }
 
+  // sets cursor position by col, row
   void setCursor(uint8_t col, uint8_t row)
   {
     int offset   = _linestarts[row] + col;
     writeDDRAM(offset);
   }
 
+  // TODO: replace these awful things.
   void write(uint8_t value) { enqueue(value, true); }
   void write(char const *str, uint8_t len) 
   {
@@ -128,6 +137,9 @@ LiquidCrystal(Pin rs, Pin rw, Pin enable,
     }
   }
 
+  // handleUpdates MUST BE CALLED OFTEN
+  // often means... at least as often as you'd like to see a new character
+  // appear on the display.
   void handleUpdates()
   {
     if(isBusy())
@@ -136,6 +148,7 @@ LiquidCrystal(Pin rs, Pin rw, Pin enable,
     dequeue();
   }
 
+  // Uses BUSY FLAG pin on LCD display to determine when LCD is ready for next write.
   bool isBusy()
   {
     _data_pins[7].setDirection(false);
@@ -157,7 +170,10 @@ LiquidCrystal(Pin rs, Pin rw, Pin enable,
 
 
 private:
+  // enqueues a "control" command.
   void command(uint8_t value) { enqueue(value, false); }
+
+  // puts a command/write into the queue to be done later
   void enqueue(uint8_t value, bool mode) {
     if(commandQueue.isFull())
       return;  // TODO: Silent fail.
@@ -166,6 +182,7 @@ private:
     modeQueue.push(mode); 
   }
 
+  // pulls a command/write from the queue, sends it to the LCD.
   void dequeue()
   {
     if(commandQueue.isEmpty())
@@ -188,9 +205,12 @@ private:
     _enable_pin.setValue(false);
   }
 
-  Pin _rs_pin; // LOW: command.  HIGH: character.
-  Pin _rw_pin; // LOW: write to LCD.  HIGH: read from LCD.
-  Pin _enable_pin; // activated by a HIGH pulse.
+
+
+
+  Pin _rs_pin;
+  Pin _rw_pin;
+  Pin _enable_pin;
   Pin _data_pins[8];
 
   uint8_t _displayfunction;
