@@ -80,7 +80,6 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
 {
   uint8_t ourcrc = 0;
   bool packetdone = false;
-  chars_in_line[source] += numbytes+1;
 
   
   if(crc_state[source] == NOCRC && bytes[0] == 'N')
@@ -96,10 +95,14 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
         bytes[x] = 0;
         crcpos=x+1;
         crc_state[source] = CRCCOMPLETE;
+#ifndef REPRAP_COMPAT
+        crc[source] += chars_in_line[source] + x;
+        HOST.labelnum("LEN: ", chars_in_line[source]);
+#endif        
         break;
       }
 
-      crc[source] = crc[source] ^ bytes[x];
+      crc[source] ^= bytes[x];
 
       if(bytes[x] < 32)
       {
@@ -107,6 +110,8 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
         packetdone = true;
       }
     }
+
+    chars_in_line[source] += numbytes+1;
 
     // CRC finished?
     // If crcpos == 0 then no crcpos.  
@@ -145,6 +150,7 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
           crc[source] = 0;
           crc_state[source] = NOCRC;
           HOST.rxerror("Invalid line number.",line_number[source] + 1);
+          chars_in_line[source] = 0;
           return;
         }
         break;
@@ -205,6 +211,7 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
           crc_state[source] = NOCRC;
           line_number[source]--;
           HOST.rxerror("CRC mismatch.",line_number[source] + 1);
+          chars_in_line[source] = 0;
           return;
         }
         break;
@@ -218,6 +225,7 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
         line_number[source]--;
         // Error out - no CRC before end of command or invalid state.
         HOST.rxerror("Missing CRC.",line_number[source] + 1);
+        chars_in_line[source] = 0;
         return;
     }
     
@@ -235,7 +243,13 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
     enqueue(sources[source]);
 
     if(source == HOST_SOURCE)
+    {
+#ifndef REPRAP_COMPAT    
       HOST.labelnum("ok ", codes.getCount(), true);
+#else
+      HOST.write("ok \n");
+#endif      
+    }
   }
   else
   {

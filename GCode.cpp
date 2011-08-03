@@ -67,7 +67,9 @@ void GCode::wrapupmove()
   if(!cps[G].isUnused())
   {
     //dump_movedata();
+#ifndef REPRAP_COMPAT    
     HOST.labelnum("done ", linenum, false); HOST.labelnum(" G", cps[G].getInt());
+#endif    
     MOTION.wrapup(*this);
   }
 }
@@ -232,6 +234,7 @@ void GCode::do_m_code()
       state = DONE;
       break;
   }
+#ifndef REPRAP_COMPAT  
   if(state == DONE)
   {
     if(linenum != -1)
@@ -241,6 +244,7 @@ void GCode::do_m_code()
 
     HOST.labelnum(" M", cps[M].getInt(), true);
   }
+#endif
 }
 
 void GCode::resetlastpos(Point& lp) 

@@ -5,6 +5,7 @@ use IO::Select;
 
 local $|=1;
 
+my $SJFW_CRC = 0;
 
 my $port = $ARGV[0] || die(usage());
 
@@ -72,6 +73,10 @@ while(1)
     foreach my $c (split('', $line))
     {
       $ck ^= ord($c);
+    }
+    if($SJFW_CRC)
+    {
+      $ck += length($line);
     }
     $line .= "*".$ck."\n";
 
