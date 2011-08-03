@@ -31,7 +31,7 @@
 #define X_MAX_FEED      12000
 #define X_AVG_FEED      6000
 #define X_START_FEED    2000
-#define X_ACCEL_RATE    1000
+#define X_ACCEL_RATE    200
 #define X_LENGTH        110
 #define X_DISABLE       false
 
@@ -46,7 +46,7 @@
 #define Y_MAX_FEED      12000
 #define Y_AVG_FEED      6000
 #define Y_START_FEED    2000
-#define Y_ACCEL_RATE    1000
+#define Y_ACCEL_RATE    200
 #define Y_LENGTH        110
 #define Y_DISABLE       false
 
@@ -61,7 +61,7 @@
 #define Z_MAX_FEED      150
 #define Z_AVG_FEED      100
 #define Z_START_FEED    75
-#define Z_ACCEL_RATE    250
+#define Z_ACCEL_RATE    50
 #define Z_LENGTH        110
 #define Z_DISABLE       true
 
@@ -73,8 +73,8 @@
 #define A_STEPS_PER_UNIT 729.99
 #define A_MAX_FEED      24000
 #define A_AVG_FEED      12000
-#define A_START_FEED    6000
-#define A_ACCEL_RATE    5000
+#define A_START_FEED    5000
+#define A_ACCEL_RATE    2000
 #define A_LENGTH        110
 #define A_DISABLE       false
 

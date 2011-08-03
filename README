@@ -41,35 +41,12 @@ make clean && make && make upload
 
 IMPORTANT NOTES ON USING THIS FIRMWARE:
 
-* There is no homing Gcode.  Make a move towards the endstops that is longer than the platform, then mark that spot 
-with a G92 and carry on.
+* The Gen4 Support is perfectly useable on a Reprap, but it is designed for use by the Thing O Matic.  The important
+part is this; the Gen4 support ASSUMES you are using the Makerbot Thing-O-Matic EC Firmware on your EC.  If you are
+not, you must install that on your EC first!
 
-Here's my start.gcode from my Prusa:
-------
-M104 S180 (set extruder temperature to 180)
-G92 X0 Y0 Z0 E0 (set current position to 0)
-G1 X-300 Y-300 F2000 (move X+Y to endstops)
-G1 Z-200 F400 (move Z to endstop)
-G92 X0 Y0 Z0 E0 (set current position to 0)
-G1 X0 Y0 Z30 F2000 (move to 0,0,30 to heat up)
-M84 (disable all motors)
-M109 S180 (set extruder temperature, wait)
-------
 
-Here's the start.gcode from my ToM:
-------
-M104 S180 (extruder to 180)
-M140 S50 (bed to 50)
-G92 X0 Y0 Z0 E0 (position 0)
-G1 Z200 F400 (move Z to endstop)
-G1 X-200 Y-200 F2000 (move x+Y to endstop)
-G92 X-5 Y-25 Z116.68 E0 (set endstop positions)
-G1 X0 Y0 Z50 (move to 0,0,50 to heat up)
-M109 S180 (wait for hotend to reach 180)
-------
-
-* This firmware does NOT follow the standard Reprap gcode communication protocol, however the latest release has been
-tested to work with the EXCELLENT "Pronterface" Host by Kliment:
+* The latest release has been tested to work with the EXCELLENT "Pronterface" Host by Kliment:
 https://github.com/kliment/Printrun
 
 CURRENTLY KNOWN BUGS/ISSUES:
@@ -83,4 +60,43 @@ M204 - fetch filename from SD
 M205 - print last fetched filename
 
 * THE SD CODE MAY FAIL ON LONG FILENAMES.  8.3 FILENAMES WORK FINE IN THE MEANTIME.
+
+* THERE IS NO HOMING GCODE.  There probably never will be; it's unnecessary.  Just make a move towards the endstops 
+that is longer than the platform, then mark that spot with a G92 and carry on.  Here's some examples:
+
+Here's my start.gcode from my Prusa:
+------
+M104 S190 (start heating up, but don't wait)
+G92 X0 Y0 Z0 E0 (set current position)
+G1 X-300 Y-300 F2000 (Move to X/Y endstops)
+G92 X0 Y0 Z0 E0 (set current position)
+G1 X5 Y5 (Move away from X/Y endstops)
+G92 X0 Y0 Z0 E0 (set current position)
+G1 X-10 Y-10 F800 (Move back to X/Y endstops)
+G1 Z-200 F400 (Move to Z endstop)
+G92 X0 Y0 Z0 E0 (set current position)
+G1 Z5 F400 (Move away from Z endstop)
+G92 X0 Y0 Z0 E0 (set current position)
+G1 Z-10 F400 (Move to Z endstop)
+G92 X0 Y0 Z-0.7 E0 (set current position - note endstop is .7 below platform height)
+G1 X0 Y0 Z30 F2000 (move to waiting position)
+M109 S190 (wait for extruder to reach temperature)
+------
+
+Here's the start.gcode from my ToM:
+------
+M104 S180 (start heating extruder, but don't wait)
+M140 S50  (start heating platform, but don't wait)
+G92 X0 Y0 Z0 E0 (set current position)
+G1 Z200 F800 (move to Z endstop)
+G1 X-200 Y-200 F2000 (move to X,Y endstops)
+G92 X0 Y0 Z0 E0 (set current position)
+G1 Z-5 X5 Y5 F800 (move away from XYZ endstops)
+G92 X0 Y0 Z0 E0 (set current positions)
+G1 Z10 X-10 Y-10 F400 (move to XYZ endstops)
+G92 X-5 Y-25 Z116.7 E0 (set current positions)
+G1 X0 Y0 Z50 F6000 (move to waiting position)
+M84 (disable motors)
+M109 S180 (wait for extruder to reach temperature)
+------
 
