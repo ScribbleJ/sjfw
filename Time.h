@@ -14,6 +14,7 @@
 void init_time();
 unsigned long millis();
 unsigned long micros();
+void wait(unsigned long millis);
 
 
 

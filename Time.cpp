@@ -1,6 +1,7 @@
 #include "Time.h"
 #include <avr/interrupt.h>
 #include <util/atomic.h>
+#include <util/delay.h>
 
 volatile unsigned long timer0_overflow_count = 0;
 volatile unsigned long timer0_clock_cycles = 0;
@@ -14,6 +15,12 @@ void init_time()
   // enable timer 0 overflow interrupt
   TIMSK0 = _BV(TOIE0);
 }
+
+void wait(unsigned long t)
+{
+  _delay_ms(t);
+}    
+
 
 unsigned long millis()
 {

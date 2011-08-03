@@ -59,7 +59,7 @@ Temperature::Temperature()
   
 }
 
-#define MIN_TEMP_INTERVAL 200
+#define MIN_TEMP_INTERVAL 100
 void Temperature::update()
 {
   unsigned long now = millis();

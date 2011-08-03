@@ -6,8 +6,10 @@
 #include <string.h>
 #include "AvrPort.h"
 #include "RingBuffer.h"
+#include "Time.h"
 
 #define LCD_BUFFER_SIZE 100
+//#define USE4BITMODE
 
 class LiquidCrystal {
 public:
@@ -37,7 +39,7 @@ public:
     _rs_pin.setDirection(true);
     _rs_pin.setValue(false);
     _rw_pin.setDirection(true); 
-    _rw_pin.setValue(true);
+    _rw_pin.setValue(false);
     _enable_pin.setDirection(true);
     _enable_pin.setValue(false);
 
@@ -46,17 +48,33 @@ public:
     _currline = 0;
     _linestarts = linestarts;
 
-    for (int i = 0; i < 8; i++) {
-      _data_pins[i].setDirection(false);
+#ifdef USE4BITMODE
+    wrotehalf = false;
+
+    for (int i = 4; i < 8; i++)
+#else    
+    for (int i = 0; i < 8; i++) 
+#endif
+    {
+      _data_pins[i].setDirection(true);
       _data_pins[i].setValue(false);
     }
 
-    // Set 8-bit operation, multiline mode
+    // Set bitmode, multiline mode - follows hitachi docs
+    initialize();
+#ifdef USE4BITMODE
+    setFunction(false, (_numlines > 1) ? true : false, false);
+#else    
     setFunction(true, (_numlines > 1) ? true : false, false);
-    // display on, cursor and blink off
-    setDisplayControls(true, false, false);
+#endif    
+    // display off, cursor and blink off
+    setDisplayControls(false, false, false);
+    // clear
+    clear();
     // No scrolling, shift right
     setEntryMode(false, false);
+    // turn display on
+    setDisplayControls(true, false, false);
     // Set start write address
     writeDDRAM(0);
   }
@@ -151,11 +169,22 @@ public:
   // Uses BUSY FLAG pin on LCD display to determine when LCD is ready for next write.
   bool isBusy()
   {
-    _data_pins[7].setDirection(false);
+#ifdef USE4BITMODE
+    if(wrotehalf)
+      return false;
+#endif      
     _rs_pin.setValue(false);
     _rw_pin.setValue(true);
 
-    for (int i = 0; i < 8; i++) {
+
+#ifdef USE4BITMODE
+    static bool readhalf = false;
+    static bool result   = true;
+    for (int i = 4; i < 8; i++)
+#else    
+    for (int i = 0; i < 8; i++) 
+#endif    
+    {
       _data_pins[i].setDirection(false);
       _data_pins[i].setValue(false);
     }
@@ -165,6 +194,22 @@ public:
     bool v = _data_pins[7].getValue();
     _enable_pin.setValue(false);
 
+#ifdef USE4BITMODE
+    if(!readhalf)
+    {
+      result = v;
+      readhalf = !readhalf;
+      return true;
+    }
+    else
+    {
+      v = result;
+      readhalf = !readhalf;
+      result = true;
+      return v;
+   }
+
+#endif
     return v;
   }
 
@@ -188,24 +233,107 @@ private:
     if(commandQueue.isEmpty())
       return;
 
-    // Pull next command off stack
-    uint8_t value = commandQueue.pop();
-    uint8_t mode  = modeQueue.pop();
+    uint8_t value;
+    bool mode;
+#ifdef USE4BITMODE
+    if(!wrotehalf)
+    {
+      value = commandQueue.peek(0);
+      mode = modeQueue.peek(0);
+    }
+    else
+#endif    
+    {
+      // Pull command off stack
+      value = commandQueue.pop();
+      mode  = modeQueue.pop();
+    }
 
     _rw_pin.setValue(false);
     _rs_pin.setValue(mode);
 
+#ifdef USE4BITMODE
+    for (int i = 0; i < 4; i++)
+    {
+      _data_pins[i+4].setDirection(true);
+      _data_pins[i+4].setValue(((value >> (wrotehalf ? i : i+4)) & 0x01) != 0);
+    }
+    wrotehalf = !wrotehalf;
+#else    
     for (int i = 0; i < 8; i++) {
       _data_pins[i].setDirection(true);
       _data_pins[i].setValue(((value >> i) & 0x01) != 0);
     }
+#endif    
 
     // Pulsing enable causes LCD to read this command.
     _enable_pin.setValue(true);
     _enable_pin.setValue(false);
   }
 
+#ifndef USE4BITMODE
+  void write8init(uint8_t value)
+  {
+    for (int i = 0; i < 8; i++) {
+      _data_pins[i].setDirection(true);
+      _data_pins[i].setValue(((value >> i) & 0x01) != 0);
+    }
+    _enable_pin.setValue(true);
+    _enable_pin.setValue(false);
+  }
 
+  // 8-bit initialization routine from hitachi doc.
+  void initialize()
+  {
+    _rw_pin.setDirection(true);
+    _rw_pin.setValue(false);
+    _rs_pin.setDirection(true);
+    _rs_pin.setValue(false);
+
+    // Normally I wouldn't allow delays in the code at all, but this
+    // is at startup, so no worries, and handling it in any other
+    // fashion would be painful.
+    wait(20);
+    write8init(0b00110000); 
+    wait(10);
+    write8init(0b00110000); 
+    wait(5);
+    write8init(0b00110000); 
+    wait(5);
+  }
+#else
+  void write4init(uint8_t value)
+  {
+    for (int i = 0; i < 4; i++) {
+      _data_pins[i+4].setDirection(true);
+      _data_pins[i+4].setValue(((value >> i) & 0x01) != 0);
+    }
+    _enable_pin.setValue(true);
+    _enable_pin.setValue(false);
+  }
+
+  // 4-bit initialization routine from hitachi doc.
+  void initialize()
+  {
+    _rw_pin.setDirection(true);
+    _rw_pin.setValue(false);
+    _rs_pin.setDirection(true);
+    _rs_pin.setValue(false);
+
+    // Normally I wouldn't allow delays in the code at all, but this
+    // is at startup, so no worries, and handling it in any other
+    // fashion would be painful.
+    wait(20);
+    write4init(0b00110000); 
+    wait(10);
+    write4init(0b00110000); 
+    wait(5);
+    write4init(0b00110000); 
+    wait(5);
+    write4init(0b00100000); 
+  }
+
+#endif  
 
 
   Pin _rs_pin;
@@ -222,6 +350,10 @@ private:
   uint8_t _numlines,_currline;
   uint8_t _numcols;
   uint8_t *_linestarts;
+
+#ifdef USE4BITMODE
+  bool wrotehalf;
+#endif    
 
   uint8_t command_data[LCD_BUFFER_SIZE];
   bool    mode_data[LCD_BUFFER_SIZE];

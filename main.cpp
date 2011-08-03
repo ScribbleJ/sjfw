@@ -44,7 +44,7 @@ int main(void)
   for (;;) { 
     unsigned long now = millis();
 
-    if(now - last_lcdrefresh > 5001)
+    if(now - last_lcdrefresh > 1001)
     {
       last_lcdrefresh = now;
       LCD.home();
