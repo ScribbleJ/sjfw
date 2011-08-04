@@ -9,7 +9,7 @@
 #include "Time.h"
 
 #define LCD_BUFFER_SIZE 100
-//#define USE4BITMODE
+#define USE4BITMODE
 
 class LiquidCrystal {
 public:
@@ -112,6 +112,8 @@ public:
 
   // named "setFunction" only to match Hitachi docs.
   // select bitmode, multiline, 5x10 font
+  // Hitachi docs say calls to this function are only honored 
+  // during the specified initialization routine, not after the LCD is running.
   void setFunction(bool is8bit, bool is2line, bool fontselect)
   {
     command(0x20 |
@@ -121,15 +123,15 @@ public:
   }           
 
   // Misleading name; sets address of next write.  does no writing.
-  void writeCGRAM(uint8_t location) 
+  void writeCGRAM(uint8_t address) 
   {
-    command(0x40 | location );
+    command(0x40 | address );
   }
 
   // Misleading name; sets address of next write.  does no writing.
-  void writeDDRAM(uint8_t location)
+  void writeDDRAM(uint8_t address)
   {
-    command(0x80 | location );
+    command(0x80 | address );
   }
 
   // sets cursor position by col, row
@@ -323,12 +325,15 @@ private:
     // Normally I wouldn't allow delays in the code at all, but this
     // is at startup, so no worries, and handling it in any other
     // fashion would be painful.
+
+    // Hitachi docs say to set 8-bit mode in the first three calls here, but 
+    // that doesn't work, and makes only a little sense.
     wait(20);
-    write4init(0b00110000); 
+    write4init(0b00100000); 
     wait(10);
-    write4init(0b00110000); 
+    write4init(0b00100000); 
     wait(5);
-    write4init(0b00110000); 
+    write4init(0b00100000); 
     wait(5);
     write4init(0b00100000); 
   }
