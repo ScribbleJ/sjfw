@@ -79,17 +79,17 @@
 #define A_DISABLE       false
 
 
-#define LCD_RS_PIN      Pin(PortC,5)
-#define LCD_RW_PIN      Pin(PortL,2)
-#define LCD_E_PIN       Pin(PortL,4)
-#define LCD_0_PIN       Pin(PortL,6)
-#define LCD_1_PIN       Pin(PortG,0)
-#define LCD_2_PIN       Pin(PortA,5)
-#define LCD_3_PIN       Pin(PortC,0)
-#define LCD_4_PIN       Pin(PortC,2)
-#define LCD_5_PIN       Pin(PortC,4)
-#define LCD_6_PIN       Pin(PortC,6)
-#define LCD_7_PIN       Pin(PortA,7)
+#define LCD_RS_PIN      Pin(PortK,1)
+#define LCD_RW_PIN      Pin(PortL,7)
+#define LCD_E_PIN       Pin(PortK,3)
+#define LCD_0_PIN       Pin()
+#define LCD_1_PIN       Pin()
+#define LCD_2_PIN       Pin()
+#define LCD_3_PIN       Pin()
+#define LCD_4_PIN       Pin(PortF,5)
+#define LCD_5_PIN       Pin(PortK,2)
+#define LCD_6_PIN       Pin(PortL,5)
+#define LCD_7_PIN       Pin(PortK,4)
 
 #define LCD_X 16
 #define LCD_Y 2
@@ -97,8 +97,12 @@
 #define LCD_LINESTARTS {0x0, 0x40}
 #define LCD_FULLADDRESS 1
 
-
-
+#define KP_ROWS 4
+#define KP_COLS 4
+#define KEYPAD_BUTTONMAP "123A", "456B", "789C", "*0#D"
+#define KEYPAD_ROWPINS Pin(PortH,1),Pin(PortH,0),Pin(PortA,1),Pin(PortA,3)
+#define KEYPAD_COLPINS Pin(PortA,5), Pin(PortA,7),Pin(PortC,6),Pin(PortC,4)
+#define KEYPAD_DEBOUNCE_MICROS 50
 
 
 

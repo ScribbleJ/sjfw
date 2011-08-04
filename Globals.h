@@ -4,7 +4,9 @@
 #include "config.h"
 #ifdef HAS_LCD
 #include "LiquidCrystal.h"
+#include "Keypad.h"
 extern LiquidCrystal LCD;
+extern Keypad KEYPAD;
 #endif
 
 inline int getFreeRam () {

@@ -40,8 +40,17 @@ int main(void)
   LCD.setCursor(0,1);
   LCD.write("ScribbleJ",9);
 
+  char lastkey = 0;
   unsigned long last_lcdrefresh = millis();
   for (;;) { 
+
+    char pressedkey = KEYPAD.getPressedKey();
+    if(pressedkey && pressedkey != lastkey)
+    {
+      //HOST.write("PK:"); HOST.write(pressedkey); HOST.endl();
+    }
+    lastkey = pressedkey;
+
     unsigned long now = millis();
 
     if(now - last_lcdrefresh > 1001)
