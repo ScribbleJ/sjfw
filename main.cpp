@@ -44,12 +44,14 @@ int main(void)
   unsigned long last_lcdrefresh = millis();
   for (;;) { 
 
+#ifdef HAS_KEYPAD
     char pressedkey = KEYPAD.getPressedKey();
     if(pressedkey && pressedkey != lastkey)
     {
-      //HOST.write("PK:"); HOST.write(pressedkey); HOST.endl();
+      HOST.write("PK:"); HOST.write(pressedkey); HOST.endl();
     }
     lastkey = pressedkey;
+#endif    
 
     unsigned long now = millis();
 

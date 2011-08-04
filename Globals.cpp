@@ -10,7 +10,6 @@ Temperature& TEMPERATURE = Temperature::Instance();
 
 #ifdef HAS_LCD
 #include "LiquidCrystal.h"
-#include "Keypad.h"
 uint8_t _lcd_linestarts[] = LCD_LINESTARTS;
 LiquidCrystal LCD(LCD_RS_PIN, 
                   LCD_RW_PIN, 
@@ -26,9 +25,12 @@ LiquidCrystal LCD(LCD_RS_PIN,
                   LCD_X,
                   LCD_Y,
                   _lcd_linestarts);
+#ifdef HAS_KEYPAD                  
+#include "Keypad.h"
 const char *buttonmap[] = { KEYPAD_BUTTONMAP };
 const Pin kp_rpins[] = { KEYPAD_ROWPINS };
 const Pin kp_cpins[] = { KEYPAD_COLPINS };
 Keypad KEYPAD(kp_cpins, kp_rpins, buttonmap, KEYPAD_DEBOUNCE_MICROS);
+#endif
 #endif
 

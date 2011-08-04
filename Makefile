@@ -3,20 +3,21 @@
 ###########################
 USE_SD = 1
 USE_LCD = 1
+#USE_KEYPAD = 1
 
 # Reasonable settings for ToM Gen4
-#UPLOAD_RATE = 57600
-#AVRDUDE_PROGRAMMER = stk500v1
-#PORT = /dev/ttyUSB0
-#MCU = atmega1280
-#CONFIG_PATH = gen4
+UPLOAD_RATE = 57600
+AVRDUDE_PROGRAMMER = stk500v1
+PORT = /dev/ttyUSB0
+MCU = atmega1280
+CONFIG_PATH = gen4
 
 # Reasonable settings for RAMPS
-UPLOAD_RATE = 115200
-AVRDUDE_PROGRAMMER = stk500v2
-PORT = /dev/ttyACM0
-MCU = atmega2560
-CONFIG_PATH = ramps13
+#UPLOAD_RATE = 115200
+#AVRDUDE_PROGRAMMER = stk500v2
+#PORT = /dev/ttyACM0
+#MCU = atmega2560
+#CONFIG_PATH = ramps13
 #CONFIG_PATH = ramps12
 
 
@@ -28,6 +29,10 @@ CONFIG_PATH = ramps13
 ifeq ($(USE_LCD),1)
  LCD_FILES = 
  LCD_DEFINES = -DHAS_LCD
+ifeq ($(USE_KEYPAD),1)
+  KEYPAD_FILES = 
+  KEYPAD_DEFINES = -DHAS_KEYPAD
+endif
 endif
 ifeq ($(USE_SD),1)
  SD_FILES = lib_sd/byteordering.cpp lib_sd/fat.cpp lib_sd/partition.cpp lib_sd/sd_raw.cpp SDCard.cpp
@@ -41,8 +46,8 @@ else
  BOARD_DEFINES = -I./temperature/
 endif
 
-EXTRA_FILES = $(LCD_FILES) $(SD_FILES) $(BOARD_FILES)
-EXTRA_DEFINES = $(LCD_DEFINES) $(SD_DEFINES) $(BOARD_DEFINES)
+EXTRA_FILES = $(LCD_FILES) $(SD_FILES) $(BOARD_FILES) $(KEYPAD_FILES)
+EXTRA_DEFINES = $(LCD_DEFINES) $(SD_DEFINES) $(BOARD_DEFINES) $(KEYPAD_DEFINES)
 
 
 F_CPU = 16000000
