@@ -20,6 +20,9 @@ extern uint8_t _lcd_linestarts[];
 class LCDKeypad
 {
 public:
+  enum MODE { TEMP, SDSELECT };
+
+
   LCDKeypad() 
   : LCD(LCD_RS_PIN, LCD_RW_PIN, LCD_E_PIN,
         LCD_0_PIN, LCD_1_PIN, LCD_2_PIN, LCD_3_PIN,
@@ -34,29 +37,18 @@ public:
     LCD.setCursor(0,1);
     LCD.write("ScribbleJ",9);
 
-    char lastkey = 0;
-    unsigned long last_lcdrefresh = millis();
-
-
+    lastkey = 0;
+    last_lcdrefresh = millis();
+    changeMode(TEMP);
   }
 
   void handleUpdates()
   {
     unsigned long now = millis();
 
-    if(now - last_lcdrefresh > 1001)
+    if(now - last_lcdrefresh > 950)
     {
-      last_lcdrefresh = now;
-      LCD.home();
-      LCD.write("Hotend:",7);
-      LCD.write(TEMPERATURE.getHotend(),1000);
-      LCD.write(':');
-      LCD.write(TEMPERATURE.getHotendST(),100);
-      LCD.setCursor(0,1);
-      LCD.write("Bed   :",7);
-      LCD.write(TEMPERATURE.getPlatform(),1000);
-      LCD.write(':');
-      LCD.write(TEMPERATURE.getPlatformST(),100);
+      updateTemp();
     }
 
     LCD.handleUpdates();
@@ -71,7 +63,22 @@ public:
 #endif
 
   }
-  
+
+  void changeMode(MODE which)
+  {
+    switch(which)
+    {
+      case TEMP:
+        switchmode_TEMP();
+        break;
+      case SDSELECT:
+        switchmode_SDSELECT();
+        break;
+      default:
+        break;
+    }
+  }
+
 private:
   unsigned long last_lcdrefresh;
   char lastkey;
@@ -79,6 +86,62 @@ private:
 #ifdef HAS_KEYPAD
   Keypad KEYPAD;
 #endif
+  MODE currentmode;
+  
+  void switchmode_TEMP()
+  {
+    currentmode = TEMP;
+    LCD.clear();
+    LCD.write("Hotend:",7);
+    LCD.write(TEMPERATURE.getHotend(),1000);
+    LCD.write(':');
+    LCD.write(TEMPERATURE.getHotendST(),100);
+    if(LCD_Y > 1)
+    {
+      LCD.setCursor(0,1);
+      LCD.write("Bed   :",7);
+      LCD.write(TEMPERATURE.getPlatform(),1000);
+      LCD.write(':');
+      LCD.write(TEMPERATURE.getPlatformST(),100);
+    }
+    if(LCD_Y > 3)
+    {
+      LCD.setCursor(0,3);
+      LCD.write("SJFW  ScribbleJ",15); 
+    }
+  }
+
+  void updateTemp()
+  {
+    if(currentmode != TEMP)
+      return;
+
+    LCD.home();
+    LCD.write("Hotend:",7);
+    LCD.write(TEMPERATURE.getHotend(),1000);
+    LCD.write(':');
+    LCD.write(TEMPERATURE.getHotendST(),100);
+    if(LCD_Y > 1)
+    {
+      LCD.setCursor(0,1);
+      LCD.write("Bed   :",7);
+      LCD.write(TEMPERATURE.getPlatform(),1000);
+      LCD.write(':');
+      LCD.write(TEMPERATURE.getPlatformST(),100);
+    }
+    if(LCD_Y > 3)
+    {
+      LCD.setCursor(0,3);
+      LCD.write("SJFW  ScribbleJ",15); 
+    }
+  }
+
+  void switchmode_SDSELECT()
+  {
+    currentmode = SDSELECT;
+    LCD.clear();
+    LCD.write("SD File Select", 15);
+  }
 
 };
 

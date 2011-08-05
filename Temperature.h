@@ -9,6 +9,8 @@
 #endif
 #include <stdint.h>
 
+
+// TODO: Should support N probes/heaters instead of 2.
 class Temperature
 {
   public:
