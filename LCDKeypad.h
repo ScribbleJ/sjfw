@@ -14,6 +14,7 @@
 #include "Host.h"
 #include "Temperature.h"
 #include "GCode.h"
+#include "GcodeQueue.h"
 
 #ifdef HAS_SD
 #include "SDCard.h"
@@ -263,7 +264,9 @@ private:
     display_TEMP();
   }
 
-  bool keyhandler_MOTORS(char key) { 
+  bool keyhandler_MOTORS(char key) 
+  { 
+    bool handled = false;
     switch(key)
     {
       case '1':
@@ -285,22 +288,56 @@ private:
         }
         return true;
       case '5':
-        ; //insert M84
-        return true;
       case '2':
       case '8':
-        ; // move Y
       case '4':
       case '6':
-        ; // move X
       case '3':
       case '9':
-        ; // move Z
-        return true;
-      default:
-        return false; 
+        if(GCODES.isFull())
+          return true;
+        handled = true;
     }
+    if(!handled)
+      return false;
+
+    GCode t;
+    Point& p = GCode::getLastpos();
+    switch(key)
+    {
+      case '5':
+        t[M].setInt(84);
+        GCODES.enqueue(t);
+        return true;
+      case '2':
+        t[G].setInt(1);
+        t[Y].setFloat(p[Y] - motordistance);
+        break;
+      case '8':
+        t[G].setInt(1);
+        t[Y].setFloat(p[Y] + motordistance);
+        break;
+      case '4':
+        t[G].setInt(1);
+        t[X].setFloat(p[X] - motordistance);
+        break;
+      case '6':
+        t[G].setInt(1);
+        t[X].setFloat(p[X] + motordistance);
+        break;
+      case '3':
+        t[G].setInt(1);
+        t[Z].setFloat(p[Z] + motordistance);
+        break;
+      case '9':
+        t[G].setInt(1);
+        t[Z].setFloat(p[Z] - motordistance);
+        break;
+    }
+    GCODES.enqueue(t);
+    return true;
   }
+
   void switchmode_MOTORS()
   {
     currentmode = MOTORS;
