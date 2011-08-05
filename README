@@ -9,6 +9,9 @@ code in the Sprinter and Teacup firmwares.
 THIS COMES WITH NO WARRANTIES, GUARANTEES, PROMISES, OR CAKE.  I do not recommend that you, or anyone, uses this firmware.
 If you do, you do so at your own risk.
 
+I appreciate any bug reports, patches, and amusing stories about how this firmware burned your house down.  You can find
+me on Freenode IRC, channel #reprap.  Or email at scribblej@yahoo.com.
+
 
 SUPPORTED HARDWARE:
 Prusa Reprap RAMPS1.2 (experimental!)
@@ -45,7 +48,6 @@ IMPORTANT NOTES ON USING THIS FIRMWARE:
 part is this; the Gen4 support ASSUMES you are using the Makerbot Thing-O-Matic EC Firmware on your EC.  If you are
 not, you must install that on your EC first!  If you are not using a ToM on Gen4 you will also need to edit the 
 steps settings and speeds/accel in the config file to suit.
-
 
 * The latest release has been tested to work with the EXCELLENT "Pronterface" Host by Kliment:
 https://github.com/kliment/Printrun

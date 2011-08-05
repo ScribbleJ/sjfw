@@ -158,7 +158,7 @@ public:
   }
   void write(float n)
   {
-    write(n, 6, 1);
+    write(n, 5, 1);
   }
   void write(int32_t n)
   {

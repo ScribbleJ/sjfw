@@ -27,6 +27,8 @@ extern const Pin _kp_rpins[];
 extern const Pin _kp_cpins[];
 #endif
 extern uint8_t _lcd_linestarts[];
+extern float const RATES_OF_CHANGE[];
+extern float const* const ROC_END;
 
 
 
@@ -108,7 +110,8 @@ private:
 #endif
   MODE currentmode;
   int  tempdistance;
-  int motordistance;
+  float motordistance;
+  float const* motordistance_roc;
   bool extrude;
   
   void inputswitch(char key)
@@ -258,7 +261,42 @@ private:
     display_TEMP();
   }
 
-  bool keyhandler_MOTORS(char key) { return false; }
+  bool keyhandler_MOTORS(char key) { 
+    switch(key)
+    {
+      case '1':
+        //motordistance += *motordistance_roc;
+        return true;
+      case '7':
+        //motordistance -= *motordistance_roc;
+        if(motordistance < 0)
+          motordistance = 0;
+        return true;
+      case '*':
+        extrude = !extrude;
+        return true;
+      case '#':
+        //motordistance_roc++;
+        //if(motordistance_roc == ROC_END)
+        //  motordistance_roc = &RATES_OF_CHANGE[0];
+        return true;
+      case '5':
+        ; //insert M84
+        return true;
+      case '2':
+      case '8':
+        ; // move Y
+      case '4':
+      case '6':
+        ; // move X
+      case '3':
+      case '9':
+        ; // move Z
+        return true;
+      default:
+        return false; 
+    }
+  }
   void switchmode_MOTORS()
   {
     currentmode = MOTORS;
@@ -287,16 +325,14 @@ private:
       LCD.label("E:", lastpos[E]);
       LCD.setCursor(0,2);
       LCD.label("Move:", motordistance);
-      LCD.setCursor(9,2);
-      if(LCD_X > 16)
-        LCD.label("Extrude:", extrude ? "ON" : "OFF");
-      else
-        LCD.label("E:", extrude ? "ON" : "OFF");
+      LCD.label("/",*motordistance_roc);
+      LCD.label("E:", extrude ? "ON" : "--");
     }
     else
     {
       LCD.label("I:", motordistance);
-      LCD.label(" E:", extrude ? "ON" : "OFF");
+      LCD.label("/",*motordistance_roc);
+      LCD.label(" E:", extrude ? "-" : "*");
     }
     tagline();
   }
