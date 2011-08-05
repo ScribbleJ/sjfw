@@ -227,7 +227,7 @@ private:
     if(d < -8)
       d=-8;
     d+=8;
-    d=16-d;
+    d=15-d;
 
     for(int x=0;x<16;x++)
     {
