@@ -14,6 +14,7 @@
 #include "RingBuffer.h"
 #include "Time.h"
 #include "config.h"
+#include <stdlib.h>
 
 class LiquidCrystal {
 public:
@@ -146,18 +147,30 @@ public:
   }
 
   // TODO: replace these awful things.
-  void write(uint8_t value) { enqueue(value, true); }
+  void write(char const value) { enqueue(value, true); }
   void write(char const *str, uint8_t len) { for(int x = 0; x < len; x++) write(str[x]); }
   void write(char const *str) { for(int x=0;str[x]!=0;x++) write(str[x]); }
-  void write(uint16_t d, uint16_t maxradix)
+  void write(float n, signed char width, unsigned char prec)
   {
-    uint16_t n = d;
-    for(uint16_t i = maxradix; i >= 1; i = i/10)
-    {
-      write((uint8_t)(n/i) + '0');
-      n -= (n/i) * i; // This looks like nonsense but it chops off the remainder.
-    }
+    static const char bufsize = 8 * sizeof(float) + 1;
+    char buf[bufsize] = { 0 };
+    dtostrf(n,width,prec,buf);
+    write(buf);
   }
+  void write(float n)
+  {
+    write(n, 5, 2);
+  }
+  void write(int32_t n)
+  {
+    static const char bufsize = 8 * sizeof(int32_t) + 1;
+    char buf[bufsize] = { 0 };
+    ltoa(n,buf,10);
+    write(buf);
+  }
+  void write(int16_t n) { write((int32_t)n); }
+  void write(uint16_t n) {write((int32_t)n);}
+
 
   // handleUpdates MUST BE CALLED OFTEN
   // often means... at least as often as you'd like to see a new character
