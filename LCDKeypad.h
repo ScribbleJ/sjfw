@@ -221,6 +221,7 @@ private:
   void update_TEMPGRAPH()
   {
     int d=TEMPERATURE.getHotend()-TEMPERATURE.getHotendST();
+    d/=2;
     if(d > 7)
       d=7;
     if(d < -8)
@@ -251,42 +252,45 @@ private:
   void display_TEMP()
   {
     int t=0;
-    LCD.write("Hotend: ");
+    if(LCD_X>16)
+      LCD.write("Hotend: ");
+    else
+      LCD.write("H:");
     t = TEMPERATURE.getHotend();
     if(t == 1024)
       LCD.write("MISSING!");
     else
     {
       LCD.write(t);
-      LCD.setCursor(11,0);
+      LCD.setCursor(LCD_X > 16 ? 11 : 6,0);
       LCD.write("/ ");
       LCD.write(TEMPERATURE.getHotendST());
     }
     LCD.setCursor(0,1);
-    LCD.write("Bed   : ");
+    if(LCD_X>16)
+      LCD.write("Bed   : ");
+    else
+      LCD.write("B:");
     t = TEMPERATURE.getPlatform();
     if(t == 1024)
       LCD.write("MISSING!");
     else
     {
       LCD.write(t);
-      LCD.setCursor(11,1);
+      LCD.setCursor(LCD_X > 16 ? 11 : 6,1);
       LCD.write("/ ");
       LCD.write(TEMPERATURE.getPlatformST());
     }
-    if(LCD_X>16)
-    {
-      LCD.setCursor(16,0);
-      LCD.write((char)0);
-      LCD.write((char)2);
-      LCD.write((char)4);
-      LCD.write((char)6);
-      LCD.setCursor(16,1);
-      LCD.write((char)1);
-      LCD.write((char)3);
-      LCD.write((char)5);
-      LCD.write((char)7);
-    }
+    LCD.setCursor(LCD_X > 16 ? 16 : 12,0);
+    LCD.write((char)0);
+    LCD.write((char)2);
+    LCD.write((char)4);
+    LCD.write((char)6);
+    LCD.setCursor(LCD_X > 16 ? 16 : 12,1);
+    LCD.write((char)1);
+    LCD.write((char)3);
+    LCD.write((char)5);
+    LCD.write((char)7);
 
     tagline();
   }
@@ -422,6 +426,21 @@ private:
       LCD.label("/",*motordistance_roc);
       LCD.label(" E:", extrude ? "-" : "*");
     }
+    if(LCD_X>16)
+    {
+      LCD.setCursor(16,0);
+      LCD.write((char)0);
+      LCD.write((char)2);
+      LCD.write((char)4);
+      LCD.write((char)6);
+      LCD.setCursor(16,1);
+      LCD.write((char)1);
+      LCD.write((char)3);
+      LCD.write((char)5);
+      LCD.write((char)7);
+    }
+
+
   }
 
   bool keyhandler_MENU(char key) { return false; }
