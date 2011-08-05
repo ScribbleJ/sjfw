@@ -158,7 +158,7 @@ public:
   }
   void write(float n)
   {
-    write(n, 5, 2);
+    write(n, 6, 1);
   }
   void write(int32_t n)
   {
@@ -169,6 +169,13 @@ public:
   }
   void write(int16_t n) { write((int32_t)n); }
   void write(uint16_t n) {write((int32_t)n);}
+
+  void label(char const* str, float n) { write(str); write(n); } 
+  void label(char const* str, char const* str2) { write(str); write(str2); }
+  void label(char const* str, int32_t n) { write(str); write(n); }
+  void label(char const* str, int n) { write(str); write((int32_t)n); }
+
+
 
 
   // handleUpdates MUST BE CALLED OFTEN

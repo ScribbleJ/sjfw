@@ -13,6 +13,7 @@
 #include "LiquidCrystal.h"
 #include "Host.h"
 #include "Temperature.h"
+#include "GCode.h"
 
 #ifdef HAS_SD
 #include "SDCard.h"
@@ -33,7 +34,7 @@ extern uint8_t _lcd_linestarts[];
 class LCDKeypad
 {
 public:
-  enum MODE { TEMP, SDSELECT };
+  enum MODE { TEMP, SDSELECT, MOTORS, MENU };
 
 
   LCDKeypad() 
@@ -65,10 +66,11 @@ public:
 #endif
 
     unsigned long now = millis();
-    if(now - last_lcdrefresh > LCD_TEMP_REFRESH_MILLIS)
+    if(now - last_lcdrefresh > LCD_REFRESH_MILLIS)
     {
       last_lcdrefresh = now;
-      updateTemp();
+      update_TEMP();
+      update_MOTORS();
     }
 
   }
@@ -86,6 +88,12 @@ public:
       case SDSELECT:
         switchmode_SDSELECT();
         break;
+      case MOTORS:
+        switchmode_MOTORS();
+        break;
+      case MENU:
+        switchmode_MENU();
+        break;
       default:
         break;
     }
@@ -99,8 +107,10 @@ private:
   Keypad KEYPAD;
 #endif
   MODE currentmode;
+  int  tempdistance;
+  int motordistance;
+  bool extrude;
   
-  // 
   void inputswitch(char key)
   {
     bool handled = false;
@@ -111,6 +121,12 @@ private:
         break;
       case SDSELECT:
         handled = keyhandler_SDSELECT(key);
+        break;
+      case MOTORS:
+        handled = keyhandler_MOTORS(key);
+        break;
+      case MENU:
+        handled = keyhandler_MENU(key);
         break;
     }
     if(!handled)
@@ -128,6 +144,12 @@ private:
         break;
       case 'B':
         changeMode(SDSELECT);
+        break;
+      case 'C':
+        changeMode(MOTORS);
+        break;
+      case 'D':
+        changeMode(MENU);
         break;
       default:
         ;
@@ -227,13 +249,64 @@ private:
     display_TEMP();
   }
 
-  void updateTemp()
+  void update_TEMP()
   {
     if(currentmode != TEMP)
       return;
 
     LCD.home();
     display_TEMP();
+  }
+
+  bool keyhandler_MOTORS(char key) { return false; }
+  void switchmode_MOTORS()
+  {
+    currentmode = MOTORS;
+    LCD.clear();
+    display_MOTORS();
+  }
+  void update_MOTORS()
+  {
+    if(currentmode != MOTORS)
+      return;
+    LCD.home();
+    display_MOTORS();
+  }
+
+  void display_MOTORS()
+  {
+    Point& lastpos = GCode::getLastpos();
+    LCD.label("X:", lastpos[X]);
+    LCD.setCursor(8,0);
+    LCD.label("Y:", lastpos[Y]);
+    LCD.setCursor(0,1);
+    LCD.label("Z:", lastpos[Z]);
+    if(LCD_Y > 2)
+    {
+      LCD.setCursor(8,1);
+      LCD.label("E:", lastpos[E]);
+      LCD.setCursor(0,2);
+      LCD.label("Move:", motordistance);
+      LCD.setCursor(9,2);
+      if(LCD_X > 16)
+        LCD.label("Extrude:", extrude ? "ON" : "OFF");
+      else
+        LCD.label("E:", extrude ? "ON" : "OFF");
+    }
+    else
+    {
+      LCD.label("I:", motordistance);
+      LCD.label(" E:", extrude ? "ON" : "OFF");
+    }
+    tagline();
+  }
+
+  bool keyhandler_MENU(char key) { return false; }
+  void switchmode_MENU()
+  {
+    currentmode = MENU;
+    LCD.clear();
+    LCD.write("MAIN MENU");
   }
 
 

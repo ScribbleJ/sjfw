@@ -140,6 +140,8 @@ public:
     HOST.labelnum(" AI:",accel_inc,true);
   }
 
+  static Point& getLastpos() { return lastpos; }
+
 private:
   CodeParam cps[T+1];                    
   unsigned long lastms;
