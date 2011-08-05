@@ -79,6 +79,9 @@
 #define A_DISABLE       false
 
 
+// The following config is for a parallel LCD connected to 
+// AUX-2 in 4-bit mode.
+
 #define USE4BITMODE
 #define LCD_RS_PIN      Pin(PortK,1)
 #define LCD_RW_PIN      Pin(PortL,7)

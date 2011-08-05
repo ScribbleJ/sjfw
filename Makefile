@@ -2,12 +2,13 @@
 # Settings particular to your system
 ###########################
 USE_SD = 1
-#USE_LCD = 1
-#USE_KEYPAD = 1
+USE_LCD = 1
+USE_KEYPAD = 1
 
-CONFIG_PATH = ramps12
-#CONFIG_PATH = ramps13
+#CONFIG_PATH = ramps12
+CONFIG_PATH = ramps13
 #CONFIG_PATH = gen4
+#CONFIG_PATH = triffid
 
 # this needs to point to the directory where you have avrdude, avr-gcc, and such.
 AVR_TOOLS_PATH = /usr/bin
@@ -69,7 +70,7 @@ FORMAT = ihex
 
 # Place -D or -U options here
 CXXDEFS = -DF_CPU=$(F_CPU) $(EXTRA_DEFINES)
-CXXEXTRA = -fno-threadsafe-statics -fwrapv -fno-exceptions -ffunction-sections -fdata-sections
+CXXEXTRA = -fno-threadsafe-statics -fwrapv -fno-exceptions -ffunction-sections -fdata-sections -Wall
 CXXFLAGS = $(CXXDEFS) $(CXXINCS) -O$(OPT) $(CXXEXTRA)
 LDFLAGS = -lm
 
@@ -113,10 +114,10 @@ upload: main.hex
 HEXSIZE = $(SIZE) --target=$(FORMAT) main.hex
 ELFSIZE = $(SIZE)  main.elf
 sizebefore:
-	@if [ -f main.elf ]; then echo; echo $(MSG_SIZE_BEFORE); $(HEXSIZE); echo; fi
+	@if [ -f main.elf ]; then echo; echo $(MSG_SIZE_BEFORE); $(ELFSIZE); echo; fi
 
 sizeafter:
-	@if [ -f main.elf ]; then echo; echo $(MSG_SIZE_AFTER); $(HEXSIZE); echo; fi
+	@if [ -f main.elf ]; then echo; echo $(MSG_SIZE_AFTER); $(ELFSIZE); echo; fi
 
 
 .SUFFIXES: .elf .hex 
