@@ -3,21 +3,21 @@
 ###########################
 USE_SD = 1
 USE_LCD = 1
-#USE_KEYPAD = 1
+USE_KEYPAD = 1
 
 # Reasonable settings for ToM Gen4
-UPLOAD_RATE = 57600
-AVRDUDE_PROGRAMMER = stk500v1
-PORT = /dev/ttyUSB0
-MCU = atmega1280
-CONFIG_PATH = gen4
+#UPLOAD_RATE = 57600
+#AVRDUDE_PROGRAMMER = stk500v1
+#PORT = /dev/ttyUSB0
+#MCU = atmega1280
+#CONFIG_PATH = gen4
 
 # Reasonable settings for RAMPS
-#UPLOAD_RATE = 115200
-#AVRDUDE_PROGRAMMER = stk500v2
-#PORT = /dev/ttyACM0
-#MCU = atmega2560
-#CONFIG_PATH = ramps13
+UPLOAD_RATE = 115200
+AVRDUDE_PROGRAMMER = stk500v2
+PORT = /dev/ttyACM0
+MCU = atmega2560
+CONFIG_PATH = ramps13
 #CONFIG_PATH = ramps12
 
 
@@ -27,7 +27,7 @@ CONFIG_PATH = gen4
 # Stuff you prolly don't need to change from here down.
 ########################
 ifeq ($(USE_LCD),1)
- LCD_FILES = 
+ LCD_FILES = LCDKeypad.cpp
  LCD_DEFINES = -DHAS_LCD
 ifeq ($(USE_KEYPAD),1)
   KEYPAD_FILES = 
@@ -57,7 +57,7 @@ Globals.cpp Temperature.cpp
 
 
 FORMAT = ihex
-OPT = 2
+OPT = s
 
 # Place -D or -U options here
 CXXDEFS = -DF_CPU=$(F_CPU) $(EXTRA_DEFINES)

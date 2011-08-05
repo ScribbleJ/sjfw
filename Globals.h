@@ -2,16 +2,12 @@
 #define _GLOBALS_H_
 
 #include "config.h"
+
 #ifdef HAS_LCD
-#include "LiquidCrystal.h"
-extern LiquidCrystal LCD;
+#include "LCDKeypad.h"
+extern LCDKeypad LCDKEYPAD;
+#endif 
 
-#ifdef HAS_KEYPAD
-#include "Keypad.h"
-extern Keypad KEYPAD;
-#endif
-
-#endif
 
 inline int getFreeRam () {
   // These externs are defined and used in libavr

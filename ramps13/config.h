@@ -91,11 +91,9 @@
 #define LCD_6_PIN       Pin(PortL,5)
 #define LCD_7_PIN       Pin(PortK,4)
 
-#define LCD_X 16
-#define LCD_Y 2
-
-#define LCD_LINESTARTS {0x0, 0x40}
-#define LCD_FULLADDRESS 1
+#define LCD_X 20
+#define LCD_Y 4
+#define LCD_LINESTARTS {0x0, 0x40, 0x14, 0x54}
 
 #define KP_ROWS 4
 #define KP_COLS 4
