@@ -1,5 +1,9 @@
 #ifndef _POINT_H_
 #define _POINT_H_
+/* QND N-Dimensional Point class
+ * (c) 2011 Christopher "ScribbleJ" Jansen
+ *
+ */
 
 #include "Globals.h"
 #include "config.h"

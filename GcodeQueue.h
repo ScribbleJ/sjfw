@@ -1,11 +1,20 @@
 #ifndef _GCODES_H_
 #define _GCODES_H_
+/* GCode physical parser and queue
+ * (c) 2011 Christopher "ScribbleJ" Jansen
+ *
+ * This class is responsible for recieving Gcode from 'sources' in fragments.
+ * A source is something on the system that wants to provide Gcode; e.g. the host, 
+ * or the SD Card, or the Control Pad.
+ * Fragments are a chunk of gcode up to and including a space or carriage return/newline (BUT NO MORE THAN THAT!)
+ * Callers are presently expected to check isFull() before attempting to send a fragment.
+ *
+ */
 
 #include "RingBuffer.h"
 #include "GCode.h"
 #include "config.h"
 
-// Number of GcodeQueue we can fit in the buffer.
 class GcodeQueue
 {
 public:
@@ -27,7 +36,7 @@ private:
   void operator=(const GcodeQueue&);
 public:
 
-  // Should be called from mainloop; handles gcode dispatch
+  // Should be called often from mainloop; handles gcode dispatch
   void handlenext();
   // Change current line number
   void setLineNumber(uint32_t l, uint8_t source);

@@ -111,7 +111,8 @@
 #define LCD_Y 2
 
 #define LCD_LINESTARTS {0x0, 0x40}
-#define LCD_FULLADDRESS 1
+
+#define LCD_TEMP_REFRESH_MILLIS 1000
 
 
 

@@ -1,6 +1,12 @@
 #ifndef _LCDKEYPAD_H_
 #define _LCDKEYPAD_H_
 #ifdef HAS_LCD
+/* LCD and Keypad support for sjfw -
+ * (c) 2011, Christopher "ScribbleJ" Jansen
+ *
+ * This class provides a system of LCD menus navigated by button presses on an attached keypad.
+ *
+ */
 
 #include "config.h"
 #include "Time.h"
@@ -12,14 +18,17 @@
 #include "SDCard.h"
 #endif
 
+// These bits of global data are used by the LCD and Keypad handler classes.
 #ifdef HAS_KEYPAD
 #include "Keypad.h"
 extern const char *_kp_buttonmap[];
 extern const Pin _kp_rpins[];
 extern const Pin _kp_cpins[];
 #endif
-
 extern uint8_t _lcd_linestarts[];
+
+
+
 
 class LCDKeypad
 {
@@ -41,6 +50,7 @@ public:
     switchmode_TEMP();
   }
 
+  // This needs to be called regularly e.g. from the mainloop.
   void handleUpdates()
   {
     LCD.handleUpdates();
@@ -55,7 +65,7 @@ public:
 #endif
 
     unsigned long now = millis();
-    if(now - last_lcdrefresh > 950)
+    if(now - last_lcdrefresh > LCD_TEMP_REFRESH_MILLIS)
     {
       last_lcdrefresh = now;
       updateTemp();
@@ -90,6 +100,7 @@ private:
 #endif
   MODE currentmode;
   
+  // 
   void inputswitch(char key)
   {
     bool handled = false;

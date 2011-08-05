@@ -79,6 +79,7 @@
 #define A_DISABLE       false
 
 
+#define USE4BITMODE
 #define LCD_RS_PIN      Pin(PortK,1)
 #define LCD_RW_PIN      Pin(PortL,7)
 #define LCD_E_PIN       Pin(PortK,3)
@@ -94,6 +95,11 @@
 #define LCD_X 20
 #define LCD_Y 4
 #define LCD_LINESTARTS {0x0, 0x40, 0x14, 0x54}
+
+// How often to update the temperature display on the LCD.
+#define LCD_TEMP_REFRESH_MILLIS 1000
+#define LCD_BUFFER_SIZE 200
+
 
 #define KP_ROWS 4
 #define KP_COLS 4

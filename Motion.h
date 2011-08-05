@@ -1,5 +1,9 @@
 #ifndef _MOTION_H_
 #define _MOTION_H_
+/* Multiple-Axis motion control.  Tightly integrated with GCode class, unfortunaetly.
+ * (c) 2011, Christopher "ScribbleJ" Jansen
+ *
+ */
 
 #include "config.h"
 #include "GCode.h"

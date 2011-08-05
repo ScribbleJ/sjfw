@@ -8,7 +8,7 @@
 extern LCDKeypad LCDKEYPAD;
 #endif 
 
-
+// QND function to estimate free ram.
 inline int getFreeRam () {
   // These externs are defined and used in libavr
   extern int __heap_start, *__brkval; 

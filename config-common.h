@@ -7,9 +7,10 @@
 // Gcode is a big structure here, 10 is a lot of ram.
 #define GCODE_BUFSIZE 10
 // Each source eats anough ram for 1 addtl gcode
-#define GCODE_SOURCES 2
+#define GCODE_SOURCES 3
 #define HOST_SOURCE 0
-#define SD_SOURCE 1
+#define SD_SOURCE   1
+#define LCD_SOURCE  2
 
 
 

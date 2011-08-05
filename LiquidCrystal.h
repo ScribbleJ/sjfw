@@ -1,15 +1,19 @@
 #ifndef LIQUID_CRYSTAL_HH
 #define LIQUID_CRYSTAL_HH
-
+/* HITACHI-style LCD support, 4- and 8-bit. 
+ * (c) 2011, Christopher "ScribbleJ" Jansen
+ *
+ * Note: 4-bit startup from poweroff is not reliable; the LCD must be powered on /long/
+ * before the MCU.  You can achieve this with a reset after starting from powerup.
+ *
+ */
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include "AvrPort.h"
 #include "RingBuffer.h"
 #include "Time.h"
-
-#define LCD_BUFFER_SIZE 200
-#define USE4BITMODE
+#include "config.h"
 
 class LiquidCrystal {
 public:
@@ -325,7 +329,7 @@ private:
     // fashion would be painful.
 
     // Hitachi docs say to set 8-bit mode in the first three calls here, but 
-    // that doesn't work, and makes only a little sense.
+    // this works more reliably.
     wait(20);
     write4init(0b00100000); 
     wait(10);

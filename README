@@ -16,6 +16,7 @@ Prusa Reprap RAMPS1.3
 Thing-O-Matic Gen4
 
 FEATURES(now):
+* Control pad and full HOSTLESS printing!
 * Advanced Gcode Pipeline
 * ISR driven movement
 * Acceleration
@@ -26,7 +27,6 @@ FEATURES(now):
 -- This repository includes a perl-based "host.pl" which can be used as a host.
 
 FEATURES(planned):
-* Control panel
 * Advanced movement calculations
 * Sanguinololu Support
 
@@ -51,6 +51,8 @@ steps settings and speeds/accel in the config file to suit.
 https://github.com/kliment/Printrun
 
 CURRENTLY KNOWN BUGS/ISSUES:
+
+* Config file for ramps13 includes everything; the others may need some love for control panel and lcd support.
 
 * Motors that are set to disable after a move only get disabled a few moves thereafter.  This should work fine, but
 don't forget a M84 at the end of your gcode to turn off all motors.

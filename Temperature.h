@@ -1,5 +1,8 @@
 #ifndef _TEMPERATURE_H_
 #define _TEMPERATURE_H_
+/* Class for managing temperatures
+ * (c) 2011, Christopher "ScribbleJ" Jansen
+ */
 
 #include "config.h"
 #ifdef USE_MBIEC

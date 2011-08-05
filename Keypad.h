@@ -1,5 +1,9 @@
 #ifndef _KEYPAD_H
 #define _KEYPAD_H
+/* Button-grid-scanning-style keypad support.  IDK what the name for these are, they are common.
+ * (c) 2011, Christopher "ScribbleJ" Jansen
+ * 
+ */
 
 #include "AvrPort.h"
 #include "Time.h"
@@ -8,6 +12,7 @@
 class Keypad {
 public:
  
+  // TODO: Why do we copy cps and rps but sit on buttonmap directly? Consistency!
   Keypad(const Pin *cps, const Pin *rps, const char **buttonmap_in, uint8_t debounce_in)
   {                    
     buttonmap = buttonmap_in;
@@ -31,6 +36,7 @@ public:
 
   }
    
+  // Scans one column of keys for keypresses.
   uint8_t scanCol(uint8_t colnum)
   {
     colpins[colnum].setDirection(true);
@@ -49,6 +55,9 @@ public:
     return ret;
   }
 
+  // returns the first pressed key that is found.
+  // note - this is expected to be called in a loop like the sjfw mainloop so that it can perform debounce.
+  // this function and the above are written this way to make it easy to add support for multiple buttons later.
   char getPressedKey()
   {
     unsigned long now = micros();

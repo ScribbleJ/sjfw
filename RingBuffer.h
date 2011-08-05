@@ -1,5 +1,11 @@
 #ifndef _RINGBUFFER_H_
 #define _RINGBUFFER_H_
+/* 'Thread'safe RingBuffer for Atmega.  
+ * (c) 2011, Christopher "ScribbleJ" Jansen
+ *
+ * Note: Safety only assured if all writes from the same 'thread' and all reads from the same 'thread'.  Mixing them is no good.
+ *
+ */
 
 #include <util/atomic.h>
 

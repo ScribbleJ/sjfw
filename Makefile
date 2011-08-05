@@ -2,23 +2,27 @@
 # Settings particular to your system
 ###########################
 USE_SD = 1
-USE_LCD = 1
-USE_KEYPAD = 1
+#USE_LCD = 1
+#USE_KEYPAD = 1
 
-# Reasonable settings for ToM Gen4
+CONFIG_PATH = ramps12
+#CONFIG_PATH = ramps13
+#CONFIG_PATH = gen4
+
+# this needs to point to the directory where you have avrdude, avr-gcc, and such.
+AVR_TOOLS_PATH = /usr/bin
+
+#Reasonable settings for Atmega1280 (regardless of board)
 #UPLOAD_RATE = 57600
 #AVRDUDE_PROGRAMMER = stk500v1
 #PORT = /dev/ttyUSB0
 #MCU = atmega1280
-#CONFIG_PATH = gen4
 
-# Reasonable settings for RAMPS
+# Reasonable settings for Atmega2560 (regardless of board)
 UPLOAD_RATE = 115200
 AVRDUDE_PROGRAMMER = stk500v2
 PORT = /dev/ttyACM0
 MCU = atmega2560
-CONFIG_PATH = ramps13
-#CONFIG_PATH = ramps12
 
 
 
@@ -57,7 +61,6 @@ EXTRA_DEFINES = $(LCD_DEFINES) $(SD_DEFINES) $(BOARD_DEFINES) $(KEYPAD_DEFINES)
 
 
 F_CPU = 16000000
-AVR_TOOLS_PATH = /usr/bin
 CXXSRC = $(EXTRA_FILES) avr/AvrPort.cpp Host.cpp Time.cpp GcodeQueue.cpp GCode.cpp Axis.cpp Motion.cpp \
 Globals.cpp Temperature.cpp 
 

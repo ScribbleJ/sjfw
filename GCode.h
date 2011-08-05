@@ -1,5 +1,12 @@
 #ifndef _MGCODE_H_
 #define _MGCODE_H_
+/* GCode handling class.  
+ * (c) 2011 Christopher "ScribbleJ" Jansen
+ *
+ * This class is responsible for holding and executing and preparsing a "Gcode" (G or M really)
+ * If you're wondering where in the source to look for something Gcode related and it's not here,
+ * check GcodeQueue, which manages a list of these.
+ */
 
 // ato? functions.
 #include <stdlib.h>
@@ -8,6 +15,7 @@
 #include "Point.h"
 #include "Time.h"
 
+// CodeParameter; basically a fancy union/variable datatype.
 class CodeParam
 {
 public:
@@ -101,7 +109,6 @@ public:
 
   static void resetlastpos(Point& lp);
 
-
   // Stuff to do if it's a G move code, otherwise not I guess.
   // This function MAY get called repeatedly before the execute() function.
   // Or, it MAY not get called at all.  No guarantees.
@@ -149,12 +156,13 @@ private:
 public:
   float feed;
 
+  // This was separated out, maybe will be again...
+  // preparsed data specific to G1 type moves.
   uint32_t movesteps;
   uint32_t axismovesteps[NUM_AXES];
   bool          axisdirs[NUM_AXES];
   int           leading_axis;
 
-  // This was separated out, maybe will be again...
   uint32_t startinterval;
   uint32_t currentinterval;
   uint32_t fullinterval;
@@ -164,7 +172,6 @@ public:
   uint32_t accel_inc;
   uint32_t steps_acceled;
   uint32_t accel_remainder;
-
   Point         endpos;
   Point         startpos;
 
