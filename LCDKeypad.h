@@ -134,23 +134,83 @@ private:
     }
   }
 
-  bool keyhandler_TEMP(char key) { return false; }
+  bool keyhandler_TEMP(char key)
+  {
+    bool handled = false;
+    switch(key)
+    {
+      case '1':
+        adjustTempHotend(5);
+        handled = true;
+        break;
+      case '3':
+        adjustTempBed(5);
+        handled = true;
+        break;
+      case '4':
+        TEMPERATURE.setHotend(0);
+        handled = true;
+        break;
+      case '6':
+        TEMPERATURE.setPlatform(0);
+        handled = true;
+        break;
+      case '7':
+        adjustTempHotend(-5);
+        handled = true;
+        break;
+      case '9':
+        adjustTempBed(-5);
+        handled = true;
+        break;
+    }
+    if(handled)
+    {
+      LCD.clear();
+      display_TEMP();
+    }
+    return handled;
+  }
+
+  void adjustTempHotend(int diff)
+  {
+    int16_t now = TEMPERATURE.getHotendST();
+    now += diff;
+    if(now < 0)
+      now = 0;
+    TEMPERATURE.setHotend(now);
+  }
+
+  void adjustTempBed(int diff)
+  {
+    int16_t now = TEMPERATURE.getPlatformST();
+    now += diff;
+    if(now < 0)
+      now = 0;
+    TEMPERATURE.setPlatform(now);
+  }
 
 
   void display_TEMP()
   {
+    int t=0;
     LCD.write("Hotend:",7);
-    LCD.write(TEMPERATURE.getHotend(),1000);
+    t = TEMPERATURE.getHotend();
+    if(t == 1024)
+      LCD.write(" ERR");
+    else
+      LCD.write(t,1000);
     LCD.write(':');
     LCD.write(TEMPERATURE.getHotendST(),100);
-    if(LCD_Y > 1)
-    {
-      LCD.setCursor(0,1);
-      LCD.write("Bed   :",7);
-      LCD.write(TEMPERATURE.getPlatform(),1000);
-      LCD.write(':');
-      LCD.write(TEMPERATURE.getPlatformST(),100);
-    }
+    LCD.setCursor(0,1);
+    LCD.write("Bed   :",7);
+    t = TEMPERATURE.getPlatform();
+    if(t == 1024)
+      LCD.write(" ERR");
+    else
+      LCD.write(t,1000);
+    LCD.write(':');
+    LCD.write(TEMPERATURE.getPlatformST(),100);
     tagline();
   }
 
