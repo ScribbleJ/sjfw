@@ -143,10 +143,8 @@ public:
 
   // TODO: replace these awful things.
   void write(uint8_t value) { enqueue(value, true); }
-  void write(char const *str, uint8_t len) 
-  {
-    for(int x = 0; x < len; x++) write(str[x]);
-  }
+  void write(char const *str, uint8_t len) { for(int x = 0; x < len; x++) write(str[x]); }
+  void write(char const *str) { for(int x=0;str[x]!=0;x++) write(str[x]); }
   void write(uint16_t d, uint16_t maxradix)
   {
     uint16_t n = d;

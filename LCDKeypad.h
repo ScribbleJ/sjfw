@@ -8,6 +8,10 @@
 #include "Host.h"
 #include "Temperature.h"
 
+#ifdef HAS_SD
+#include "SDCard.h"
+#endif
+
 #ifdef HAS_KEYPAD
 #include "Keypad.h"
 extern const char *_kp_buttonmap[];
@@ -120,12 +124,10 @@ private:
   }
 
   bool keyhandler_TEMP(char key) { return false; }
-  bool keyhandler_SDSELECT(char key) { return false; }
 
-  void switchmode_TEMP()
+
+  void display_TEMP()
   {
-    currentmode = TEMP;
-    LCD.clear();
     LCD.write("Hotend:",7);
     LCD.write(TEMPERATURE.getHotend(),1000);
     LCD.write(':');
@@ -138,11 +140,14 @@ private:
       LCD.write(':');
       LCD.write(TEMPERATURE.getPlatformST(),100);
     }
-    if(LCD_Y > 3)
-    {
-      LCD.setCursor(0,3);
-      LCD.write("SJFW  ScribbleJ",15); 
-    }
+    tagline();
+  }
+
+  void switchmode_TEMP()
+  {
+    currentmode = TEMP;
+    LCD.clear();
+    display_TEMP();
   }
 
   void updateTemp()
@@ -151,36 +156,74 @@ private:
       return;
 
     LCD.home();
-    LCD.write("Hotend:",7);
-    LCD.write(TEMPERATURE.getHotend(),1000);
-    LCD.write(':');
-    LCD.write(TEMPERATURE.getHotendST(),100);
-    if(LCD_Y > 1)
-    {
-      LCD.setCursor(0,1);
-      LCD.write("Bed   :",7);
-      LCD.write(TEMPERATURE.getPlatform(),1000);
-      LCD.write(':');
-      LCD.write(TEMPERATURE.getPlatformST(),100);
-    }
-    if(LCD_Y > 3)
-    {
-      LCD.setCursor(0,3);
-      LCD.write("SJFW  ScribbleJ",15); 
-    }
+    display_TEMP();
   }
 
+
+  bool keyhandler_SDSELECT(char key) 
+  { 
+#ifdef HAS_SD    
+    if(sdcard::isReading())
+      return false;
+
+    switch(key)
+    {
+      case '6':
+        sdcard::getNextfile();
+        switchmode_SDSELECT();
+        return true;
+      case '#':
+        sdcard::printcurrent();
+        switchmode_SDSELECT();
+        return true;
+      default:
+        return false;
+    }
+#endif
+    return false;
+  }
+    
   void switchmode_SDSELECT()
   {
     currentmode = SDSELECT;
     LCD.clear();
-    LCD.write("SD File Select", 14);
-    if(LCD_Y > 3)
+#ifdef HAS_SD    
+    if(sdcard::isReading())
     {
-      LCD.setCursor(0,3);
-      LCD.write("SJFW  ScribbleJ",15); 
+      LCD.write("Printing: ");
+      LCD.setCursor(0,1);
+      LCD.write(sdcard::getCurrentfile());
+      return;
     }
-      
+    if(sdcard::getCurrentfile()[0] == 0)
+      sdcard::getNextfile();
+
+    LCD.write("SD File Select");
+    LCD.setCursor(0,1);
+    LCD.write("> ");
+    LCD.write(sdcard::getCurrentfile());
+    if(LCD_Y > 2)
+    {
+      LCD.setCursor(0,2);
+      LCD.write("6=NEXT #=PRINT");
+    }
+#else
+    LCD.write("Get SD from");
+    LCD.setCursor(0,1);
+    LCD.write("Kliment on IRC");
+#endif    
+    tagline();
+  }
+
+  void tagline()
+  {
+    if(LCD_Y < 4)
+      return;
+    LCD.setCursor(0,3);
+    if(LCD_X > 16)
+      LCD.write("SJFW by ScribbleJ");
+    else
+      LCD.write("ScribbleJ's SJFW");
   }
 
 };

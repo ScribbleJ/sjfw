@@ -45,6 +45,12 @@ else
  BOARD_FILES = temperature/Thermistor.cpp temperature/ThermistorTable.cpp avr/AnalogPin.cpp
  BOARD_DEFINES = -I./temperature/
 endif
+ifeq ($(MCU),atmega644p)
+  OPT = s
+else
+  OPT = 2
+endif
+  
 
 EXTRA_FILES = $(LCD_FILES) $(SD_FILES) $(BOARD_FILES) $(KEYPAD_FILES)
 EXTRA_DEFINES = $(LCD_DEFINES) $(SD_DEFINES) $(BOARD_DEFINES) $(KEYPAD_DEFINES)
@@ -57,7 +63,6 @@ Globals.cpp Temperature.cpp
 
 
 FORMAT = ihex
-OPT = 2
 
 # Place -D or -U options here
 CXXDEFS = -DF_CPU=$(F_CPU) $(EXTRA_DEFINES)
