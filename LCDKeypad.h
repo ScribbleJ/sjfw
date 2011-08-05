@@ -28,7 +28,6 @@ extern const Pin _kp_cpins[];
 #endif
 extern uint8_t _lcd_linestarts[];
 extern float const RATES_OF_CHANGE[];
-extern float const* const ROC_END;
 
 
 
@@ -50,6 +49,8 @@ public:
   {
     lastkey = 0;
     last_lcdrefresh = millis();
+    motordistance_roc = &RATES_OF_CHANGE[0];
+    ROC_START = motordistance_roc;
     switchmode_TEMP();
   }
 
@@ -112,6 +113,7 @@ private:
   int  tempdistance;
   float motordistance;
   float const* motordistance_roc;
+  float const* ROC_START;
   bool extrude;
   
   void inputswitch(char key)
@@ -265,10 +267,10 @@ private:
     switch(key)
     {
       case '1':
-        //motordistance += *motordistance_roc;
+        motordistance += *motordistance_roc;
         return true;
       case '7':
-        //motordistance -= *motordistance_roc;
+        motordistance -= *motordistance_roc;
         if(motordistance < 0)
           motordistance = 0;
         return true;
@@ -276,9 +278,11 @@ private:
         extrude = !extrude;
         return true;
       case '#':
-        //motordistance_roc++;
-        //if(motordistance_roc == ROC_END)
-        //  motordistance_roc = &RATES_OF_CHANGE[0];
+        motordistance_roc++;
+        if(*motordistance_roc == 0.0f)
+        {
+          motordistance_roc = ROC_START;
+        }
         return true;
       case '5':
         ; //insert M84
