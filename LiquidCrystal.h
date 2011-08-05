@@ -8,7 +8,7 @@
 #include "RingBuffer.h"
 #include "Time.h"
 
-#define LCD_BUFFER_SIZE 100
+#define LCD_BUFFER_SIZE 200
 #define USE4BITMODE
 
 class LiquidCrystal {

@@ -32,40 +32,38 @@ public:
     ,KEYPAD(_kp_cpins, _kp_rpins, _kp_buttonmap, KEYPAD_DEBOUNCE_MICROS)
 #endif    
   {
-    LCD.clear();
-    LCD.write("start",5);
-    LCD.setCursor(0,1);
-    LCD.write("ScribbleJ",9);
-
     lastkey = 0;
     last_lcdrefresh = millis();
-    changeMode(TEMP);
+    switchmode_TEMP();
   }
 
   void handleUpdates()
   {
-    unsigned long now = millis();
-
-    if(now - last_lcdrefresh > 950)
-    {
-      updateTemp();
-    }
-
     LCD.handleUpdates();
 
 #ifdef HAS_KEYPAD
     char pressedkey = KEYPAD.getPressedKey();
     if(pressedkey && pressedkey != lastkey)
     {
-      HOST.write("PK:"); HOST.write(pressedkey); HOST.endl();
+      inputswitch(pressedkey);
     }
     lastkey = pressedkey;
 #endif
+
+    unsigned long now = millis();
+    if(now - last_lcdrefresh > 950)
+    {
+      last_lcdrefresh = now;
+      updateTemp();
+    }
 
   }
 
   void changeMode(MODE which)
   {
+    if(currentmode == which)
+      return;
+
     switch(which)
     {
       case TEMP:
@@ -88,6 +86,42 @@ private:
 #endif
   MODE currentmode;
   
+  void inputswitch(char key)
+  {
+    bool handled = false;
+    switch(currentmode)
+    {
+      case TEMP:
+        handled = keyhandler_TEMP(key);
+        break;
+      case SDSELECT:
+        handled = keyhandler_SDSELECT(key);
+        break;
+    }
+    if(!handled)
+    {
+      keyhandler_default(key);
+    }
+  }
+
+  void keyhandler_default(char key) 
+  {
+    switch(key)
+    {
+      case 'A':
+        changeMode(TEMP);
+        break;
+      case 'B':
+        changeMode(SDSELECT);
+        break;
+      default:
+        ;
+    }
+  }
+
+  bool keyhandler_TEMP(char key) { return false; }
+  bool keyhandler_SDSELECT(char key) { return false; }
+
   void switchmode_TEMP()
   {
     currentmode = TEMP;
@@ -140,7 +174,13 @@ private:
   {
     currentmode = SDSELECT;
     LCD.clear();
-    LCD.write("SD File Select", 15);
+    LCD.write("SD File Select", 14);
+    if(LCD_Y > 3)
+    {
+      LCD.setCursor(0,3);
+      LCD.write("SJFW  ScribbleJ",15); 
+    }
+      
   }
 
 };

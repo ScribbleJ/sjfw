@@ -57,7 +57,7 @@ Globals.cpp Temperature.cpp
 
 
 FORMAT = ihex
-OPT = s
+OPT = 2
 
 # Place -D or -U options here
 CXXDEFS = -DF_CPU=$(F_CPU) $(EXTRA_DEFINES)
