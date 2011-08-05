@@ -146,6 +146,17 @@ public:
     writeDDRAM(offset);
   }
 
+  void writeCustomChar(int idx, char const *data)
+  {
+    writeCGRAM(idx * 8);
+    for(int x=0;x<8;x++)
+    {
+      write(*data);
+      data++;
+    }
+    writeDDRAM(_linestarts[0]);
+  }
+
   // TODO: replace these awful things.
   void write(char const value) { enqueue(value, true); }
   void write(char const *str) { for(int x=0;str[x]!=0;x++) write(str[x]); }

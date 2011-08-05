@@ -30,9 +30,6 @@ extern const Pin _kp_cpins[];
 extern uint8_t _lcd_linestarts[];
 extern float const RATES_OF_CHANGE[];
 
-
-
-
 class LCDKeypad
 {
 public:
@@ -73,6 +70,7 @@ public:
     if(now - last_lcdrefresh > LCD_REFRESH_MILLIS)
     {
       last_lcdrefresh = now;
+      update_TEMPGRAPH();
       update_TEMP();
       update_MOTORS();
     }
@@ -116,6 +114,7 @@ private:
   float const* motordistance_roc;
   float const* ROC_START;
   bool extrude;
+  char tgraph[8*8];
   
   void inputswitch(char key)
   {
@@ -219,6 +218,36 @@ private:
   }
 
 
+  void update_TEMPGRAPH()
+  {
+    int d=TEMPERATURE.getHotend()-TEMPERATURE.getHotendST();
+    if(d > 7)
+      d=7;
+    if(d < -8)
+      d=-8;
+    d+=8;
+    d=16-d;
+
+    for(int x=0;x<16;x++)
+    {
+      for(int y=0;y<3;y++)
+      {
+        tgraph[(y*16)+x] <<= 1;
+        if(tgraph[16+(y*16)+x] & 0b00010000)
+          tgraph[(y*16)+x] |= 1;
+        tgraph[(y*16)+x] &= 0b00011111;
+      }
+      tgraph[x+48] <<= 1;
+      if(x == d)
+        tgraph[x+48] |= 1;
+      tgraph[x+48] &= 0b00011111;
+    }
+    for(int x=0;x<8;x++)
+    {
+      LCD.writeCustomChar(x,tgraph+(x*8));
+    }
+  }
+
   void display_TEMP()
   {
     int t=0;
@@ -245,6 +274,20 @@ private:
       LCD.write("/ ");
       LCD.write(TEMPERATURE.getPlatformST());
     }
+    if(LCD_X>16)
+    {
+      LCD.setCursor(16,0);
+      LCD.write((char)0);
+      LCD.write((char)2);
+      LCD.write((char)4);
+      LCD.write((char)6);
+      LCD.setCursor(16,1);
+      LCD.write((char)1);
+      LCD.write((char)3);
+      LCD.write((char)5);
+      LCD.write((char)7);
+    }
+
     tagline();
   }
 
@@ -366,8 +409,12 @@ private:
       LCD.label("E:", lastpos[E]);
       LCD.setCursor(0,2);
       LCD.label("Move:", motordistance);
-      LCD.label("/",*motordistance_roc);
-      LCD.label("E:", extrude ? "ON" : "--");
+      if(LCD_X > 16)
+        LCD.label(" ROC:",*motordistance_roc);
+      else
+        LCD.label("/",*motordistance_roc);
+      LCD.setCursor(0,3);
+      LCD.label("Extruder:", extrude ? "ON " : "OFF");
     }
     else
     {
@@ -375,7 +422,6 @@ private:
       LCD.label("/",*motordistance_roc);
       LCD.label(" E:", extrude ? "-" : "*");
     }
-    tagline();
   }
 
   bool keyhandler_MENU(char key) { return false; }

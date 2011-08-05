@@ -12,6 +12,11 @@
 #define SD_SOURCE   1
 #define LCD_SOURCE  2
 
+// How often to update the temperature display on the LCD.
+#define LCD_REFRESH_MILLIS 1000
+// Size of LCD command queue.. should be minimum of LCD_X*LCD_Y + 100
+#define LCD_BUFFER_SIZE 300
+
 
 
 // RECV buffer must be large enough to hold at least 1 full line of gcode.  Anything
