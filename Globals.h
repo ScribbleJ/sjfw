@@ -2,12 +2,6 @@
 #define _GLOBALS_H_
 
 #include "config.h"
-
-#ifdef HAS_LCD
-#include "LCDKeypad.h"
-extern LCDKeypad LCDKEYPAD;
-#endif 
-
 // QND function to estimate free ram.
 inline int getFreeRam () {
   // These externs are defined and used in libavr

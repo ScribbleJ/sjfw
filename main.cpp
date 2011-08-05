@@ -8,6 +8,12 @@
 #include "Time.h"
 #include <avr/interrupt.h>
 #include "Globals.h"
+
+#ifdef HAS_LCD
+#include "LCDKeypad.h"
+extern LCDKeypad LCDKEYPAD;
+#endif 
+
 #include "config.h"
 #include "SDCard.h"
 int main(void)
