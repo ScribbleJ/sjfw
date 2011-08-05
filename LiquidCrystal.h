@@ -148,7 +148,6 @@ public:
 
   // TODO: replace these awful things.
   void write(char const value) { enqueue(value, true); }
-  void write(char const *str, uint8_t len) { for(int x = 0; x < len; x++) write(str[x]); }
   void write(char const *str) { for(int x=0;str[x]!=0;x++) write(str[x]); }
   void write(float n, signed char width, unsigned char prec)
   {

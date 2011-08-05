@@ -194,23 +194,29 @@ private:
   void display_TEMP()
   {
     int t=0;
-    LCD.write("Hotend:");
+    LCD.write("Hotend: ");
     t = TEMPERATURE.getHotend();
     if(t == 1024)
-      LCD.write(" ERR");
+      LCD.write("MISSING!");
     else
+    {
       LCD.write(t);
-    LCD.write(':');
-    LCD.write(TEMPERATURE.getHotendST());
+      LCD.setCursor(11,0);
+      LCD.write("/ ");
+      LCD.write(TEMPERATURE.getHotendST());
+    }
     LCD.setCursor(0,1);
-    LCD.write("Bed   :");
+    LCD.write("Bed   : ");
     t = TEMPERATURE.getPlatform();
     if(t == 1024)
-      LCD.write(" ERR");
+      LCD.write("MISSING!");
     else
+    {
       LCD.write(t);
-    LCD.write(':');
-    LCD.write(TEMPERATURE.getPlatformST());
+      LCD.setCursor(11,1);
+      LCD.write("/ ");
+      LCD.write(TEMPERATURE.getPlatformST());
+    }
     tagline();
   }
 
