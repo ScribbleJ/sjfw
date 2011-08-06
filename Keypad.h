@@ -23,18 +23,34 @@ public:
     for (int i = 0; i < KP_COLS; i++) 
     {
       colpins[i] = cps[i];
+    }
+
+    for (int i = 0; i < KP_ROWS; i++) 
+    {
+      rowpins[i] = rps[i];
+    }
+
+    reinit();
+  }
+
+  void reinit()
+  {
+    if(colpins[0].isNull())
+      return;
+
+    for (int i = 0; i < KP_COLS; i++) 
+    {
       colpins[i].setDirection(false);
       colpins[i].setValue(true);
     }
 
     for (int i = 0; i < KP_ROWS; i++) 
     {
-      rowpins[i] = rps[i];
       rowpins[i].setDirection(false);
       rowpins[i].setValue(true);
     }
-
   }
+
    
   // Scans one column of keys for keypresses.
   uint8_t scanCol(uint8_t colnum)
@@ -60,6 +76,10 @@ public:
   // this function and the above are written this way to make it easy to add support for multiple buttons later.
   char getPressedKey()
   {
+    // if config is invalid, maybe we get it later.
+    if(colpins[0].isNull())
+      return 0;
+
     unsigned long now = micros();
 
     uint8_t colscan = 0;
@@ -94,6 +114,36 @@ public:
     return 0;
   }
 
+  // Reads configuration from specially-formatted string.
+  void parseSettings(char const* str, int charsin)
+  {
+#define KP_PS(FOO)                                   \
+    if(str[x+2] == '-')                                     \
+    {                                                       \
+      FOO(PortNull,0,str[x+1]-'0');                                  \
+      x+=3;                                                 \
+      continue;                                             \
+    }                                                       \
+    FOO(Port::getPortFromLetter(str[x+2]), str[x+3]-'0',str[x+1]-'0');\
+    x+=3;
+
+
+    for(int x=0;x<charsin && str[x]!='*' && str[x]>32;x++)
+    {
+      switch(str[x])
+      {
+        case 'C':
+          KP_PS(setColPin);
+          break;
+        case 'R':
+          KP_PS(setRowPin);
+          break;
+      }
+    }
+  }
+
+  void setColPin(Port& p, int pin, int n) { colpins[n] = Pin(p, pin); }
+  void setRowPin(Port& p, int pin, int n) { rowpins[n] = Pin(p, pin); }
 
 private:
   Pin colpins[KP_COLS];

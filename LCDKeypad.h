@@ -85,9 +85,9 @@ public:
 
   void doKeypadSettings(char const* str, int charsin)
   {
-    ;
+    KEYPAD.parseSettings(str, charsin);
+    KEYPAD.reinit();
   }
-
 
 
   void changeMode(MODE which)
