@@ -161,6 +161,8 @@ public:
           break;
       }
     }
+    if(!_data_pins[7].isNull())
+      reinit();
   }
 
 

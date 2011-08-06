@@ -75,23 +75,28 @@ void Temperature::update()
   }
 
 
-  if(hotend_therm.getTemperature() >= hotend_setpoint)
+  if(!hotend_heat.isNull())
   {
-    hotend_heat.setValue(false);
-  }
-  else
-  {
-    hotend_heat.setValue(true);
+    if(hotend_therm.getTemperature() >= hotend_setpoint)
+    {
+      hotend_heat.setValue(false);
+    }
+    else
+    {
+      hotend_heat.setValue(true);
+    }
   }
 
-
-  if(platform_therm.getTemperature() >= platform_setpoint)
+  if(!platform_heat.isNull())
   {
-    platform_heat.setValue(false);
-  }
-  else
-  {
-    platform_heat.setValue(true);
+    if(platform_therm.getTemperature() >= platform_setpoint)
+    {
+      platform_heat.setValue(false);
+    }
+    else
+    {
+      platform_heat.setValue(true);
+    }
   }
 
 }

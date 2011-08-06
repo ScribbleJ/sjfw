@@ -6,9 +6,15 @@ USE_LCD = 1
 USE_KEYPAD = 1
 
 #CONFIG_PATH = ramps12
-CONFIG_PATH = ramps13
+#CONFIG_PATH = ramps13
 #CONFIG_PATH = gen4
 #CONFIG_PATH = triffid
+
+# "generic" is a special config with no pins defined.
+# You should be able to compile this for your chip, upload it, then configure the pins at
+# runtime.
+CONFIG_PATH = generic
+
 
 # this needs to point to the directory where you have avrdude, avr-gcc, and such.
 AVR_TOOLS_PATH = /usr/bin

@@ -55,7 +55,7 @@ private:
 public:
 	Thermistor(int8_t analog_pin, uint8_t table_index);
 	void init();
-  void changePin(int pin) { analog_pin = pin; }
+  void changePin(int pin) { analog_pin = pin; init(); }
 	// True if update initiated, false otherwise
 	SensorState update();
 };

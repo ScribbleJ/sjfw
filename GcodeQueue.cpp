@@ -290,6 +290,7 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
   
 }
 
+// TODO: Move these.
 bool GcodeQueue::doPinSetting(GCode& c, char const* str, int charsin)
 {
   int axis = str[0] - 'X';
@@ -351,7 +352,7 @@ bool GcodeQueue::doPinSetting(GCode& c, char const* str, int charsin)
         x++;
         break;
       case 'K':
-        MOTION.getAxis(axis).setPULLUPS(str[x+1]-'0');
+        MOTION.getAxis(axis).setEND_INVERT(str[x+1]-'0');
         x++;
         break;
     }

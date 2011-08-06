@@ -58,15 +58,7 @@ while(1)
   elsif($bufsize < $bufmax and scalar @ready and $started and defined(my $line=<STDIN>))
   {
     chomp $line;
-    if($line =~ m/^(.*?)\s*(\(.*)?$/o)
-    {
-      $line = $1;
-    }
-    else
-    {
-      print "Bad line: $line\n";
-      next;
-    }
+    $line =~ s/\(.*$//o;
 
     $line = "N$linenum $line";
     my $ck = 0;

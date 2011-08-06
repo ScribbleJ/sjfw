@@ -13,6 +13,9 @@ I appreciate any bug reports, patches, and amusing stories about how this firmwa
 me on Freenode IRC, channel #reprap.  Or email at scribblej@yahoo.com.
 
 
+VERY IMPORTANT!!!!!!!!!
+The documentation below may be out of date.  Please see http://reprap.org/wiki/Sjfw for lastest full documentation.
+
 SUPPORTED HARDWARE:
 Prusa Reprap RAMPS1.2 (experimental!)
 Prusa Reprap RAMPS1.3
@@ -26,6 +29,7 @@ FEATURES(now):
 * LCD Temperature Display
 * "Volumteric" Printing
 * SD Card support
+* Runtime Configuration
 -- Tested and working with "Pronterface" Reprap host, the best Reprap host there is presently.
 -- This repository includes a perl-based "host.pl" which can be used as a host.
 
