@@ -60,6 +60,9 @@ public:
     if(_data_pins[7].isNull())
       return;
       
+    commandQueue.reset();
+    modeQueue.reset();
+
     _rs_pin.setDirection(true);
     _rs_pin.setValue(false);
     _rw_pin.setDirection(true); 

@@ -324,7 +324,7 @@ private:
     if(currentmode != TEMP)
       return;
 
-    LCD.home();
+    LCD.clear();
     display_TEMP();
   }
 

@@ -14,7 +14,7 @@
 #define HOTEND_HEAT_PIN Pin()
 #define PLATFORM_HEAT_PIN Pin()
 
-//#define SD_AUTORUN 
+#define SD_AUTORUN 
 #define SD_DETECT_PIN   Pin()
 #define SD_WRITE_PIN    Pin()
 #define SD_SELECT_PIN   Pin(PortB, 0)

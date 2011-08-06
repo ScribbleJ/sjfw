@@ -31,11 +31,5 @@ M201 X2000 Y2000 Z75 E5000             (safest if we repeat the last 4...)
 M203 X2000 Y2000 Z75 E5000             (lines, so we don't need to worry...)
 M202 X12000 Y12000 Z150 E24000         (about the proper ordering of them.)
 M206 X300 Y300 Z50 E2000 (set accel mm/s/s)
-G91
-G1 X10 Y10
-G1 Z5
-G1 X-10 Y-10
-G1 Z-5
 M84
-
 
