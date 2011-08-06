@@ -296,7 +296,7 @@ bool GcodeQueue::doPinSetting(GCode& c, char const* str, int charsin)
 
   //HOST.labelnum("PCHANGE ", axis, false);
   //HOST.write(':');
-  MOTION.getAxis(axis).dump_to_host();
+  //MOTION.getAxis(axis).dump_to_host();
   for(int x=1;x<charsin && str[x]!='*' && str[x]>32;x++)
   {
     //HOST.write("  ");
@@ -351,7 +351,7 @@ bool GcodeQueue::doPinSetting(GCode& c, char const* str, int charsin)
     }
   }
 
-  MOTION.getAxis(axis).dump_to_host();
+  //MOTION.getAxis(axis).dump_to_host();
     
   return true;
 

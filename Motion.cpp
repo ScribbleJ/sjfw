@@ -307,7 +307,7 @@ void Motion::handleInterrupt()
     if(current_gcode->movesteps == current_gcode->steps_acceled)
     {
       current_gcode->fullinterval = lastinterval;
-      AXES[0].dump_to_host();
+      //AXES[0].dump_to_host();
     }
 
     // Decelerate!
