@@ -186,6 +186,15 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
     case 'T':
       c[T].setInt(bytes+1);
       break;
+    // SPECIAL HANDLING FOR PINSETTING
+    case '$':
+      // Only activate pinsetting mode if G and M are /both/ set
+      // This is both a nice way to signal something unusual is happening
+      // and also causes the code to not get dropped into the queue.
+      if(c[M].isUnused() || c[G].isUnused())
+        break;
+      doPinSetting(c, bytes+1,numbytes);
+      break;
     case 0:
       ; // noise
       break;
@@ -258,6 +267,95 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
   
 }
 
+Port GcodeQueue::PORTMAP[] = 
+{
+  PortA,
+  PortB,
+  PortC,
+  PortD,
+  PortE,
+  PortF,
+  PortG,
+  PortH,
+  Port(0xFFFF),
+  PortJ,
+  PortK,
+  PortL
+};
+
+Port& GcodeQueue::getPortFromLetter(char l)
+{
+  return(PORTMAP[l-'A']);
+}
+
+bool GcodeQueue::doPinSetting(GCode& c, char const* str, int charsin)
+{
+  int axis = str[0] - 'X';
+  if(str[0] < 'X')
+    axis = str[0] - 'A' + 3;
+
+  //HOST.labelnum("PCHANGE ", axis, false);
+  //HOST.write(':');
+  MOTION.getAxis(axis).dump_to_host();
+  for(int x=1;x<charsin && str[x]!='*' && str[x]>32;x++)
+  {
+    //HOST.write("  ");
+    //HOST.write(str[x]);
+    //HOST.write(" is:");
+    //HOST.write(str[x+1]);
+    //HOST.labelnum(",",(str[x+2]-'0'),true);
+    //x+=2;
+#define _DOPINSETTING(FOO)  \
+    if(str[x+1] == '-') \
+    {                   \
+      MOTION.getAxis(axis).FOO(PORTMAP[8],0); \
+      x+=2;             \
+      continue;         \
+    }                   \
+    MOTION.getAxis(axis).FOO(getPortFromLetter(str[x+1]), str[x+2]-'0'); \
+    x+=2; 
+
+    switch(str[x])
+    {
+      case 'S':
+        _DOPINSETTING(changepinStep);
+        break;
+      case 'D':
+        _DOPINSETTING(changepinDir);
+        break;
+      case 'E':
+        _DOPINSETTING(changepinEnable);
+        break;
+      case 'I':
+        _DOPINSETTING(changepinMin);
+        break;
+      case 'A':
+        _DOPINSETTING(changepinMax);
+        break;
+      case 'N':
+        MOTION.getAxis(axis).setInvert(str[x+1]-'0');
+        x++;
+        break;
+      case 'X':
+        MOTION.getAxis(axis).setDisable(str[x+1]-'0');
+        x++;
+        break;
+      case 'J':
+        MOTION.getAxis(axis).setPULLUPS(str[x+1]-'0');
+        x++;
+        break;
+      case 'K':
+        MOTION.getAxis(axis).setPULLUPS(str[x+1]-'0');
+        x++;
+        break;
+    }
+  }
+
+  MOTION.getAxis(axis).dump_to_host();
+    
+  return true;
+
+}
 void GcodeQueue::Invalidate() { invalidate_codes = true; }
 
 

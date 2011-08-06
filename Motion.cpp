@@ -296,7 +296,10 @@ void Motion::handleInterrupt()
   {
     // This is just here to log the data of the minimum steptime
     if(current_gcode->movesteps == current_gcode->steps_acceled)
+    {
       current_gcode->fullinterval = lastinterval;
+      AXES[0].dump_to_host();
+    }
 
     // Decelerate!
     while(lastinterval >= current_gcode->accel_inc)

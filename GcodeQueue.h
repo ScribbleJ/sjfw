@@ -14,6 +14,7 @@
 #include "RingBuffer.h"
 #include "GCode.h"
 #include "config.h"
+#include "AvrPort.h"
 
 class GcodeQueue
 {
@@ -61,6 +62,11 @@ private:
   int32_t line_number[GCODE_SOURCES];
   uint8_t chars_in_line[GCODE_SOURCES];
   bool invalidate_codes;
+
+  // Helpers for coniguration change hak
+  static Port PORTMAP[];
+  Port& getPortFromLetter(char l);
+  bool  doPinSetting(GCode& c, char const* str, int numbytes);
 };
   
 extern GcodeQueue& GCODES;  

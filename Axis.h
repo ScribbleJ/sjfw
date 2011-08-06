@@ -13,10 +13,9 @@ class Axis
 {
   public:
 	Axis(Pin step_pin, Pin dir_pin, Pin enable_pin, Pin min_pin, Pin max_pin, 
-       float steps_per_unit, bool dir_inverted, float max_length,
+       float steps_per_unit, bool dir_inverted,
        float max_feedrate, float avg_feedrate, float min_feedrate, 
-       float accel_rate_in_units, bool disable_after_move,
-       int homing_dir);
+       float accel_rate_in_units, bool disable_after_move);
 
   // Interval measured in clock ticks
   // feedrate in mm/min
@@ -73,19 +72,21 @@ class Axis
     if(steps_remaining == 0) return;
     if(direction)
     {
-      if(!max_pin.isNull() && max_pin.getValue() != ENDSTOPS_INVERTING)
+      if(!max_pin.isNull() && max_pin.getValue() != END_INVERT)
       {
         position += (float)(steps_to_take-steps_remaining) / steps_per_unit;
         steps_remaining = 0;
+        HOST.write("AES\n");
         return;
       }
     }
     else
     {
-      if(!min_pin.isNull() && min_pin.getValue() != ENDSTOPS_INVERTING)
+      if(!min_pin.isNull() && min_pin.getValue() != END_INVERT)
       {
         position -= (float)(steps_to_take-steps_remaining) / steps_per_unit;
         steps_remaining = 0;
+        HOST.write("IES\n");
         return;
       }
     }
@@ -118,27 +119,62 @@ class Axis
 
   void disableIfConfigured() { if(disable_after_move) disable(); }
 
+  void changepinStep(Port& p, int bit)
+  {
+    step_pin = Pin(p, bit);
+    step_pin.setDirection(true); step_pin.setValue(false);
+  }
+
+  void changepinDir(Port& p, int bit)
+  {
+    dir_pin = Pin(p, bit);
+    dir_pin.setDirection(true); dir_pin.setValue(false);
+  }
+
+  void changepinEnable(Port& p, int bit)
+  {
+    enable_pin = Pin(p, bit);
+    enable_pin.setDirection(true); enable_pin.setValue(true);
+  }
+
+  void changepinMin(Port& p, int bit)
+  {
+    min_pin = Pin(p, bit);
+    min_pin.setDirection(false); min_pin.setValue(PULLUPS);
+  }
+
+  void changepinMax(Port& p, int bit)
+  {
+    max_pin = Pin(p, bit);
+    max_pin.setDirection(false); min_pin.setValue(PULLUPS);
+  }
+
+  void setInvert(bool v) { dir_inverted = v; }
+  void setDisable(bool v) { disable_after_move = v; }
+  static void setPULLUPS(bool v) { PULLUPS = v; };
+  static void setEND_INVERT(bool v) { END_INVERT = v; };
+
 private:
+  static bool PULLUPS;
+  static bool END_INVERT;
   volatile float position;
 	volatile bool direction;
 	volatile uint32_t steps_to_take;
 	volatile uint32_t steps_remaining;
 
 	float steps_per_unit;
-  float max_length;
 
   uint32_t min_interval, avg_interval, max_interval;
   uint32_t accel_rate;
 
   int homing_dir;
 	
-	Pin step_pin;
-	Pin dir_pin;
+	 Pin step_pin;
+	 Pin dir_pin;
 	bool dir_inverted;
-	Pin enable_pin;
-	bool enable_inverted;
-	Pin min_pin;
-	Pin max_pin;
+	 Pin enable_pin;
+	 Pin min_pin;
+	 Pin max_pin;
 	bool relative;
   bool disable_after_move;
 

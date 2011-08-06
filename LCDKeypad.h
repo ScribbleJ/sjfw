@@ -485,6 +485,7 @@ private:
       LCD.write("Printing: ");
       LCD.setCursor(0,1);
       LCD.write(sdcard::getCurrentfile());
+      tagline();
       return;
     }
     if(sdcard::getCurrentfile()[0] == 0)

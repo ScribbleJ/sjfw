@@ -41,6 +41,7 @@ private:
 public:
 	Port() : port_base(NULL_PORT) {}
 	Port(port_base_t port_base_in) : port_base(port_base_in) {}
+  Port& operator=(const Port& p) { port_base = p.port_base; return *this; }
 
 	bool isNull() { return port_base == NULL_PORT; }
 	void setPinDirection(uint8_t pin_index, bool out) {
@@ -52,6 +53,7 @@ public:
 	void setPin(uint8_t pin_index, bool on) {
 		PORTx = (PORTx & ~_BV(pin_index)) | (on?_BV(pin_index):0);
 	}
+  port_base_t getpb() const { return port_base; }
 };
 
 extern Port PortA, PortB, PortC, PortD;
@@ -65,11 +67,13 @@ private:
 public:
 	Pin() : port(Port()), pin_index(0) {}
 	Pin(Port& port_in, uint8_t pin_index_in) : port(port_in), pin_index(pin_index_in) {}
+  Pin& operator=(const Pin& p) { port = p.port; pin_index = p.pin_index; return *this; }
 	bool isNull() { return port.isNull(); }
 	void setDirection(bool out) { port.setPinDirection(pin_index,out); }
 	bool getValue() { return port.getPin(pin_index); }
 	void setValue(bool on) { port.setPin(pin_index,on); }
 	const uint8_t getPinIndex() const { return pin_index; }
+  uint16_t getPortIndex() const { return port.getpb(); }
 };
 
 #endif // SHARED_AVR_PORT_HH_
