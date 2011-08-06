@@ -123,30 +123,44 @@ class Axis
   void changepinStep(Port& p, int bit)
   {
     step_pin = Pin(p, bit);
+    if(step_pin.isNull())
+      return;
     step_pin.setDirection(true); step_pin.setValue(false);
   }
 
   void changepinDir(Port& p, int bit)
   {
     dir_pin = Pin(p, bit);
+    if(dir_pin.isNull())
+      return;
+
     dir_pin.setDirection(true); dir_pin.setValue(false);
   }
 
   void changepinEnable(Port& p, int bit)
   {
     enable_pin = Pin(p, bit);
+    if(enable_pin.isNull())
+      return;
+
     enable_pin.setDirection(true); enable_pin.setValue(true);
   }
 
   void changepinMin(Port& p, int bit)
   {
     min_pin = Pin(p, bit);
+    if(min_pin.isNull())
+      return;
+
     min_pin.setDirection(false); min_pin.setValue(PULLUPS);
   }
 
   void changepinMax(Port& p, int bit)
   {
     max_pin = Pin(p, bit);
+    if(max_pin.isNull())
+      return;
+
     max_pin.setDirection(false); min_pin.setValue(PULLUPS);
   }
 

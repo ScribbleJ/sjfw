@@ -72,7 +72,9 @@ void GcodeQueue::enqueue(GCode &c)
 {
   if(c[M].isUnused() == c[G].isUnused()) // Both used or both unused is an error.
   {
+#ifndef REPRAP_COMPAT  
     c.dump_to_host();
+#endif    
     return;
   }
   codes.push(c);
@@ -294,23 +296,27 @@ bool GcodeQueue::doPinSetting(GCode& c, char const* str, int charsin)
   if(str[0] < 'X')
     axis = str[0] - 'A' + 3;
 
-  //HOST.labelnum("PCHANGE ", axis, false);
-  //HOST.write(':');
+  //HOST.labelnum("PCHANGE ", axis, true);
   //MOTION.getAxis(axis).dump_to_host();
   for(int x=1;x<charsin && str[x]!='*' && str[x]>32;x++)
   {
     //HOST.write("  ");
     //HOST.write(str[x]);
     //HOST.write(" is:");
-    //HOST.write(str[x+1]);
-    //HOST.labelnum(",",(str[x+2]-'0'),true);
-    //x+=2;
+    //if(str[x+1] == '-')
+    //  HOST.write("NULL\n");
+    //else
+    //{
+    //  HOST.write(str[x+1]);
+    //  HOST.labelnum(",",(str[x+2]-'0'),true);
+    //}
+
 #define _DOPINSETTING(FOO)  \
     if(str[x+1] == '-') \
     {                   \
       MOTION.getAxis(axis).FOO(PortNull,0); \
       x+=2;             \
-      continue;         \
+      break;         \
     }                   \
     MOTION.getAxis(axis).FOO(Port::getPortFromLetter(str[x+1]), str[x+2]-'0'); \
     x+=2; 
