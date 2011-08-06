@@ -49,9 +49,10 @@ public:
     last_lcdrefresh = millis();
     motordistance_roc = &RATES_OF_CHANGE[0];
     ROC_START = motordistance_roc;
+    lcd_x = LCD.getCols();
+    lcd_y = LCD.getRows();
     switchmode_TEMP();
   }
-
   // This needs to be called regularly e.g. from the mainloop.
   void handleUpdates()
   {
@@ -115,6 +116,10 @@ private:
   float const* ROC_START;
   bool extrude;
   char tgraph[8*8];
+  int lcd_x;
+  int lcd_y;
+
+
   
   void inputswitch(char key)
   {
@@ -252,7 +257,7 @@ private:
   void display_TEMP()
   {
     int t=0;
-    if(LCD_X>16)
+    if(lcd_x>16)
       LCD.write("Hotend: ");
     else
       LCD.write("H:");
@@ -262,12 +267,12 @@ private:
     else
     {
       LCD.write(t);
-      LCD.setCursor(LCD_X > 16 ? 11 : 6,0);
+      LCD.setCursor(lcd_x > 16 ? 11 : 6,0);
       LCD.write("/ ");
       LCD.write(TEMPERATURE.getHotendST());
     }
     LCD.setCursor(0,1);
-    if(LCD_X>16)
+    if(lcd_x>16)
       LCD.write("Bed   : ");
     else
       LCD.write("B:");
@@ -277,16 +282,16 @@ private:
     else
     {
       LCD.write(t);
-      LCD.setCursor(LCD_X > 16 ? 11 : 6,1);
+      LCD.setCursor(lcd_x > 16 ? 11 : 6,1);
       LCD.write("/ ");
       LCD.write(TEMPERATURE.getPlatformST());
     }
-    LCD.setCursor(LCD_X > 16 ? 16 : 12,0);
+    LCD.setCursor(lcd_x > 16 ? 16 : 12,0);
     LCD.write((char)0);
     LCD.write((char)2);
     LCD.write((char)4);
     LCD.write((char)6);
-    LCD.setCursor(LCD_X > 16 ? 16 : 12,1);
+    LCD.setCursor(lcd_x > 16 ? 16 : 12,1);
     LCD.write((char)1);
     LCD.write((char)3);
     LCD.write((char)5);
@@ -407,13 +412,13 @@ private:
     LCD.label("Y:", lastpos[Y]);
     LCD.setCursor(0,1);
     LCD.label("Z:", lastpos[Z]);
-    if(LCD_Y > 2)
+    if(lcd_y > 2)
     {
       LCD.setCursor(8,1);
       LCD.label("E:", lastpos[E]);
       LCD.setCursor(0,2);
       LCD.label("Move:", motordistance);
-      if(LCD_X > 16)
+      if(lcd_x > 16)
         LCD.label(" ROC:",*motordistance_roc);
       else
         LCD.label("/",*motordistance_roc);
@@ -426,7 +431,7 @@ private:
       LCD.label("/",*motordistance_roc);
       LCD.label(" E:", extrude ? "-" : "*");
     }
-    if(LCD_X>16)
+    if(lcd_x>16)
     {
       LCD.setCursor(16,0);
       LCD.write((char)0);
@@ -495,7 +500,7 @@ private:
     LCD.setCursor(0,1);
     LCD.write("> ");
     LCD.write(sdcard::getCurrentfile());
-    if(LCD_Y > 2)
+    if(lcd_y > 2)
     {
       LCD.setCursor(0,2);
       LCD.write("6=NEXT #=PRINT");
@@ -510,10 +515,10 @@ private:
 
   void tagline()
   {
-    if(LCD_Y < 4)
+    if(lcd_y < 4)
       return;
     LCD.setCursor(0,3);
-    if(LCD_X > 16)
+    if(lcd_x > 16)
       LCD.write("SJFW by ScribbleJ");
     else
       LCD.write("ScribbleJ's SJFW");

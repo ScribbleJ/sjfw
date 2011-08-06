@@ -50,7 +50,6 @@ public:
 
     _numlines = lines;
     _numcols  = cols;
-    _currline = 0;
     _linestarts = linestarts;
 
 #ifdef USE4BITMODE
@@ -377,14 +376,26 @@ private:
   Pin _rw_pin;
   Pin _enable_pin;
   Pin _data_pins[8];
+public:
+  void setRS(Port& p, int bit) { _rs_pin = Pin(p, bit); }
+  void setRW(Port& p, int bit) { _rw_pin = Pin(p, bit); }
+  void setE(Port& p, int bit)  { _enable_pin = Pin(p, bit); }
+  void setD(Port& p, int bit, int D) { _data_pins[D] = Pin(p, bit); }
+  void setLineStart(int l, int s) { _linestarts[l] = s; }
+  void setNumRows(int l) { _numlines = l; }
+  void setNumCols(int l) { _numcols = l; }
+  int getRows() { return _numlines; }
+  int getCols() { return _numcols; }
 
+
+private:
   uint8_t _displayfunction;
   uint8_t _displaycontrol;
   uint8_t _displaymode;
 
   uint8_t _initialized;
 
-  uint8_t _numlines,_currline;
+  uint8_t _numlines;
   uint8_t _numcols;
   uint8_t *_linestarts;
 
