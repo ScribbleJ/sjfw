@@ -11,7 +11,6 @@
 #include "config.h"
 #include "Time.h"
 #include "LiquidCrystal.h"
-#include "Host.h"
 #include "Temperature.h"
 #include "GCode.h"
 #include "GcodeQueue.h"

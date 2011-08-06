@@ -29,3 +29,21 @@ Port PortH(0x100);
 Port PortJ(0x103);
 Port PortK(0x106);
 Port PortL(0x109);
+Port PortNull(0xFFFF);
+
+Port PORTMAP[] =
+{
+  PortA,
+  PortB,
+  PortC,
+  PortD,
+  PortE,
+  PortF,
+  PortG,
+  PortH,
+  PortNull,
+  PortJ,
+  PortK,
+  PortL
+};
+

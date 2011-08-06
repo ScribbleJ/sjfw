@@ -202,6 +202,11 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
         break;
       doTempSetting(c, bytes+1, numbytes);
       break;
+    case '^':
+      if(c[M].isUnused() || c[G].isUnused())
+        break;
+      //doLCDSetting(c, bytes+1, numbytes);
+      break;
     case 0:
       ; // noise
       break;
@@ -274,27 +279,6 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
   
 }
 
-Port GcodeQueue::PORTMAP[] = 
-{
-  PortA,
-  PortB,
-  PortC,
-  PortD,
-  PortE,
-  PortF,
-  PortG,
-  PortH,
-  Port(0xFFFF),
-  PortJ,
-  PortK,
-  PortL
-};
-
-Port& GcodeQueue::getPortFromLetter(char l)
-{
-  return(PORTMAP[l-'A']);
-}
-
 bool GcodeQueue::doPinSetting(GCode& c, char const* str, int charsin)
 {
   int axis = str[0] - 'X';
@@ -315,11 +299,11 @@ bool GcodeQueue::doPinSetting(GCode& c, char const* str, int charsin)
 #define _DOPINSETTING(FOO)  \
     if(str[x+1] == '-') \
     {                   \
-      MOTION.getAxis(axis).FOO(PORTMAP[8],0); \
+      MOTION.getAxis(axis).FOO(PortNull,0); \
       x+=2;             \
       continue;         \
     }                   \
-    MOTION.getAxis(axis).FOO(getPortFromLetter(str[x+1]), str[x+2]-'0'); \
+    MOTION.getAxis(axis).FOO(Port::getPortFromLetter(str[x+1]), str[x+2]-'0'); \
     x+=2; 
 
     switch(str[x])
@@ -375,28 +359,27 @@ bool GcodeQueue::doTempSetting(GCode& c, char const* str, int charsin)
       case 'H':
         if(str[x+1] == '-') 
         {                   
-          TEMPERATURE.changePinHotend(PORTMAP[8],0);
+          TEMPERATURE.changePinHotend(PortNull,0);
           x+=2; 
           continue;
         }         
-        TEMPERATURE.changePinHotend(getPortFromLetter(str[x+1]), str[x+2]-'0'); 
+        TEMPERATURE.changePinHotend(Port::getPortFromLetter(str[x+1]), str[x+2]-'0'); 
         x+=2; 
         break;
       case 'B':
         if(str[x+1] == '-') 
         {                   
-          TEMPERATURE.changePinPlatform(PORTMAP[8],0);
+          TEMPERATURE.changePinPlatform(PortNull,0);
           x+=2; 
           continue;
         }         
-        TEMPERATURE.changePinPlatform(getPortFromLetter(str[x+1]), str[x+2]-'0'); 
+        TEMPERATURE.changePinPlatform(Port::getPortFromLetter(str[x+1]), str[x+2]-'0'); 
         x+=2; 
         break;
     }
   }
   return true;
 }
-
 
 
 GcodeQueue& GCODES = GcodeQueue::Instance();

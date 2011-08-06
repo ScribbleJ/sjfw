@@ -35,6 +35,9 @@
 typedef uint16_t port_base_t;
 #define NULL_PORT 0xffff
 
+class Port;
+extern Port PORTMAP[];
+
 class Port {
 private:
 	port_base_t port_base;
@@ -54,11 +57,12 @@ public:
 		PORTx = (PORTx & ~_BV(pin_index)) | (on?_BV(pin_index):0);
 	}
   port_base_t getpb() const { return port_base; }
+  static Port& getPortFromLetter(char l) { return(PORTMAP[l-'A']); }
 };
 
 extern Port PortA, PortB, PortC, PortD;
 extern Port PortE, PortF, PortG, PortH;
-extern Port PortJ, PortK, PortL;
+extern Port PortJ, PortK, PortL, PortNull;
 
 class Pin {
 private:

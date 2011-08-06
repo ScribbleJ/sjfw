@@ -28,6 +28,8 @@ public:
              ) : commandQueue(LCD_BUFFER_SIZE, command_data),
                        modeQueue(LCD_BUFFER_SIZE, mode_data) 
   {                    
+    initialized = false;
+
     _rs_pin = rs;
     _rw_pin = rw;
     _enable_pin = enable;
@@ -41,6 +43,23 @@ public:
     _data_pins[6] = d6;
     _data_pins[7] = d7; 
 
+    _numlines = lines;
+    _numcols  = cols;
+    _linestarts = linestarts;
+
+#ifdef USE4BITMODE
+    wrotehalf = false;
+#endif
+
+    // if the config is invalid, maybe we'll be getting it later.
+    if(_data_pins[7].isNull())
+      return;
+
+    reinit();
+  }
+
+  void reinit()
+  {
     _rs_pin.setDirection(true);
     _rs_pin.setValue(false);
     _rw_pin.setDirection(true); 
@@ -48,13 +67,7 @@ public:
     _enable_pin.setDirection(true);
     _enable_pin.setValue(false);
 
-    _numlines = lines;
-    _numcols  = cols;
-    _linestarts = linestarts;
-
 #ifdef USE4BITMODE
-    wrotehalf = false;
-
     for (int i = 4; i < 8; i++)
 #else    
     for (int i = 0; i < 8; i++) 
@@ -83,6 +96,74 @@ public:
     writeDDRAM(0);
   }
    
+
+  // Reads configuration from specially-formatted string.
+  void parseSettings(char const* str, int charsin)
+  {
+#define LCD_PS_2(FOO)                                       \
+    if(str[x+1] == '-')                                     \
+    {                                                       \
+      FOO(PortNull,0);                                    \
+      x+=2;                                                 \
+      continue;                                             \
+    }                                                       \
+    FOO(Port::getPortFromLetter(str[x+1]), str[x+2]-'0');   \
+    x+=2;
+
+#define LCD_PS_D(FOO,BAR)                                   \
+    if(str[x+1] == '-')                                     \
+    {                                                       \
+      FOO(PortNull,0,BAR);                                \
+      x+=2;                                                 \
+      continue;                                             \
+    }                                                       \
+    FOO(Port::getPortFromLetter(str[x+1]), str[x+2]-'0',BAR);\
+    x+=2;
+
+
+
+    for(int x=0;x<charsin && str[x]!='*' && str[x]>32;x++)
+    {
+      switch(str[x])
+      {
+        case 'S':
+          LCD_PS_2(setRS);
+          break;
+        case 'W':
+          LCD_PS_2(setRW);
+          break;
+        case 'E':
+          LCD_PS_2(setE);
+          break;
+        case '0':
+          LCD_PS_D(setD,0);
+          break;
+        case '1':
+          LCD_PS_D(setD,1);
+          break;
+        case '2':
+          LCD_PS_D(setD,2);
+          break;
+        case '3':
+          LCD_PS_D(setD,3);
+          break;
+        case '4':
+          LCD_PS_D(setD,4);
+          break;
+        case '5':
+          LCD_PS_D(setD,5);
+          break;
+        case '6':
+          LCD_PS_D(setD,6);
+          break;
+        case '7':
+          LCD_PS_D(setD,7);
+          break;
+      }
+    }
+  }
+
+
   // Clears the screen AND resets cursor to "home"
   void clear() { command(0x01); }
 
@@ -193,6 +274,10 @@ public:
   // appear on the display.
   void handleUpdates()
   {
+    // if the config is invalid, maybe we'll be getting it later.
+    if(!initialized)
+      return;
+
     if(isBusy())
       return;
 
@@ -333,6 +418,7 @@ private:
     wait(5);
     write8init(0b00110000); 
     wait(5);
+    initialized = true;
   }
 #else
   void write4init(uint8_t value)
@@ -367,6 +453,7 @@ private:
     write4init(0b00100000); 
     wait(5);
     write4init(0b00100000); 
+    initialized = true;
   }
 
 #endif  
@@ -398,6 +485,8 @@ private:
   uint8_t _numlines;
   uint8_t _numcols;
   uint8_t *_linestarts;
+
+  bool initialized;
 
 #ifdef USE4BITMODE
   bool wrotehalf;
