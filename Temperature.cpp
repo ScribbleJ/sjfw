@@ -56,10 +56,9 @@ Temperature::Temperature()
   platform_therm.init();
   hotend_heat.setDirection(true); hotend_heat.setValue(false);
   platform_heat.setDirection(true); platform_heat.setValue(false);
-  
 }
 
-#define MIN_TEMP_INTERVAL 100
+#define MIN_TEMP_INTERVAL 20
 void Temperature::update()
 {
   unsigned long now = millis();

@@ -67,6 +67,7 @@ private:
   static Port PORTMAP[];
   Port& getPortFromLetter(char l);
   bool  doPinSetting(GCode& c, char const* str, int numbytes);
+  bool  doTempSetting(GCode& c, char const* str, int numbytes);
 };
   
 extern GcodeQueue& GCODES;  

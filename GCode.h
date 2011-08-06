@@ -27,7 +27,7 @@ public:
   void setFloat(const char* v) { f = atof(v); state = FLOAT; }
   void setInt(const char* v) { u = atol(v); state = INT; }
   float& getFloat() { return f; }
-  unsigned long& getInt() { return u; }
+  long& getInt() { return u; }
   bool isUnused() { return state == UNUSED; }
 
   void dump_to_host() 
@@ -54,7 +54,7 @@ public:
   union 
   {
     float f;
-    unsigned long u;
+    long u;
   };
 };
 

@@ -18,7 +18,7 @@
 #ifndef THERMISTOR_HH_
 #define THERMISTOR_HH_
 
-#include "AvrPort.h"
+#include <stdint.h>
 
 #define THERM_TABLE_SIZE 20
 #define SAMPLE_COUNT 4
@@ -44,7 +44,7 @@ public:
 	int16_t getTemperature() const { return current_temp; }
 
 private:
-	uint8_t analog_pin; // index of analog pin
+	int8_t analog_pin; // index of analog pin
 	volatile int16_t raw_value; // raw storage for asynchronous analog read
 	volatile bool raw_valid; // flag to state if raw_value contains valid data
 	const static int ADC_RANGE = 1024;
@@ -53,8 +53,9 @@ private:
 	const uint8_t table_index;
 
 public:
-	Thermistor(uint8_t analog_pin, uint8_t table_index);
+	Thermistor(int8_t analog_pin, uint8_t table_index);
 	void init();
+  void changePin(int pin) { analog_pin = pin; }
 	// True if update initiated, false otherwise
 	SensorState update();
 };

@@ -76,6 +76,15 @@ void Motion::setStepsPerUnit(GCode& gcode)
   }
 }
 
+void Motion::setAccel(GCode& gcode)
+{
+  for(int ax=0;ax < NUM_AXES;ax++)
+  {
+    if(gcode[ax].isUnused()) continue;
+    AXES[ax].setAccel(gcode[ax].getFloat());
+  }
+}
+
 void Motion::disableAllMotors()
 {
   for(int ax=0;ax < NUM_AXES;ax++)

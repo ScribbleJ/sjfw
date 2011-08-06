@@ -5,7 +5,7 @@ use IO::Select;
 
 local $|=1;
 
-my $SJFW_CRC = 1;
+my $SJFW_CRC = 0;
 
 my $port = $ARGV[0] || die(usage());
 

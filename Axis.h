@@ -40,6 +40,7 @@ class Axis
   void  setAverageFeedrate(float feedrate) { if(feedrate <= 0) return; avg_interval = interval_from_feedrate(feedrate); }
   // WARNING! BECAUSE OF THE WAY WE STORE ACCEL DATA< YOU MUST USE THE ABOVE THREE CALLS TO RESET THE FEEDRATES AFTER CHANGING THE STEPS
   void  setStepsPerUnit(float steps) { if(steps <= 0) return; steps_per_unit = steps; }
+  void  setAccel(float rate) { if(rate <= 0) return; accel_rate = rate; }
   void  disable() { enable_pin.setValue(true); }
   void  enable() { enable_pin.setValue(false); }
 

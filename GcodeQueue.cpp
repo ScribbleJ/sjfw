@@ -9,6 +9,8 @@
 // REMOVEME
 #include "Time.h"
 
+#include "Temperature.h"
+
 
 
 void GcodeQueue::handlenext()
@@ -193,7 +195,12 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
       // and also causes the code to not get dropped into the queue.
       if(c[M].isUnused() || c[G].isUnused())
         break;
-      doPinSetting(c, bytes+1,numbytes);
+      doPinSetting(c, bytes+1, numbytes);
+      break;
+    case '%':
+      if(c[M].isUnused() || c[G].isUnused())
+        break;
+      doTempSetting(c, bytes+1, numbytes);
       break;
     case 0:
       ; // noise
@@ -356,8 +363,39 @@ bool GcodeQueue::doPinSetting(GCode& c, char const* str, int charsin)
   return true;
 
 }
+
 void GcodeQueue::Invalidate() { invalidate_codes = true; }
 
+bool GcodeQueue::doTempSetting(GCode& c, char const* str, int charsin)
+{
+  for(int x=0;x<charsin && str[x]!='*' && str[x]>32;x++)
+  {
+    switch(str[x])
+    {
+      case 'H':
+        if(str[x+1] == '-') 
+        {                   
+          TEMPERATURE.changePinHotend(PORTMAP[8],0);
+          x+=2; 
+          continue;
+        }         
+        TEMPERATURE.changePinHotend(getPortFromLetter(str[x+1]), str[x+2]-'0'); 
+        x+=2; 
+        break;
+      case 'B':
+        if(str[x+1] == '-') 
+        {                   
+          TEMPERATURE.changePinPlatform(PORTMAP[8],0);
+          x+=2; 
+          continue;
+        }         
+        TEMPERATURE.changePinPlatform(getPortFromLetter(str[x+1]), str[x+2]-'0'); 
+        x+=2; 
+        break;
+    }
+  }
+  return true;
+}
 
 
 

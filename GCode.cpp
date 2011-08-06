@@ -228,6 +228,19 @@ void GCode::do_m_code()
       state = DONE;
       break;
 #endif
+    case 206: // NOT STANDARD - set accel rate
+      MOTION.setAccel(*this);
+      state = DONE;
+      break;
+    case 207: // NOT STANDARD - set hotend thermistor pin
+      TEMPERATURE.changePinHotend(cps[P].getInt());
+      state = DONE;
+      break;
+    case 208: // NOT STANDARD - set platform thermistor pin
+      TEMPERATURE.changePinPlatform(cps[P].getInt());
+      state = DONE;
+      break;
+
     default:
       HOST.labelnum("warn ", linenum, false);
       HOST.write(" MCODE "); HOST.write(cps[M].getInt(), 10); HOST.write(" NOT SUPPORTED\n");

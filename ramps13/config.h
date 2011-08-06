@@ -25,7 +25,7 @@
 #define X_ENABLE_PIN    Pin(PortD, 7)
 #define X_MIN_PIN       Pin(PortE, 5)
 #define X_MAX_PIN       Pin(PortE, 4)
-#define X_INVERT_DIR    true
+#define X_INVERT_DIR    false
 #define X_STEPS_PER_UNIT 62.745
 #define X_MAX_FEED      12000
 #define X_AVG_FEED      6000
@@ -38,7 +38,7 @@
 #define Y_ENABLE_PIN    Pin(PortF, 2)
 #define Y_MIN_PIN       Pin(PortJ, 1)
 #define Y_MAX_PIN       Pin(PortJ, 0)
-#define Y_INVERT_DIR    true
+#define Y_INVERT_DIR    false
 #define Y_STEPS_PER_UNIT 62.745
 #define Y_MAX_FEED      12000
 #define Y_AVG_FEED      6000

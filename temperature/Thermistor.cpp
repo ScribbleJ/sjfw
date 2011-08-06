@@ -20,7 +20,7 @@
 #include "AnalogPin.h"
 #include <util/atomic.h>
 
-Thermistor::Thermistor(uint8_t analog_pin_in, uint8_t table_index_in) :
+Thermistor::Thermistor(int8_t analog_pin_in, uint8_t table_index_in) :
 analog_pin(analog_pin_in), 
 raw_valid(false), next_sample(0), table_index(table_index_in)
 {
@@ -28,12 +28,20 @@ raw_valid(false), next_sample(0), table_index(table_index_in)
 }
 
 void Thermistor::init() {
+  if(analog_pin < 0) 
+    return;
 	initAnalogPin(analog_pin);
 }
 
 Thermistor::SensorState Thermistor::update() {
 	int16_t temp;
 	bool valid;
+
+  if(analog_pin < 0)
+  {
+    current_temp = 1024;
+    return SS_ERROR_UNPLUGGED;
+  }
 
 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
 		valid = raw_valid;

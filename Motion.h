@@ -58,6 +58,7 @@ public:
   void setMaximumFeedrate(GCode& gcode);
   void setAverageFeedrate(GCode& gcode);
   void setStepsPerUnit(GCode& gcode);
+  void setAccel(GCode& gcode);
   // Motors automatically enabled when used
   void disableAllMotors();
   void wrapup(GCode& gcode) { checkdisable(gcode); }
