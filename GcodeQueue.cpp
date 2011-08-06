@@ -8,6 +8,10 @@
 
 // REMOVEME
 #include "Time.h"
+#ifdef HAS_LCD
+#include "LCDKeypad.h"
+extern LCDKeypad LCDKEYPAD;
+#endif
 
 #include "Temperature.h"
 
@@ -205,7 +209,12 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
     case '^':
       if(c[M].isUnused() || c[G].isUnused())
         break;
-      //doLCDSetting(c, bytes+1, numbytes);
+      LCDKEYPAD.doLCDSettings(bytes+1, numbytes);
+      break;
+    case '&':
+      if(c[M].isUnused() || c[G].isUnused())
+        break;
+      LCDKEYPAD.doKeypadSettings(bytes+1, numbytes);
       break;
     case 0:
       ; // noise

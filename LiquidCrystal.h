@@ -51,15 +51,15 @@ public:
     wrotehalf = false;
 #endif
 
-    // if the config is invalid, maybe we'll be getting it later.
-    if(_data_pins[7].isNull())
-      return;
-
     reinit();
   }
 
   void reinit()
   {
+    // if the config is invalid, maybe we'll be getting it later.
+    if(_data_pins[7].isNull())
+      return;
+      
     _rs_pin.setDirection(true);
     _rs_pin.setValue(false);
     _rw_pin.setDirection(true); 

@@ -77,6 +77,19 @@ public:
 
   }
 
+  void doLCDSettings(char const* str, int charsin)
+  {
+    LCD.parseSettings(str, charsin);
+    LCD.reinit();
+  }
+
+  void doKeypadSettings(char const* str, int charsin)
+  {
+    ;
+  }
+
+
+
   void changeMode(MODE which)
   {
     if(currentmode == which)
