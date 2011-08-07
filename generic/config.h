@@ -3,6 +3,12 @@
 
 #include "config-common.h"
 
+// These are only used on Gen4 and hardcoded there.
+#define RS485_TX_ENABLE   Pin(PortC,5)
+#define RS485_RX_ENABLE   Pin(PortC,7)
+
+
+
 #define NUM_AXES 4
 #define ENDSTOPS_INVERTING 0
 #define ENDSTOPPULLUPS 0

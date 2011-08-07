@@ -5,6 +5,9 @@ USE_SD = 1
 USE_LCD = 1
 USE_KEYPAD = 1
 
+# EC for Gen3/4 only.  Others default to 100k Thermistors.
+#USE_EXTRUDERCONTROLLER = 1
+
 #CONFIG_PATH = ramps12
 #CONFIG_PATH = ramps13
 #CONFIG_PATH = gen4
@@ -49,7 +52,7 @@ ifeq ($(USE_SD),1)
  SD_FILES = lib_sd/byteordering.cpp lib_sd/fat.cpp lib_sd/partition.cpp lib_sd/sd_raw.cpp SDCard.cpp
  SD_DEFINES = -DHAS_SD
 endif
-ifeq ($(CONFIG_PATH),gen4)
+ifeq ($(USE_EXTRUDERCONTROLLER),1)
  BOARD_FILES = temperature/MBIEC.cpp
  BOARD_DEFINES = -I./temperature/
 else
@@ -82,7 +85,7 @@ LDFLAGS = -lm
 
 # Programming support using avrdude. Settings and variables.
 AVRDUDE_WRITE_FLASH = -U flash:w:main.hex:i
-AVRDUDE_FLAGS = -F -V -p $(MCU) -P $(PORT) -c $(AVRDUDE_PROGRAMMER) -b $(UPLOAD_RATE) -D
+AVRDUDE_FLAGS = -V -p $(MCU) -P $(PORT) -c $(AVRDUDE_PROGRAMMER) -b $(UPLOAD_RATE) -D
 
 # Program settings
 CC = $(AVR_TOOLS_PATH)/avr-gcc

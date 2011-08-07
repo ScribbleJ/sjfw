@@ -208,9 +208,10 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
         break;
       doTempSetting(c, bytes+1, numbytes);
       break;
+#ifdef HAS_LCD      
     case '^':
       if(c[M].isUnused() || c[G].isUnused())
-        break;
+        break;        
       LCDKEYPAD.doLCDSettings(bytes+1, numbytes);
       break;
     case '&':
@@ -218,6 +219,7 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
         break;
       LCDKEYPAD.doKeypadSettings(bytes+1, numbytes);
       break;
+#endif      
     case 0:
       ; // noise
       break;
