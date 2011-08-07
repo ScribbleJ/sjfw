@@ -6,7 +6,7 @@ USE_LCD = 1
 USE_KEYPAD = 1
 
 # EC for Gen3/4 only.  Others default to 100k Thermistors.
-#USE_EXTRUDERCONTROLLER = 1
+USE_EXTRUDERCONTROLLER = 1
 
 #CONFIG_PATH = ramps12
 #CONFIG_PATH = ramps13
@@ -23,16 +23,16 @@ CONFIG_PATH = generic
 AVR_TOOLS_PATH = /usr/bin
 
 #Reasonable settings for Atmega1280 (regardless of board)
-#UPLOAD_RATE = 57600
-#AVRDUDE_PROGRAMMER = stk500v1
-#PORT = /dev/ttyUSB0
-#MCU = atmega1280
+UPLOAD_RATE = 57600
+AVRDUDE_PROGRAMMER = stk500v1
+PORT = /dev/ttyUSB0
+MCU = atmega1280
 
 # Reasonable settings for Atmega2560 (regardless of board)
-UPLOAD_RATE = 115200
-AVRDUDE_PROGRAMMER = stk500v2
-PORT = /dev/ttyACM0
-MCU = atmega2560
+#UPLOAD_RATE = 115200
+#AVRDUDE_PROGRAMMER = stk500v2
+#PORT = /dev/ttyACM0
+#MCU = atmega2560
 
 
 
@@ -54,7 +54,7 @@ ifeq ($(USE_SD),1)
 endif
 ifeq ($(USE_EXTRUDERCONTROLLER),1)
  BOARD_FILES = temperature/MBIEC.cpp
- BOARD_DEFINES = -I./temperature/
+ BOARD_DEFINES = -I./temperature/ -DUSE_MBIEC
 else
  BOARD_FILES = temperature/Thermistor.cpp temperature/ThermistorTable.cpp avr/AnalogPin.cpp
  BOARD_DEFINES = -I./temperature/

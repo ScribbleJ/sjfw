@@ -77,7 +77,7 @@ class Axis
       {
         position += (float)(steps_to_take-steps_remaining) / steps_per_unit;
         steps_remaining = 0;
-        HOST.write("AES\n");
+        //HOST.write("AES\n");
         return;
       }
     }
@@ -87,7 +87,7 @@ class Axis
       {
         position -= (float)(steps_to_take-steps_remaining) / steps_per_unit;
         steps_remaining = 0;
-        HOST.write("IES\n");
+        //HOST.write("IES\n");
         return;
       }
     }
