@@ -153,10 +153,11 @@ private:
 
   void do_m_code();
   void do_g_code();
-  void write_temps_to_host();
+  void write_temps_to_host(int port);
 
 public:
   float feed;
+  int source;
 
   // This was separated out, maybe will be again...
   // preparsed data specific to G1 type moves.

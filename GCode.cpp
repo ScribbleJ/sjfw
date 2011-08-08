@@ -68,7 +68,7 @@ void GCode::wrapupmove()
   {
     //dump_movedata();
 #ifndef REPRAP_COMPAT    
-    HOST.labelnum("done ", linenum, false); HOST.labelnum(" G", cps[G].getInt());
+    Host::Instance(source).labelnum("done ", linenum, false); Host::Instance(source).labelnum(" G", cps[G].getInt());
 #endif    
     MOTION.wrapup(*this);
   }
@@ -108,22 +108,25 @@ void GCode::do_g_code()
       state = DONE;
       break;
     default:
-      HOST.labelnum("warn ",linenum, false); HOST.write(" GCODE "); HOST.write(cps[G].getInt(), 10); HOST.write(" NOT SUPPORTED\n");
+      Host::Instance(source).labelnum("warn ",linenum, false); 
+      Host::Instance(source).write(" GCODE "); 
+      Host::Instance(source).write(cps[G].getInt(), 10); 
+      Host::Instance(source).write(" NOT SUPPORTED\n");
       state = DONE;
       break;
   }
 
 }
 
-void GCode::write_temps_to_host()
+void GCode::write_temps_to_host(int port)
 {
-  HOST.labelnum("T:",TEMPERATURE.getHotend(),false); 
-  HOST.labelnum(" B:", TEMPERATURE.getPlatform(),false);  
+  Host::Instance(port).labelnum("T:",TEMPERATURE.getHotend(),false); 
+  Host::Instance(port).labelnum(" B:", TEMPERATURE.getPlatform(),false);  
 #ifdef REPG_COMPAT
-  HOST.write('\n');
+  Host::Instance(port).write('\n');
 #endif
-  HOST.labelnum(" / SH:", TEMPERATURE.getHotendST(),false);
-  HOST.labelnum(" SP:", TEMPERATURE.getPlatformST());
+  Host::Instance(port).labelnum(" / SH:", TEMPERATURE.getHotendST(),false);
+  Host::Instance(port).labelnum(" SP:", TEMPERATURE.getPlatformST());
 }
 
 void GCode::do_m_code()
@@ -140,18 +143,18 @@ void GCode::do_m_code()
       if(TEMPERATURE.setHotend(cps[S].getInt()))
       {
 #ifndef REPG_COMPAT        
-        HOST.labelnum("prog ", linenum, false); HOST.write(' ');  write_temps_to_host();
+        Host::Instance(source).labelnum("prog ", linenum, false); Host::Instance(source).write(' ');  write_temps_to_host(source);
 #else
-        write_temps_to_host();
+        write_temps_to_host(source);
 #endif        
         state = DONE;
       }
       break;
     case 105: // Get Extruder Temperature
 #ifndef REPG_COMPAT        
-        HOST.labelnum("prog ", linenum, false); HOST.write(' ');  write_temps_to_host(); 
+        Host::Instance(source).labelnum("prog ", linenum, false); Host::Instance(source).write(' ');  write_temps_to_host(source); 
 #else
-        write_temps_to_host();
+        write_temps_to_host(source);
 #endif        
         state = DONE;
 
@@ -164,9 +167,9 @@ void GCode::do_m_code()
       if(TEMPERATURE.getHotend() >= cps[S].getInt())
       {
 #ifndef REPG_COMPAT        
-        HOST.labelnum("prog ", linenum, false); HOST.write(' ');  write_temps_to_host();
+        Host::Instance(source).labelnum("prog ", linenum, false); Host::Instance(source).write(' ');  write_temps_to_host(source);
 #else
-        write_temps_to_host();
+        write_temps_to_host(source);
 #endif        
         state = DONE;
       }
@@ -175,9 +178,9 @@ void GCode::do_m_code()
       {
         lastms = millis();
 #ifndef REPG_COMPAT        
-        HOST.labelnum("prog ", linenum, false); HOST.write(' ');  write_temps_to_host(); 
+        Host::Instance(source).labelnum("prog ", linenum, false); Host::Instance(source).write(' ');  write_temps_to_host(source); 
 #else
-        write_temps_to_host();
+        write_temps_to_host(source);
 #endif        
       }
       break;
@@ -187,19 +190,19 @@ void GCode::do_m_code()
       break;
     case 114: // Get Current Position
 #ifndef REPG_COMPAT    
-      HOST.labelnum("prog ", linenum, false);
-      HOST.write(' ');
+      Host::Instance(source).labelnum("prog ", linenum, false);
+      Host::Instance(source).write(' ');
 #endif      
-      HOST.write("C: ");
+      Host::Instance(source).write("C: ");
       MOTION.writePositionToHost();
-      HOST.endl();
+      Host::Instance(source).endl();
       state = DONE;
       break; 
     case 115: // Get Firmware Version and Capabilities
-      HOST.labelnum("prog ", linenum, false);
-      HOST.write(" PROTOCOL_VERSION:SJ FIRMWARE_NAME:sjfw FREE_RAM:");
-      HOST.write(getFreeRam(),10);
-      HOST.endl();
+      Host::Instance(source).labelnum("prog ", linenum, false);
+      Host::Instance(source).write(" PROTOCOL_VERSION:SJ FIRMWARE_NAME:sjfw FREE_RAM:");
+      Host::Instance(source).write(getFreeRam(),10);
+      Host::Instance(source).endl();
       state = DONE;
       break;
     case 116: // Wait on temperatures
@@ -210,9 +213,9 @@ void GCode::do_m_code()
       {
         lastms = millis();
 #ifndef REPG_COMPAT        
-        HOST.labelnum("prog ", linenum, false); HOST.write(' ');  write_temps_to_host(); 
+        Host::Instance(source).labelnum("prog ", linenum, false); Host::Instance(source).write(' ');  write_temps_to_host(source); 
 #else
-        write_temps_to_host();
+        write_temps_to_host(source);
 #endif        
       }
       break;
@@ -220,9 +223,9 @@ void GCode::do_m_code()
       if(TEMPERATURE.setPlatform(cps[S].getInt()))
       {
 #ifndef REPG_COMPAT        
-        HOST.labelnum("prog ", linenum, false); HOST.write(' ');  write_temps_to_host(); 
+        Host::Instance(source).labelnum("prog ", linenum, false); Host::Instance(source).write(' ');  write_temps_to_host(source); 
 #else
-        write_temps_to_host();
+        write_temps_to_host(source);
 #endif        
         state = DONE;
       }
@@ -245,21 +248,21 @@ void GCode::do_m_code()
       break;
 #ifdef HAS_SD
     case 204: // NOT STANDARD - get next filename from SD
-      HOST.labelnum("prog ", linenum, false);
-      HOST.write(' ');
-      HOST.write(sdcard::getNextfile());
-      HOST.endl();
+      Host::Instance(source).labelnum("prog ", linenum, false);
+      Host::Instance(source).write(' ');
+      Host::Instance(source).write(sdcard::getNextfile());
+      Host::Instance(source).endl();
       state = DONE;
       break;
     case 205: // NOT STANDARD - print file from last 204
-      HOST.labelnum("prog ", linenum, false);
-      HOST.write(sdcard::getCurrentfile());
+      Host::Instance(source).labelnum("prog ", linenum, false);
+      Host::Instance(source).write(sdcard::getCurrentfile());
       if(sdcard::printcurrent())
-        HOST.write(" BEGUN");
+        Host::Instance(source).write(" BEGUN");
       else
-        HOST.write(" FAIL");
+        Host::Instance(source).write(" FAIL");
      
-      HOST.endl();
+      Host::Instance(source).endl();
       state = DONE;
       break;
 #endif
@@ -277,8 +280,8 @@ void GCode::do_m_code()
       break;
 
     default:
-      HOST.labelnum("warn ", linenum, false);
-      HOST.write(" MCODE "); HOST.write(cps[M].getInt(), 10); HOST.write(" NOT SUPPORTED\n");
+      Host::Instance(source).labelnum("warn ", linenum, false);
+      Host::Instance(source).write(" MCODE "); Host::Instance(source).write(cps[M].getInt(), 10); Host::Instance(source).write(" NOT SUPPORTED\n");
       state = DONE;
       break;
   }
@@ -286,11 +289,11 @@ void GCode::do_m_code()
   if(state == DONE)
   {
     if(linenum != -1)
-      HOST.labelnum("done ", linenum, false);
+      Host::Instance(source).labelnum("done ", linenum, false);
     else
-      HOST.write("done ");
+      Host::Instance(source).write("done ");
 
-    HOST.labelnum(" M", cps[M].getInt(), true);
+    Host::Instance(source).labelnum(" M", cps[M].getInt(), true);
   }
 #endif
 }

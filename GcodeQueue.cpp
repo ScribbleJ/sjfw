@@ -162,7 +162,7 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
       {
         //crc[source] = 0;
         //crc_state[source] = NOCRC;
-        HOST.labelnum("Invalid line:",l);
+        Host::Instance(source).labelnum("Invalid line:",l);
         //chars_in_line[source] = 0;
         needserror[source]=true;
         break;
@@ -246,7 +246,7 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
           //crc[source] = 0;
           //crc_state[source] = NOCRC;
           //line_number[source]--;
-          HOST.labelnum("CRC mismatch:",line_number[source]);
+          Host::Instance(source).labelnum("CRC mismatch:",line_number[source]);
           needserror[source] = true;
           //chars_in_line[source] = 0;
         }
@@ -260,7 +260,7 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
         //crc_state[source] = NOCRC;
         //line_number[source]--;
         //// Error out - no CRC before end of command or invalid state.
-        HOST.labelnum("Missing CRC:",line_number[source]);
+        Host::Instance(source).labelnum("Missing CRC:",line_number[source]);
         //chars_in_line[source] = 0;
         needserror[source] = true;
         break;
@@ -277,9 +277,9 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
     }
     chars_in_line[source] = 0;
 
-    if(needserror[source] && source == HOST_SOURCE)
+    if(needserror[source])
     {
-      HOST.rxerror("Unknown.", line_number[source]);
+      Host::Instance(source).rxerror("Unknown.", line_number[source]);
       line_number[source]--;
       c.reset();
       needserror[source] = false;
@@ -287,14 +287,15 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
     }
 
 
+    c.source = source;
     enqueue(sources[source]);
 
-    if(source == HOST_SOURCE)
+    if(source == HOST_SOURCE || source == BT_SOURCE)
     {
 #ifndef REPRAP_COMPAT    
-      HOST.labelnum("ok ", codes.getCount(), true);
+      Host::Instance(source).labelnum("ok ", codes.getCount(), true);
 #else
-      HOST.write("ok \n");
+      Host::Instance(source).write("ok \n");
 #endif      
     }
   }

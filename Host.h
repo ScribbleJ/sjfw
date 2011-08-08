@@ -1,7 +1,7 @@
 #ifndef _HOST_H_
 #define _HOST_H_
 
-/* Serial comms - port1
+/* Serial comms - port0 or 2
    Chris "ScribbleJ" Jansen
    (c)2011
 
@@ -19,18 +19,35 @@ class Host
 {
   public:
     // singleton
-    static Host& Instance() { static Host instance(HOST_BAUD); return instance; }
+    static Host& Instance(int port) 
+    { 
+      if(port == 2) 
+      {
+        return i2();
+      }
+      else
+      {
+        return i0();
+      }
+    }
+    static Host& Instance() { return Instance(0); }
+    static Host& i0() { static Host instance(HOST_BAUD,0); return instance; }
+    static Host& i2() { static Host instance2(BT_BAUD,2); return instance2; }
   private:
-    explicit Host(unsigned long baud);
+    explicit Host(unsigned long baud, int port);
     Host(Host&);
     Host& operator=(Host&);
+    int port;
+
+    void Init0(unsigned long baud);
+    void Init2(unsigned long baud);
   public:
 
     uint8_t rxchars() { uint8_t l = rxring.getCount(); return l; }
     uint8_t popchar() { uint8_t c = rxring.pop(); return c; }
     uint8_t peekchar() { uint8_t c = rxring.peek(0); return c; }
 
-    void write(uint8_t data) { txring.push(data); UCSR0B |= MASK(UDRIE0); }
+    void write(uint8_t data) { txring.push(data); if(port == 2) UCSR2B |= MASK(UDRIE2); else UCSR0B |= MASK(UDRIE0); }
     void write(const char *data) { uint8_t i = 0, r; while ((r = data[i++])) write(r); }
     void write(uint32_t n, int radix)
     {
@@ -133,20 +150,38 @@ class Host
 
     void scan_input();
 
-    void rx_interrupt_handler()
+    void rx_interrupt_handler(int p)
     {
-      uint8_t c = UDR0;
+      uint8_t c;
+      if(p == 2)
+      {
+        c = UDR2;
+      }
+      else
+      {
+        c = UDR0;
+      }
       rxring.push(c);
       if(c <= 32)
         input_ready++;
     }
 
-    void udre_interrupt_handler()
+    void udre_interrupt_handler(int p)
     {
-      if(txring.getCount() > 0)
-        UDR0 = txring.pop();
+      if(p == 2)
+      {
+        if(txring.getCount() > 0)
+          UDR2 = txring.pop();
+        else
+          UCSR2B &= ~MASK(UDRIE2);
+      }
       else
-        UCSR0B &= ~MASK(UDRIE0);
+      {
+        if(txring.getCount() > 0)
+          UDR0 = txring.pop();
+        else
+          UCSR0B &= ~MASK(UDRIE0);
+      }
     }
 
   private:
@@ -159,6 +194,10 @@ class Host
 };
 
 extern Host& HOST;
+
+#ifdef HAS_BT
+extern Host& BT;
+#endif
 
 
 #endif

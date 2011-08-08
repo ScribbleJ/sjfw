@@ -69,7 +69,16 @@ int main(void)
 #ifdef HAS_LCD
     // Update LCD, read keypresses, etc.
     LCDKEYPAD.handleUpdates();
+
+    // Checks to see if gcodes are waiting to run and runs them if so.
+    GCODES.handlenext();
 #endif    
+
+#ifdef HAS_BT
+    // Look for incoming data
+    BT.scan_input();
+#endif
+
   }
 
   return 0;
