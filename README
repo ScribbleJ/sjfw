@@ -1,7 +1,16 @@
 ScribbleJ Firmware
 (c) 2011 Christopher "ScribbleJ" Jansen
+http://reprap.org/wiki/Sjfw
 
 This is a firmware for 3D printers with an advanced gcode pipeline, capable of running at high speeds efficiently.
+
+* Run-time configuration of all settings.
+* Advanced preparsing gcode pipeline
+* Acceleration
+* "Dimension" - 5D/Volumetric, buzzword buzzword.
+* LCD and Control Panel
+* Hostless printing from SD Card.
+
 
 This firmware includes some portions which are copped directly from the MBI firmware, and some code that is based on
 code in the Sprinter and Teacup firmwares.
@@ -14,98 +23,7 @@ me on Freenode IRC, channel #reprap.  Or email at scribblej@yahoo.com.
 
 
 VERY IMPORTANT!!!!!!!!!
-The documentation below may be out of date.  Please see http://reprap.org/wiki/Sjfw for lastest full documentation.
+Please see http://reprap.org/wiki/Sjfw for lastest full documentation.
 
-SUPPORTED HARDWARE:
-Prusa Reprap RAMPS1.2 (experimental!)
-Prusa Reprap RAMPS1.3
-Thing-O-Matic Gen4
 
-FEATURES(now):
-* Control pad and full HOSTLESS printing!
-* Advanced Gcode Pipeline
-* ISR driven movement
-* Acceleration
-* LCD Temperature Display
-* "Volumteric" Printing
-* SD Card support
-* Runtime Configuration
--- Tested and working with "Pronterface" Reprap host, the best Reprap host there is presently.
--- This repository includes a perl-based "host.pl" which can be used as a host.
-
-FEATURES(planned):
-* Advanced movement calculations
-* Sanguinololu Support
-
-COMPILING AND INSTALLING:
-
-Examine and edit the top of the Makefile to your satisfaction.  Optionally, look under
-rampsXX/config.h or gen4/config.h to change the firmware settings.  You'll probably need to 
-change the steps per unit settings, as mine are odd on the Prusa.  ToM users, you should be
-fine.
-
-make clean && make && make upload
-
-IMPORTANT NOTES ON USING THIS FIRMWARE:
-
-* The Gen4 Support is perfectly useable on a Reprap, but it is designed for use by the Thing O Matic.  The important
-part is this; the Gen4 support ASSUMES you are using the Makerbot Thing-O-Matic EC Firmware on your EC.  If you are
-not, you must install that on your EC first!  If you are not using a ToM on Gen4 you will also need to edit the 
-steps settings and speeds/accel in the config file to suit.
-
-* The latest release has been tested to work with the EXCELLENT "Pronterface" Host by Kliment:
-https://github.com/kliment/Printrun
-
-CURRENTLY KNOWN BUGS/ISSUES:
-
-* Config file for ramps13 includes everything; the others may need some love for control panel and lcd support.
-
-* Motors that are set to disable after a move only get disabled a few moves thereafter.  This should work fine, but
-don't forget a M84 at the end of your gcode to turn off all motors.
-
-* SD card support works in the firmware, but is not compatible with the Gcodes that Pronterface emits.  This firmware
-presently has two Gcodes for SD access:
-M204 - fetch filename from SD
-M205 - print last fetched filename
-
-* THE SD CODE MAY FAIL ON LONG FILENAMES.  8.3 FILENAMES WORK FINE IN THE MEANTIME.
-
-* THERE IS NO HOMING GCODE.  There probably never will be; it's unnecessary.  Just make a move towards the endstops 
-that is longer than the platform, then mark that spot with a G92 and carry on.  Here's some examples:
-
-Here's my start.gcode from my Prusa:
-------
-M104 S190 (start heating up, but don't wait)
-G92 X0 Y0 Z0 E0 (set current position)
-G1 X-300 Y-300 F2000 (Move to X/Y endstops)
-G92 X0 Y0 Z0 E0 (set current position)
-G1 X5 Y5 (Move away from X/Y endstops)
-G92 X0 Y0 Z0 E0 (set current position)
-G1 X-10 Y-10 F800 (Move back to X/Y endstops)
-G1 Z-200 F400 (Move to Z endstop)
-G92 X0 Y0 Z0 E0 (set current position)
-G1 Z5 F400 (Move away from Z endstop)
-G92 X0 Y0 Z0 E0 (set current position)
-G1 Z-10 F400 (Move to Z endstop)
-G92 X0 Y0 Z-0.7 E0 (set current position - note endstop is .7 below platform height)
-G1 X0 Y0 Z30 F2000 (move to waiting position)
-M109 S190 (wait for extruder to reach temperature)
-------
-
-Here's the start.gcode from my ToM:
-------
-M104 S180 (start heating extruder, but don't wait)
-M140 S50  (start heating platform, but don't wait)
-G92 X0 Y0 Z0 E0 (set current position)
-G1 Z200 F800 (move to Z endstop)
-G1 X-200 Y-200 F2000 (move to X,Y endstops)
-G92 X0 Y0 Z0 E0 (set current position)
-G1 Z-5 X5 Y5 F800 (move away from XYZ endstops)
-G92 X0 Y0 Z0 E0 (set current positions)
-G1 Z10 X-10 Y-10 F400 (move to XYZ endstops)
-G92 X-5 Y-25 Z116.7 E0 (set current positions)
-G1 X0 Y0 Z50 F6000 (move to waiting position)
-M84 (disable motors)
-M109 S180 (wait for extruder to reach temperature)
-------
 

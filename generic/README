@@ -7,8 +7,4 @@ config.h           - Configuration used in precompiled .hex files for reference.
 ramps13.gcode      - Runtime configuration for RAMPS13.  Commented.
 ramps13.gcd        - Same but uncommented, to use as sjfwauto.gcd on sdcard.
 tom.gcd            - Runtime configuration for ToM.
-100k-thermistor-1280.hex - Firmware suitable for any 1280-based system using 100k Thermistors.
-100k-thermistor-2560.hex - Same, for 2560.
-ec-1280.hex        - Firmware suitable for any 1280-based system using an RS485 Extruder Controller.
-ec-2560.hex        - Same, for 2560. 
 
