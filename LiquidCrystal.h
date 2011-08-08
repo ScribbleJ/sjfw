@@ -247,7 +247,7 @@ public:
   void write(char const *str) { for(int x=0;str[x]!=0;x++) write(str[x]); }
   void write(float n, signed char width, unsigned char prec)
   {
-    static const char bufsize = 8 * sizeof(float) + 1;
+    static const char bufsize = 32;
     char buf[bufsize] = { 0 };
     dtostrf(n,width,prec,buf);
     write(buf);
@@ -258,7 +258,7 @@ public:
   }
   void write(int32_t n)
   {
-    static const char bufsize = 8 * sizeof(int32_t) + 1;
+    static const char bufsize = 32;
     char buf[bufsize] = { 0 };
     ltoa(n,buf,10);
     write(buf);

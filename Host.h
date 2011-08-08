@@ -34,14 +34,14 @@ class Host
     void write(const char *data) { uint8_t i = 0, r; while ((r = data[i++])) write(r); }
     void write(uint32_t n, int radix)
     {
-      static const char bufsize = 8 * sizeof(uint32_t) + 1;
+      static const char bufsize = 32;
       char buf[bufsize];
       ultoa(n,buf,radix);
       write(buf);
     }
     void write(int32_t n, int radix)
     {
-      static const char bufsize = 8 * sizeof(int32_t) + 1;
+      static const char bufsize = 32;
       char buf[bufsize];
       ltoa(n,buf,radix);
       write(buf);
@@ -51,7 +51,7 @@ class Host
 
     void write(float n, signed char width, unsigned char prec)
     {
-      static const char bufsize = 8 * sizeof(float) + 1;
+      static const char bufsize = 32;
       char buf[bufsize];
       dtostrf(n,width,prec,buf);
       write(buf);
