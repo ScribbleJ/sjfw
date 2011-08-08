@@ -103,7 +103,7 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
         bytes[x] = 0;
         crcpos=x+1;
         crc_state[source] = CRCCOMPLETE;
-#ifndef REPRAP_COMPAT
+#ifdef  ADV_CHECKSUMS
         crc[source] += chars_in_line[source] + x;
 #endif        
         break;
@@ -149,20 +149,24 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
     case 'N':
       l = atol(bytes+1);
       //HOST.labelnum("Starting line number:", (int) line_number + 1, true);
-      if(line_number[source] + 1 != l)
+      // TODO: fixme; allow start with '1' to fix dumb hosts.
+      if(l < 1)
       {
-        if(l != -1)
-        {
-          crc[source] = 0;
-          crc_state[source] = NOCRC;
-          HOST.rxerror("Invalid line number.",line_number[source] + 1);
-          chars_in_line[source] = 0;
-          return;
-        }
-        break;
+        line_number[source] = l-1;
       }
+
       line_number[source]++;
       c.setLinenumber(line_number[source]);
+
+      if(line_number[source] != l)
+      {
+        //crc[source] = 0;
+        //crc_state[source] = NOCRC;
+        HOST.labelnum("Invalid line:",l);
+        //chars_in_line[source] = 0;
+        needserror[source]=true;
+        break;
+      }
       break;
     case 'M':
       c[M].setInt(bytes+1);
@@ -192,7 +196,7 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
       c[S].setInt(bytes+1);
       break;
     case 'T':
-      c[T].setInt(bytes+1);
+      //c[T].setInt(bytes+1);
       break;
     // SPECIAL HANDLING FOR PINSETTING
     case '$':
@@ -239,12 +243,12 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
         {
           //HOST.labelnum("CRC COMPUTED: ", crc, true);
           //HOST.labelnum("CRC RECVD: ", ourcrc, true);
-          crc[source] = 0;
-          crc_state[source] = NOCRC;
-          line_number[source]--;
-          HOST.rxerror("CRC mismatch.",line_number[source] + 1);
-          chars_in_line[source] = 0;
-          return;
+          //crc[source] = 0;
+          //crc_state[source] = NOCRC;
+          //line_number[source]--;
+          HOST.labelnum("CRC mismatch:",line_number[source]);
+          needserror[source] = true;
+          //chars_in_line[source] = 0;
         }
         break;
       case NOCRC:
@@ -252,15 +256,16 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
         break;
       case CRC:
       default:
-        crc[source] = 0;
-        crc_state[source] = NOCRC;
-        line_number[source]--;
-        // Error out - no CRC before end of command or invalid state.
-        HOST.rxerror("Missing CRC.",line_number[source] + 1);
-        chars_in_line[source] = 0;
-        return;
+        //crc[source] = 0;
+        //crc_state[source] = NOCRC;
+        //line_number[source]--;
+        //// Error out - no CRC before end of command or invalid state.
+        HOST.labelnum("Missing CRC:",line_number[source]);
+        //chars_in_line[source] = 0;
+        needserror[source] = true;
+        break;
     }
-    
+
     crc_state[source] = NOCRC;
     crc[source] = 0;
 
@@ -271,6 +276,16 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
       return;
     }
     chars_in_line[source] = 0;
+
+    if(needserror[source] && source == HOST_SOURCE)
+    {
+      HOST.rxerror("Unknown.", line_number[source]);
+      line_number[source]--;
+      c.reset();
+      needserror[source] = false;
+      return;
+    }
+
 
     enqueue(sources[source]);
 

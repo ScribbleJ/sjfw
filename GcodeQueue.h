@@ -31,6 +31,7 @@ private:
       crc[x] = 0;
       line_number[x] = -1;
       chars_in_line[x] = 0;
+      needserror[x] = false;
     }
   }
   GcodeQueue(GcodeQueue const&);
@@ -61,6 +62,7 @@ private:
   uint8_t crc[GCODE_SOURCES];
   int32_t line_number[GCODE_SOURCES];
   uint8_t chars_in_line[GCODE_SOURCES];
+  bool needserror[GCODE_SOURCES];
   bool invalidate_codes;
 
   // Helpers for coniguration change hak

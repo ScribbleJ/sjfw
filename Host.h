@@ -103,7 +103,7 @@ class Host
     void labelnum(const char *label, float num, bool end)
     {
       write(label);
-      write(num,10,4);
+      write(num,0,4);
       if(end)
         endl();
     }
@@ -118,8 +118,8 @@ class Host
       write(errmsg);
 #endif      
       endl();
-      rxring.reset();
-      input_ready=0;
+      //rxring.reset();
+      //input_ready=0;
     }
 
     void rxerror(const char* errmsg)
@@ -127,8 +127,8 @@ class Host
       write("!! ");
       write(errmsg);
       endl();
-      rxring.reset();
-      input_ready=0;
+      //rxring.reset();
+      //input_ready=0;
     }
 
     void scan_input();

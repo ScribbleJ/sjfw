@@ -161,13 +161,14 @@ class Axis
     if(max_pin.isNull())
       return;
 
-    max_pin.setDirection(false); min_pin.setValue(PULLUPS);
+    max_pin.setDirection(false); max_pin.setValue(PULLUPS);
   }
 
   void setInvert(bool v) { dir_inverted = v; }
   void setDisable(bool v) { disable_after_move = v; }
   static void setPULLUPS(bool v) { PULLUPS = v; };
   static void setEND_INVERT(bool v) { END_INVERT = v; };
+  bool isInvalid() { return step_pin.isNull(); }
 
 private:
   static bool PULLUPS;

@@ -46,13 +46,13 @@ void Host::scan_input()
 
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
   {
-  input_ready--;
+    input_ready--;
+  }
   for(len=0;len<MAX_GCODE_FRAG_SIZE;len++)
   {
     buf[len] = rxring.pop();
     if(buf[len] <= 32)
       break;
-  }
   }
 
   // HOST.labelnum("Fragment length:", len);

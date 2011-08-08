@@ -238,6 +238,14 @@ void Motion::gcode_execute(GCode& gcode)
   if(gcode.state > GCode::PREPARED)
     return;
 
+  // Make sure they have configured the axis!
+  if(AXES[0].isInvalid())
+  {
+    HOST.write("!! AXIS ARE NOT CONFIGURED !!\n");
+    gcode.state = GCode::DONE;
+    return;
+  }
+
   // set axis move data, invalidate all precomputes if bad data
   for(int ax=0;ax<NUM_AXES;ax++)
   {
@@ -273,7 +281,7 @@ void Motion::writePositionToHost()
 {
   for(int ax=0;ax<NUM_AXES;ax++)
   {
-    HOST.write(ax > Z ? 'A' - Z - 1 + ax : 'X' + ax); HOST.write(':'); HOST.write(AXES[ax].getCurrentPosition(),10,4); HOST.write(' ');
+    HOST.write(ax > Z ? 'A' - Z - 1 + ax : 'X' + ax); HOST.write(':'); HOST.write(AXES[ax].getCurrentPosition(),0,4); HOST.write(' ');
   }
 }
 

@@ -117,8 +117,13 @@ void GCode::do_g_code()
 
 void GCode::write_temps_to_host()
 {
-  HOST.write(" T:"); HOST.write(TEMPERATURE.getHotend(), 10); HOST.write('/'); HOST.write(TEMPERATURE.getHotendST(), 10);
-  HOST.write(" B:"); HOST.write(TEMPERATURE.getPlatform(), 10);  HOST.write('/'); HOST.write(TEMPERATURE.getPlatformST(), 10);
+  HOST.labelnum("T:",TEMPERATURE.getHotend(),false); 
+  HOST.labelnum(" B:", TEMPERATURE.getPlatform(),false);  
+#ifdef REPG_COMPAT
+  HOST.write('\n');
+#endif
+  HOST.labelnum(" / SH:", TEMPERATURE.getHotendST(),false);
+  HOST.labelnum(" SP:", TEMPERATURE.getPlatformST());
 }
 
 void GCode::do_m_code()
@@ -126,6 +131,7 @@ void GCode::do_m_code()
   switch(cps[M].getInt())
   {
     case 0: // Finish up and shut down.
+    case 18: // 18 used by RepG.
     case 84: // "Stop Idle Hold" == shut down motors.
       MOTION.disableAllMotors();
       state = DONE;
@@ -133,12 +139,22 @@ void GCode::do_m_code()
     case 104: // Set Extruder Temperature (Fast)
       if(TEMPERATURE.setHotend(cps[S].getInt()))
       {
-        HOST.labelnum("prog ", linenum, false); write_temps_to_host(); HOST.endl();
+#ifndef REPG_COMPAT        
+        HOST.labelnum("prog ", linenum, false); HOST.write(' ');  write_temps_to_host();
+#else
+        write_temps_to_host();
+#endif        
         state = DONE;
       }
       break;
     case 105: // Get Extruder Temperature
-      HOST.labelnum("prog ", linenum, false); write_temps_to_host(); HOST.endl();
+#ifndef REPG_COMPAT        
+        HOST.labelnum("prog ", linenum, false); HOST.write(' ');  write_temps_to_host(); 
+#else
+        write_temps_to_host();
+#endif        
+        state = DONE;
+
       state = DONE;
       break;
     case 109: // Set Extruder Temperature
@@ -147,23 +163,34 @@ void GCode::do_m_code()
 
       if(TEMPERATURE.getHotend() >= cps[S].getInt())
       {
-        HOST.labelnum("prog ", linenum, false); write_temps_to_host(); HOST.endl();
+#ifndef REPG_COMPAT        
+        HOST.labelnum("prog ", linenum, false); HOST.write(' ');  write_temps_to_host();
+#else
+        write_temps_to_host();
+#endif        
         state = DONE;
       }
 
       if(millis() - lastms > 1000)
       {
         lastms = millis();
-        HOST.labelnum("prog ", linenum, false); write_temps_to_host(); HOST.endl();
+#ifndef REPG_COMPAT        
+        HOST.labelnum("prog ", linenum, false); HOST.write(' ');  write_temps_to_host(); 
+#else
+        write_temps_to_host();
+#endif        
       }
       break;
     case 110: // Set Current Line Number
-      GCODES.setLineNumber(cps[S].isUnused() ? 0 : cps[S].getInt());
+      GCODES.setLineNumber(cps[S].isUnused() ? 1 : cps[S].getInt());
       state = DONE;
       break;
     case 114: // Get Current Position
+#ifndef REPG_COMPAT    
       HOST.labelnum("prog ", linenum, false);
       HOST.write(' ');
+#endif      
+      HOST.write("C: ");
       MOTION.writePositionToHost();
       HOST.endl();
       state = DONE;
@@ -182,13 +209,21 @@ void GCode::do_m_code()
       if(millis() - lastms > 1000)
       {
         lastms = millis();
-        HOST.labelnum("prog ", linenum, false); write_temps_to_host(); HOST.endl();
+#ifndef REPG_COMPAT        
+        HOST.labelnum("prog ", linenum, false); HOST.write(' ');  write_temps_to_host(); 
+#else
+        write_temps_to_host();
+#endif        
       }
       break;
     case 140: // Bed Temperature (Fast) 
       if(TEMPERATURE.setPlatform(cps[S].getInt()))
       {
-        HOST.labelnum("prog ", linenum, false); write_temps_to_host(); HOST.endl();
+#ifndef REPG_COMPAT        
+        HOST.labelnum("prog ", linenum, false); HOST.write(' ');  write_temps_to_host(); 
+#else
+        write_temps_to_host();
+#endif        
         state = DONE;
       }
       break;
@@ -220,7 +255,7 @@ void GCode::do_m_code()
       HOST.labelnum("prog ", linenum, false);
       HOST.write(sdcard::getCurrentfile());
       if(sdcard::printcurrent())
-        HOST.write(" START");
+        HOST.write(" BEGUN");
       else
         HOST.write(" FAIL");
      

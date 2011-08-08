@@ -6,7 +6,7 @@ USE_LCD = 1
 USE_KEYPAD = 1
 
 # EC for Gen3/4 only.  Others default to 100k Thermistors.
-USE_EXTRUDERCONTROLLER = 1
+#USE_EXTRUDERCONTROLLER = 1
 
 #CONFIG_PATH = ramps12
 #CONFIG_PATH = ramps13

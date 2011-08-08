@@ -2,6 +2,8 @@
    AND NOT THIS FILE, which is just defining some things peculiar to the sourcecode. */
 
 #define REPRAP_COMPAT 
+//#define ADV_CHECKSUMS
+#define REPG_COMPAT
 // Maximum length of a single 'fragment' of Gcode; characters in-between spaces.
 #define MAX_GCODE_FRAG_SIZE 32
 // Gcode is a big structure here, 10 is a lot of ram.

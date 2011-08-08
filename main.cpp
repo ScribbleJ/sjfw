@@ -20,7 +20,6 @@ int main(void)
 {
   sei();
   init_time();
-  HOST.write("start\n");
 
 #ifdef HAS_SD
   sdcard::reset();
@@ -30,7 +29,7 @@ int main(void)
 #ifdef SD_AUTORUN
   if(sdcard::autorun())
   {
-    HOST.write("AUTORUN START\n");
+    HOST.write("AUTORUN GOOD\n");
   }
   else
   {
@@ -39,6 +38,8 @@ int main(void)
 #endif
 #endif
 #endif
+
+  HOST.write("start\n");
   // TODO: check to see whether interleaving calls to GCODES.handlenext really gains me anything.
   for (;;) { 
     // Checks to see if gcodes are waiting to run and runs them if so.
