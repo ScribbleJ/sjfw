@@ -5,6 +5,7 @@ http://reprap.org/wiki/Sjfw
 
 config.h           - Configuration used in precompiled .hex files for reference.
 ramps13.gcode      - Runtime configuration for RAMPS13.  Commented.
-ramps13.gcd        - Same but uncommented, to use as sjfwauto.gcd on sdcard.
-tom.gcd            - Runtime configuration for ToM.
+ramps13ex.gcode    - Same, but uncommented.  sdcard cannot handle comments.
+ramps13.gcd        - Typical ramps13 config WITHOUT the LCD and Keypad config.
+tom.gcd            - Runtime configuration for ToM WITHOUT the LCD and Keypad config.
 
