@@ -124,9 +124,10 @@ void GCode::write_temps_to_host(int port)
   Host::Instance(port).labelnum(" B:", TEMPERATURE.getPlatform(),false);  
 #ifdef REPG_COMPAT
   Host::Instance(port).write('\n');
-#endif
+#else
   Host::Instance(port).labelnum(" / SH:", TEMPERATURE.getHotendST(),false);
   Host::Instance(port).labelnum(" SP:", TEMPERATURE.getPlatformST());
+#endif  
 }
 
 void GCode::do_m_code()
@@ -144,9 +145,7 @@ void GCode::do_m_code()
       {
 #ifndef REPG_COMPAT        
         Host::Instance(source).labelnum("prog ", linenum, false); Host::Instance(source).write(' ');  write_temps_to_host(source);
-#else
-        write_temps_to_host(source);
-#endif        
+#endif
         state = DONE;
       }
       break;
@@ -168,7 +167,6 @@ void GCode::do_m_code()
       {
 #ifndef REPG_COMPAT        
         Host::Instance(source).labelnum("prog ", linenum, false); Host::Instance(source).write(' ');  write_temps_to_host(source);
-#else
         write_temps_to_host(source);
 #endif        
         state = DONE;
@@ -224,8 +222,6 @@ void GCode::do_m_code()
       {
 #ifndef REPG_COMPAT        
         Host::Instance(source).labelnum("prog ", linenum, false); Host::Instance(source).write(' ');  write_temps_to_host(source); 
-#else
-        write_temps_to_host(source);
 #endif        
         state = DONE;
       }
@@ -278,7 +274,6 @@ void GCode::do_m_code()
       TEMPERATURE.changePinPlatform(cps[P].getInt());
       state = DONE;
       break;
-
     default:
       Host::Instance(source).labelnum("warn ", linenum, false);
       Host::Instance(source).write(" MCODE "); Host::Instance(source).write(cps[M].getInt(), 10); Host::Instance(source).write(" NOT SUPPORTED\n");

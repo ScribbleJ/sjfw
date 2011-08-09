@@ -30,10 +30,16 @@ int main(void)
   if(sdcard::autorun())
   {
     HOST.write("AUTORUN GOOD\n");
+#ifdef HAS_BT
+    BT.write("AUTORUN GOOD\n");
+#endif
   }
   else
   {
     HOST.write("AUTORUN FAIL\n");
+#ifdef HAS_BT
+    BT.write("AUTORUN FAIL\n");
+#endif    
   }
 #endif
 #endif
@@ -41,7 +47,7 @@ int main(void)
 
   HOST.write("start\n");
 #ifdef HAS_BT
-  BT.write("AT+NAMEsjfw\n");
+  BT.write("start\n");
 #endif  
   // TODO: check to see whether interleaving calls to GCODES.handlenext really gains me anything.
   for (;;) { 
