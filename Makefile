@@ -21,7 +21,8 @@ CONFIG_PATH = generic
 
 
 # this needs to point to the directory where you have avrdude, avr-gcc, and such.
-AVR_TOOLS_PATH = /usr/bin
+AVR_TOOLS_PATH = /usr/bin/avr/bin
+AVR_GCC_PATH = $(AVR_TOOLS_PATH)
 
 #Reasonable settings for Atmega1280 (regardless of board)
 #UPLOAD_RATE = 57600
@@ -94,8 +95,8 @@ AVRDUDE_WRITE_FLASH = -U flash:w:main.hex:i
 AVRDUDE_FLAGS = -V -p $(MCU) -P $(PORT) -c $(AVRDUDE_PROGRAMMER) -b $(UPLOAD_RATE) -D
 
 # Program settings
-CC = $(AVR_TOOLS_PATH)/avr-gcc
-CXX = $(AVR_TOOLS_PATH)/avr-g++
+CC = $(AVR_GCC_PATH)/avr-gcc
+CXX = $(AVR_GCC_PATH)/avr-g++
 OBJCOPY = $(AVR_TOOLS_PATH)/avr-objcopy
 OBJDUMP = $(AVR_TOOLS_PATH)/avr-objdump
 AR  = $(AVR_TOOLS_PATH)/avr-ar
@@ -110,7 +111,7 @@ OBJ = $(CXXSRC:.cpp=.o)
 
 # Combine all necessary flags and optional flags.
 # Add target processor to flags.
-ALL_CXXFLAGS = -mmcu=$(MCU) -I. -I./$(CONFIG_PATH) -I./lib_sd -I./avr $(CXXFLAGS)
+ALL_CXXFLAGS = -mmcu=$(MCU) -I. -I./$(CONFIG_PATH) -I./lib_sd -I./avr -I/home/chris/gcc-avr/include $(CXXFLAGS)
 
 # Default target.
 all: build sizeafter

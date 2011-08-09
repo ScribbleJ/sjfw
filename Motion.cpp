@@ -241,7 +241,7 @@ void Motion::gcode_execute(GCode& gcode)
   // Make sure they have configured the axis!
   if(AXES[0].isInvalid())
   {
-    HOST.write("!! AXIS ARE NOT CONFIGURED !!\n");
+    Host::Instance(gcode.source).write("!! AXIS ARE NOT CONFIGURED !!\n");
     gcode.state = GCode::DONE;
     return;
   }
@@ -277,11 +277,14 @@ bool Motion::axesAreMoving()
 }
 
 
-void Motion::writePositionToHost()
+void Motion::writePositionToHost(GCode& gc)
 {
   for(int ax=0;ax<NUM_AXES;ax++)
   {
-    HOST.write(ax > Z ? 'A' - Z - 1 + ax : 'X' + ax); HOST.write(':'); HOST.write(AXES[ax].getCurrentPosition(),0,4); HOST.write(' ');
+    Host::Instance(gc.source).write(ax > Z ? 'A' - Z - 1 + ax : 'X' + ax); 
+    Host::Instance(gc.source).write(':'); 
+    Host::Instance(gc.source).write(AXES[ax].getCurrentPosition(),0,4); 
+    Host::Instance(gc.source).write(' ');
   }
 }
 

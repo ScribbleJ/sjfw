@@ -194,7 +194,7 @@ void GCode::do_m_code()
       Host::Instance(source).write(' ');
 #endif      
       Host::Instance(source).write("C: ");
-      MOTION.writePositionToHost();
+      MOTION.writePositionToHost(*this);
       Host::Instance(source).endl();
       state = DONE;
       break; 

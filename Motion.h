@@ -83,7 +83,7 @@ public:
   void gcode_execute(GCode& gcode);
 
   // Debugging and output to host...
-  void writePositionToHost();
+  void writePositionToHost(GCode& gcode);
 
   // Functions for handling pulsing motors using a timer interrupt for timing.
   void handleInterrupt();

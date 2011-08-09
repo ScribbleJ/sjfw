@@ -21,14 +21,12 @@ class Host
     // singleton
     static Host& Instance(int port) 
     { 
+#ifdef HAS_BT    
       if(port == 2) 
-      {
         return i2();
-      }
       else
-      {
-        return i0();
-      }
+#endif      
+      return i0();
     }
     static Host& Instance() { return Instance(0); }
     static Host& i0() { static Host instance(HOST_BAUD,0); return instance; }
@@ -47,7 +45,14 @@ class Host
     uint8_t popchar() { uint8_t c = rxring.pop(); return c; }
     uint8_t peekchar() { uint8_t c = rxring.peek(0); return c; }
 
-    void write(uint8_t data) { txring.push(data); if(port == 2) UCSR2B |= MASK(UDRIE2); else UCSR0B |= MASK(UDRIE0); }
+    void write(uint8_t data) 
+    { 
+      txring.push(data); 
+      if(port == 2) 
+        UCSR2B |= MASK(UDRIE2); 
+      else UCSR0B |= MASK(UDRIE0); 
+    }
+
     void write(const char *data) { uint8_t i = 0, r; while ((r = data[i++])) write(r); }
     void write(uint32_t n, int radix)
     {
@@ -156,6 +161,7 @@ class Host
       if(p == 2)
       {
         c = UDR2;
+        //i0().write(c);
       }
       else
       {

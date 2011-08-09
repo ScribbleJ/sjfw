@@ -40,6 +40,9 @@ int main(void)
 #endif
 
   HOST.write("start\n");
+#ifdef HAS_BT
+  BT.write("AT+NAMEsjfw\n");
+#endif  
   // TODO: check to see whether interleaving calls to GCODES.handlenext really gains me anything.
   for (;;) { 
     // Checks to see if gcodes are waiting to run and runs them if so.

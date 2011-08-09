@@ -7,17 +7,21 @@
 #include <util/atomic.h>
 #include "GcodeQueue.h"
 
+#include "config.h"
 
 
-Host::Host(unsigned long BAUD, int port)
+
+Host::Host(unsigned long BAUD, int port_in)
   : rxring(HOST_RECV_BUFSIZE, rxbuf), txring(HOST_SEND_BUFSIZE, txbuf)
 {
   input_ready = 0;
-  port = port;
-  if(port == 0)
-    Init0(BAUD);
+  port = port_in;
+#ifdef HAS_BT  
   if(port == 2)
     Init2(BAUD);
+  else
+#endif
+    Init0(BAUD);
 }
 
 void Host::Init0(unsigned long BAUD)
@@ -48,8 +52,16 @@ void Host::Init2(unsigned long BAUD)
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
   {
   PRR1 &= ~MASK(PRUSART2);
-  UCSR2A = 0;
-  UBRR2 = (((F_CPU / 16) / BAUD) - 0.5);
+  if(BAUD > 38401)
+  {
+    UCSR2A = MASK(U2X2);
+    UBRR2 = (((F_CPU / 8) / BAUD) - 0.5);
+  }
+  else
+  {
+    UCSR2A = 0;
+    UBRR2 = (((F_CPU / 16) / BAUD) - 0.5);
+  }
 
   UCSR2B = MASK(RXEN2) | MASK(TXEN2);
   UCSR2C = MASK(UCSZ21) | MASK(UCSZ20);
@@ -93,7 +105,18 @@ void Host::scan_input()
     return;
   }
 
-
+#ifdef HAS_BT
+#ifdef BT_DEBUG
+    uint8_t temp = buf[len];
+    buf[len] = 0;
+    int other = 0;
+    if(port == 0) other = 2;
+    Host::Instance(other).write("COM: ");
+    Host::Instance(other).write(buf);
+    Host::Instance(other).endl();
+    buf[len] = temp;
+#endif    
+#endif    
   GCODES.parsebytes(buf, len, port);
 
 }
@@ -114,11 +137,15 @@ ISR(USART0_UDRE_vect)
 
 ISR(USART2_RX_vect)
 {
+#ifdef HAS_BT
   BT.rx_interrupt_handler(2);
+#endif  
 }
 
 ISR(USART2_UDRE_vect)
 {
+#ifdef HAS_BT
   BT.udre_interrupt_handler(2);
+#endif
 }
 

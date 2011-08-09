@@ -29,4 +29,5 @@
 #define HOST_SEND_BUFSIZE 128
 #define HOST_BAUD 57600
 
-#define BT_BAUD 2400
+#define BT_BAUD 9600
+//#define BT_DEBUG

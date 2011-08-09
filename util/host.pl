@@ -8,9 +8,11 @@ local $|=1;
 my $SJFW_CRC = 0;
 
 my $port = $ARGV[0] || die(usage());
+my $baud = $ARGV[1] || 57600;
+
 
 my $p = tie(*PH, 'Device::SerialPort', $ARGV[0]) || die("Cannot tie: $!\n");
-$p->baudrate(57600);
+$p->baudrate($baud);
 $p->parity("none");
 $p->databits(8);
 $p->stopbits(1);
@@ -31,7 +33,7 @@ my $bufsize = 0;
 my $resend = 0;
 my @linehist = ();
 my $linenum = 0;
-my $started = 0;
+my $started = $ARGV[2] || 0;
 
 my $instr='';
 my $inready =0;
