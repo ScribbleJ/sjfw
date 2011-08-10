@@ -43,7 +43,9 @@ private:
 	port_base_t port_base;
 public:
 	Port() : port_base(NULL_PORT) {}
+
 	Port(port_base_t port_base_in) : port_base(port_base_in) {}
+
   Port& operator=(const Port& p) { port_base = p.port_base; return *this; }
 
 	bool isNull() { return port_base == NULL_PORT; }
@@ -70,8 +72,11 @@ private:
 	uint8_t pin_index : 4;
 public:
 	Pin() : port(Port()), pin_index(0) {}
-	Pin(Port& port_in, uint8_t pin_index_in) : port(port_in), pin_index(pin_index_in) {}
+
+	Pin(Port port_in, uint8_t pin_index_in) : port(port_in), pin_index(pin_index_in) {}
+
   Pin& operator=(const Pin& p) { port = p.port; pin_index = p.pin_index; return *this; }
+
 	bool isNull() { return port.isNull(); }
 	void setDirection(bool out) { port.setPinDirection(pin_index,out); }
 	bool getValue() { return port.getPin(pin_index); }

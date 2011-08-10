@@ -267,11 +267,53 @@ void GCode::do_m_code()
       state = DONE;
       break;
     case 207: // NOT STANDARD - set hotend thermistor pin
-      TEMPERATURE.changePinHotend(cps[P].getInt());
+      if(!cps[P].isUnused())
+        TEMPERATURE.changePinHotend(cps[P].getInt());
+      if(!cps[S].isUnused())
+        TEMPERATURE.changeOutputPinHotend(cps[S].getInt());
       state = DONE;
       break;
     case 208: // NOT STANDARD - set platform thermistor pin
-      TEMPERATURE.changePinPlatform(cps[P].getInt());
+      if(!cps[P].isUnused())
+        TEMPERATURE.changePinPlatform(cps[P].getInt());
+      if(!cps[S].isUnused())
+        TEMPERATURE.changeOutputPinPlatform(cps[S].getInt());
+      state = DONE;
+      break;
+    case 300: // NOT STANDARD - set axis STEP pin
+      MOTION.setStepPins(*this);
+      state = DONE;
+      break;
+    case 301: // NOT STANDARD - set axis DIR pin
+      MOTION.setDirPins(*this);
+      state = DONE;
+      break;
+    case 302: // NOT STANDARD - set axis ENABLE pin
+      MOTION.setEnablePins(*this);
+      state = DONE;
+      break;
+    case 304: // NOT STANDARD - set axis MIN pin
+      MOTION.setMinPins(*this);
+      state = DONE;
+      break;
+    case 305: // NOT STANDARD - set axis MAX pin
+      MOTION.setMaxPins(*this);
+      state = DONE;
+      break;
+    case 307: // NOT STANDARD - set axis invert
+      MOTION.setAxisInvert(*this);
+      state = DONE;
+      break;
+    case 308: // NOT STANDARD - set axis disable
+      MOTION.setAxisDisable(*this);
+      state = DONE;
+      break;
+    case 309: // NOT STANDARD - set global endstop invert, endstop pullups.
+      MOTION.setEndstopGlobals(cps[P].getInt() == 1 ? true: false, cps[S].getInt() == 1 ? true: false);
+      state = DONE;
+      break;
+    case 310: // NOT STANDARD - report axis configuration status
+      MOTION.reportConfigStatus(Host::Instance(source));
       state = DONE;
       break;
     default:

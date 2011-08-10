@@ -10,6 +10,7 @@
 #include "MBIEC.h"
 #else
 #include "Thermistor.h"
+#include "ArduinoMap.h"
 #endif
 
 
@@ -44,10 +45,16 @@ class Temperature
 #ifdef USE_MBIEC
     MBIEC& EC;
 public:
-    void changePinHotend(Port& p, int pin) { return; }
-    void changePinPlatform(Port& p, int pin) { return; }
+    // Changes FET pin
+    void changePinHotend(Port p, int pin) { return; }
+    void changePinPlatform(Port p, int pin) { return; }
+    // Changes Thermistor pin
     void changePinHotend(int pin) { return; }
     void changePinPlatform(int pin) { return; }
+    // Changes FET pin
+    void changeOutputPinHotend(int pin) { return; }
+    void changeOutputPinPlatform(int pin) { return; }
+
 
 #else
     Thermistor hotend_therm;
@@ -59,14 +66,15 @@ public:
     Pin hotend_heat;
     Pin platform_heat;
 public:
-    void changePinHotend(Port& p, int pin)
+    // Changes FET pin by Port, pin
+    void changePinHotend(Port p, int pin)
     {
       hotend_heat.setValue(false);
       hotend_heat = Pin(p, pin);
       hotend_heat.setDirection(true);
       hotend_heat.setValue(false);
     }
-    void changePinPlatform(Port& p, int pin)
+    void changePinPlatform(Port p, int pin)
     {
       platform_heat.setValue(false);
       platform_heat = Pin(p, pin);
@@ -74,8 +82,21 @@ public:
       platform_heat.setValue(false);
     }
 
+    // changes thermistor pin
     void changePinHotend(int pin) { hotend_therm.changePin(pin); }
     void changePinPlatform(int pin) { platform_therm.changePin(pin); }
+
+    // Changes FET pin by Arduino naming
+    void changeOutputPinHotend(int pin) 
+    {
+      changePinHotend(ArduinoMap::getPort(pin), ArduinoMap::getPinnum(pin));
+    }
+    void changeOutputPinPlatform(int pin) 
+    { 
+      changePinPlatform(ArduinoMap::getPort(pin), ArduinoMap::getPinnum(pin));
+    }
+
+
 #endif
 
 };

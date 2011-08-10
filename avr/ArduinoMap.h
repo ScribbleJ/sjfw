@@ -6,6 +6,8 @@
 namespace ArduinoMap 
 {
   Pin getArduinoPin(int pinnum);
+  Port getPort(int pinnum);
+  uint8_t getPinnum(int pinnum);
 };
 
 

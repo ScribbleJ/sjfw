@@ -178,16 +178,28 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
       c[F].setFloat(bytes+1);
       break;
     case 'X':
-      c[X].setFloat(bytes+1);
+      if((!c[M].isUnused()) && (c[M].getInt() >= 300))
+        c[X].setInt(bytes+1);
+      else
+        c[X].setFloat(bytes+1);
       break;
     case 'Y':
-      c[Y].setFloat(bytes+1);
+      if((!c[M].isUnused()) && (c[M].getInt() >= 300))
+        c[Y].setInt(bytes+1);
+      else
+        c[Y].setFloat(bytes+1);
       break;
     case 'Z':
-      c[Z].setFloat(bytes+1);
+      if((!c[M].isUnused()) && (c[M].getInt() >= 300))
+        c[Z].setInt(bytes+1);
+      else
+        c[Z].setFloat(bytes+1);
       break;
     case 'E':
-      c[E].setFloat(bytes+1);
+      if((!c[M].isUnused()) && (c[M].getInt() >= 300))
+        c[E].setInt(bytes+1);
+      else
+        c[E].setFloat(bytes+1);
       break;
     case 'P':
       c[P].setInt(bytes+1);
@@ -199,19 +211,6 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
       //c[T].setInt(bytes+1);
       break;
     // SPECIAL HANDLING FOR PINSETTING
-    case '$':
-      // Only activate pinsetting mode if G and M are /both/ set
-      // This is both a nice way to signal something unusual is happening
-      // and also causes the code to not get dropped into the queue.
-      if(c[M].isUnused() || c[G].isUnused())
-        break;
-      doPinSetting(c, bytes+1, numbytes);
-      break;
-    case '%':
-      if(c[M].isUnused() || c[G].isUnused())
-        break;
-      doTempSetting(c, bytes+1, numbytes);
-      break;
 #ifdef HAS_LCD      
     case '^':
       if(c[M].isUnused() || c[G].isUnused())
@@ -308,112 +307,5 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
   
 }
 
-// TODO: Move these.
-bool GcodeQueue::doPinSetting(GCode& c, char const* str, int charsin)
-{
-  int axis = str[0] - 'X';
-  if(str[0] < 'X')
-    axis = str[0] - 'A' + 3;
-
-  //HOST.labelnum("PCHANGE ", axis, true);
-  //MOTION.getAxis(axis).dump_to_host();
-  for(int x=1;x<charsin && str[x]!='*' && str[x]>32;x++)
-  {
-    //HOST.write("  ");
-    //HOST.write(str[x]);
-    //HOST.write(" is:");
-    //if(str[x+1] == '-')
-    //  HOST.write("NULL\n");
-    //else
-    //{
-    //  HOST.write(str[x+1]);
-    //  HOST.labelnum(",",(str[x+2]-'0'),true);
-    //}
-
-#define _DOPINSETTING(FOO)  \
-    if(str[x+1] == '-') \
-    {                   \
-      MOTION.getAxis(axis).FOO(PortNull,0); \
-      x+=2;             \
-      break;         \
-    }                   \
-    MOTION.getAxis(axis).FOO(Port::getPortFromLetter(str[x+1]), str[x+2]-'0'); \
-    x+=2; 
-
-    switch(str[x])
-    {
-      case 'S':
-        _DOPINSETTING(changepinStep);
-        break;
-      case 'D':
-        _DOPINSETTING(changepinDir);
-        break;
-      case 'E':
-        _DOPINSETTING(changepinEnable);
-        break;
-      case 'I':
-        _DOPINSETTING(changepinMin);
-        break;
-      case 'A':
-        _DOPINSETTING(changepinMax);
-        break;
-      case 'N':
-        MOTION.getAxis(axis).setInvert(str[x+1]-'0');
-        x++;
-        break;
-      case 'X':
-        MOTION.getAxis(axis).setDisable(str[x+1]-'0');
-        x++;
-        break;
-      case 'J':
-        MOTION.getAxis(axis).setPULLUPS(str[x+1]-'0');
-        x++;
-        break;
-      case 'K':
-        MOTION.getAxis(axis).setEND_INVERT(str[x+1]-'0');
-        x++;
-        break;
-    }
-  }
-
-  //MOTION.getAxis(axis).dump_to_host();
-    
-  return true;
-
-}
-
 void GcodeQueue::Invalidate() { invalidate_codes = true; }
-
-bool GcodeQueue::doTempSetting(GCode& c, char const* str, int charsin)
-{
-  for(int x=0;x<charsin && str[x]!='*' && str[x]>32;x++)
-  {
-    switch(str[x])
-    {
-      case 'H':
-        if(str[x+1] == '-') 
-        {                   
-          TEMPERATURE.changePinHotend(PortNull,0);
-          x+=2; 
-          continue;
-        }         
-        TEMPERATURE.changePinHotend(Port::getPortFromLetter(str[x+1]), str[x+2]-'0'); 
-        x+=2; 
-        break;
-      case 'B':
-        if(str[x+1] == '-') 
-        {                   
-          TEMPERATURE.changePinPlatform(PortNull,0);
-          x+=2; 
-          continue;
-        }         
-        TEMPERATURE.changePinPlatform(Port::getPortFromLetter(str[x+1]), str[x+2]-'0'); 
-        x+=2; 
-        break;
-    }
-  }
-  return true;
-}
-
-
 GcodeQueue& GCODES = GcodeQueue::Instance();

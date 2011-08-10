@@ -5,6 +5,7 @@
 #include "Axis.h"
 #include "Globals.h"
 #include "GcodeQueue.h"
+#include "ArduinoMap.h"
 
 
 
@@ -84,6 +85,65 @@ void Motion::setAccel(GCode& gcode)
     AXES[ax].setAccel(gcode[ax].getFloat());
   }
 }
+
+#define MOT_CHANGEPIN(FOO) \
+  for(int ax=0;ax < NUM_AXES;ax++) \
+  { \
+    if(gcode[ax].isUnused()) \
+      continue; \
+    \
+    AXES[ax].FOO(ArduinoMap::getPort(gcode[ax].getInt()), ArduinoMap::getPinnum(gcode[ax].getInt())); \
+  } 
+ 
+
+void Motion::setStepPins(GCode& gcode) { MOT_CHANGEPIN(changepinStep); }
+void Motion::setDirPins(GCode& gcode) { MOT_CHANGEPIN(changepinDir); }
+void Motion::setEnablePins(GCode& gcode) { MOT_CHANGEPIN(changepinEnable); }
+void Motion::setMinPins(GCode& gcode) { MOT_CHANGEPIN(changepinMin); }
+void Motion::setMaxPins(GCode& gcode) { MOT_CHANGEPIN(changepinMax); } 
+void Motion::setAxisInvert(GCode& gcode)
+{
+  for(int ax=0;ax < NUM_AXES;ax++)
+  {
+    if(gcode[ax].isUnused()) continue;
+    AXES[ax].setInvert(gcode[ax].getInt());
+  }
+}
+
+void Motion::setAxisDisable(GCode& gcode)
+{
+  for(int ax=0;ax < NUM_AXES;ax++)
+  {
+    if(gcode[ax].isUnused()) continue;
+    AXES[ax].setDisable(gcode[ax].getInt());
+  }
+}
+
+void Motion::setEndstopGlobals(bool inverted, bool pulledup)
+{
+  Axis::setPULLUPS(pulledup);
+  Axis::setEND_INVERT(inverted);
+}
+
+void Motion::reportConfigStatus(Host& h)
+{
+  for(int ax=0;ax < NUM_AXES;ax++)
+  {
+    h.labelnum("CS:", ax, false);
+    h.write(' ');
+    AXES[ax].reportConfigStatus(h);
+    h.endl();
+  }
+}
+
+
+
+
+
+
+
+
+
 
 void Motion::disableAllMotors()
 {

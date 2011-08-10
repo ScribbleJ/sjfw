@@ -120,7 +120,7 @@ class Axis
 
   void disableIfConfigured() { if(disable_after_move) disable(); }
 
-  void changepinStep(Port& p, int bit)
+  void changepinStep(Port p, int bit)
   {
     step_pin = Pin(p, bit);
     if(step_pin.isNull())
@@ -128,7 +128,7 @@ class Axis
     step_pin.setDirection(true); step_pin.setValue(false);
   }
 
-  void changepinDir(Port& p, int bit)
+  void changepinDir(Port p, int bit)
   {
     dir_pin = Pin(p, bit);
     if(dir_pin.isNull())
@@ -137,7 +137,7 @@ class Axis
     dir_pin.setDirection(true); dir_pin.setValue(false);
   }
 
-  void changepinEnable(Port& p, int bit)
+  void changepinEnable(Port p, int bit)
   {
     enable_pin = Pin(p, bit);
     if(enable_pin.isNull())
@@ -146,7 +146,7 @@ class Axis
     enable_pin.setDirection(true); enable_pin.setValue(true);
   }
 
-  void changepinMin(Port& p, int bit)
+  void changepinMin(Port p, int bit)
   {
     min_pin = Pin(p, bit);
     if(min_pin.isNull())
@@ -155,7 +155,7 @@ class Axis
     min_pin.setDirection(false); min_pin.setValue(PULLUPS);
   }
 
-  void changepinMax(Port& p, int bit)
+  void changepinMax(Port p, int bit)
   {
     max_pin = Pin(p, bit);
     if(max_pin.isNull())
@@ -169,6 +169,31 @@ class Axis
   static void setPULLUPS(bool v) { PULLUPS = v; };
   static void setEND_INVERT(bool v) { END_INVERT = v; };
   bool isInvalid() { return step_pin.isNull(); }
+  void reportConfigStatus(Host& h)
+  {
+    if(steps_per_unit == 1)
+      h.write(" no steps_per_unit ");
+    if(accel_rate == 1)
+      h.write(" no accel ");
+    if(step_pin.isNull())
+      h.write(" no step ");
+    if(dir_pin.isNull())
+      h.write(" no dir ");
+    if(enable_pin.isNull())
+      h.write(" no enable ");
+    if(min_pin.isNull())
+      h.write(" no min ");
+    if(max_pin.isNull())
+      h.write(" no max ");
+    if(disable_after_move)
+      h.write(" DIS ");
+    if(dir_inverted)
+      h.write(" INV ");
+    if(PULLUPS)
+      h.write(" EPULL ");
+    if(END_INVERT)
+      h.write(" EINV ");
+  }
 
 private:
   static bool PULLUPS;

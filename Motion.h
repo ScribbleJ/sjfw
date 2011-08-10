@@ -59,12 +59,20 @@ public:
   void setAverageFeedrate(GCode& gcode);
   void setStepsPerUnit(GCode& gcode);
   void setAccel(GCode& gcode);
+
+  void setStepPins(GCode& gcode);
+  void setDirPins(GCode& gcode);
+  void setEnablePins(GCode& gcode);
+  void setMinPins(GCode& gcode);
+  void setMaxPins(GCode& gcode);
+  void setAxisInvert(GCode& gcode);
+  void setAxisDisable(GCode& gcode);
+  void setEndstopGlobals(bool inverted, bool pulledup);
+  void reportConfigStatus(Host& h);
   // Motors automatically enabled when used
   void disableAllMotors();
   void wrapup(GCode& gcode) { checkdisable(gcode); }
   void checkdisable(GCode& gcode);
-
-
 
   // Calculate the number of steps for each axis in a move.
   void getMovesteps(GCode& gcode);

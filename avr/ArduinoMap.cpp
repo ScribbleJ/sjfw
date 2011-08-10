@@ -1,7 +1,7 @@
 #include "ArduinoMap.h"
 #include <avr/pgmspace.h>
 
-namespace ArduinoPin
+namespace ArduinoMap 
 {
 
 #ifdef __AVR_ATmega2560__
@@ -19,7 +19,7 @@ namespace ArduinoPin
 #define AP_PL 0x109
 #define AP_PN 0xFFFF
 
-const uint16_t portmap[70] PROGMEM = 
+const uint16_t __portmap[70] PROGMEM = 
 {
   AP_PE  , // PE 0 ** 0 ** USART0_RX
   AP_PE  , // PE 1 ** 1 ** USART0_TX
@@ -93,7 +93,7 @@ const uint16_t portmap[70] PROGMEM =
   AP_PK  // PK 7 ** 69 ** A15
 };
 
-const uint8_t pinmap[70] PROGMEM = 
+const uint8_t __pinmap[70] PROGMEM = 
 {
   0, // ** 0 ** USART0_RX
   1, // ** 1 ** USART0_TX
@@ -172,22 +172,31 @@ const uint8_t pinmap[70] PROGMEM =
 #endif
 
 
+  Port getPort(int pinnum)
+  {
+    Port port(pgm_read_word(&(__portmap[pinnum])));
+    return port;
+  }
 
+  uint8_t getPinnum(int pinnum)
+  {
+    uint8_t p = pgm_read_byte(&(__pinmap[pinnum]));
+    return p;
+  }
 
   Pin getArduinoPin(int pinnum)
   {
-    Port port(pgm_read_word(&(portmap[pinnum])));
-    Pin p = Pin(port,
-                pgm_read_byte(&(pinmap[pinnum]))
+    Pin p = Pin(getPort(pinnum), 
+                getPinnum(pinnum)
                );
     return p;
   }
 
 
+}; // namespace
 
 
 
 
 
-};
 

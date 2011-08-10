@@ -19,7 +19,8 @@
 class CodeParam
 {
 public:
-  CodeParam(const char name) :letter(name), state(UNUSED) { };
+  enum states_T { UNUSED, FLOAT, INT } state;
+  CodeParam(const char name) :state(UNUSED), letter(name) { };
 
   void unset() { state = UNUSED; u=0; }
   void setFloat(float v) { f = v; state = FLOAT; }
@@ -50,7 +51,6 @@ public:
 
   
   char letter;
-  enum states_T { UNUSED, FLOAT, INT } state;
   union 
   {
     float f;

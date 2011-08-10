@@ -24,9 +24,9 @@
 
 // RECV buffer must be large enough to hold at least 1 full line of gcode.  Anything
 // larger is overkill - limited to 255 chars by RingBuffer addresstype presently
-#define HOST_RECV_BUFSIZE 128
+#define HOST_RECV_BUFSIZE 200
 // SEND buffer must be large enough to hold as much text as we might spew in a loop; it's a lot.
-#define HOST_SEND_BUFSIZE 128
+#define HOST_SEND_BUFSIZE 200
 #define HOST_BAUD 57600
 
 #define BT_BAUD 9600
