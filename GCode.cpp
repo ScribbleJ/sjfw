@@ -280,6 +280,13 @@ void GCode::do_m_code()
         TEMPERATURE.changeOutputPinPlatform(cps[S].getInt());
       state = DONE;
       break;
+    case 211: // NOT STANDARD - request temp reports at regular interval
+      if(cps[P].isUnused())
+        TEMPERATURE.changeReporting(0, Host::Instance(source));
+      else
+        TEMPERATURE.changeReporting(cps[P].getInt(), Host::Instance(source));
+      state = DONE;
+      break;
     case 300: // NOT STANDARD - set axis STEP pin
       MOTION.setStepPins(*this);
       state = DONE;

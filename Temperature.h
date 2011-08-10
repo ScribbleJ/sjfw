@@ -16,6 +16,7 @@
 
 #include <stdint.h>
 #include "AvrPort.h"
+#include "Host.h"
 
 
 // TODO: Should support N probes/heaters instead of 2.
@@ -28,6 +29,9 @@ class Temperature
     Temperature(Temperature&);
     Temperature& operator=(Temperature&);
 
+    unsigned long report_m;
+    unsigned long report_l;
+    Host *report_h;
   public:
     void update();
     // Set temperature of hotend and platform
@@ -39,7 +43,12 @@ class Temperature
     // Get current temperature settings
     uint16_t getHotendST();
     uint16_t getPlatformST();
-
+    void changeReporting(unsigned long millis, Host &out)
+    {
+      report_h = &out;
+      report_m = millis;
+    }
+    void doreport();
 
   private:
 #ifdef USE_MBIEC

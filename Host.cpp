@@ -16,10 +16,12 @@ Host::Host(unsigned long BAUD, int port_in)
 {
   input_ready = 0;
   port = port_in;
+#ifdef HIGHPORTS  
 #ifdef HAS_BT  
   if(port == 2)
     Init2(BAUD);
   else
+#endif
 #endif
     Init0(BAUD);
 }
@@ -49,6 +51,7 @@ void Host::Init0(unsigned long BAUD)
 
 void Host::Init2(unsigned long BAUD)
 {
+#ifdef HIGHPORTS
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
   {
   PRR1 &= ~MASK(PRUSART2);
@@ -68,6 +71,7 @@ void Host::Init2(unsigned long BAUD)
 
   UCSR2B |= MASK(RXCIE2) | MASK(UDRIE2);
   }
+#endif  
 }
 
 
@@ -135,6 +139,7 @@ ISR(USART0_UDRE_vect)
   HOST.udre_interrupt_handler(0);
 }
 
+#ifdef HIGHPORTS
 ISR(USART2_RX_vect)
 {
 #ifdef HAS_BT
@@ -148,4 +153,5 @@ ISR(USART2_UDRE_vect)
   BT.udre_interrupt_handler(2);
 #endif
 }
+#endif
 

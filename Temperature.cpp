@@ -2,17 +2,33 @@
 
 #include "Time.h"
 
+void Temperature::doreport()
+{
+  if(report_m == 0)
+    return;
+  unsigned long now = millis();
+  if(report_l + report_m < now)
+  {
+    report_l = now;
+    (*report_h).labelnum("T:",getHotend(),false);
+    (*report_h).labelnum(" B:",getPlatform());
+  }
+}
+
 #ifdef USE_MBIEC
 Temperature::Temperature()
   : EC(MBIEC::Instance())
 {
-  ; // Nothing to do here.
+  report_m = 0;
+  report_l = 0;
+  report_h = 0;
 }
 
 void Temperature::update()
 {
   EC.scan_input();
   EC.update();
+  doreport();
 }
 
 bool Temperature::setHotend(uint16_t temp)
@@ -52,6 +68,9 @@ Temperature::Temperature()
     hotend_heat(HOTEND_HEAT_PIN),
     platform_heat(PLATFORM_HEAT_PIN)
 {
+  report_m = 0;
+  report_l = 0;
+  report_h = 0;
   hotend_therm.init();
   platform_therm.init();
   hotend_heat.setDirection(true); hotend_heat.setValue(false);
@@ -98,6 +117,8 @@ void Temperature::update()
       platform_heat.setValue(true);
     }
   }
+
+  doreport();
 
 }
 

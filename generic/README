@@ -4,8 +4,8 @@ http://reprap.org/wiki/Sjfw
 "EC" firmwares for Thing-O-Matic/Gen4 require the Makerbot Extruder Controller Firmware on your EC.
 
 config.h           - Configuration used in precompiled .hex files for reference.
-ramps13.gcode      - Runtime configuration for RAMPS13.  Commented.
-ramps13ex.gcode    - Same, but uncommented.  sdcard cannot handle comments.
-ramps13.gcd        - Typical ramps13 config WITHOUT the LCD and Keypad config.
-tom.gcd            - Runtime configuration for ToM WITHOUT the LCD and Keypad config.
+ramps13.gcode      - Example, commented configuration.
+ramps13ex.g        - Same, but uncommented.  sdcard cannot handle comments.
+ramps13.g          - Typical ramps13 config WITHOUT the LCD and Keypad config.
+tom.g              - Runtime configuration for ToM WITHOUT the LCD and Keypad config.
 

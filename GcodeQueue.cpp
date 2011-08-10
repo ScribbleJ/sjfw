@@ -279,7 +279,7 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
     if(needserror[source])
     {
       Host::Instance(source).rxerror("Unknown.", line_number[source]);
-      //line_number[source]--;
+      line_number[source]--;
       c.reset();
       needserror[source] = false;
       return;

@@ -14,6 +14,11 @@
 #include "config.h"
 
 #define MASK(PIN) (1 << PIN)
+#if ((defined __AVR_ATmega2560__) || (defined __AVR_ATmega1280__))
+#define HIGHPORTS
+#else
+#undef HIGHPORTS
+#endif
 
 class Host
 {
@@ -30,7 +35,11 @@ class Host
     }
     static Host& Instance() { return Instance(0); }
     static Host& i0() { static Host instance(HOST_BAUD,0); return instance; }
+#ifdef HIGHPORTS    
     static Host& i2() { static Host instance2(BT_BAUD,2); return instance2; }
+#else
+    static Host& i2() { return i0(); }
+#endif    
   private:
     explicit Host(unsigned long baud, int port);
     Host(Host&);
@@ -48,9 +57,12 @@ class Host
     void write(uint8_t data) 
     { 
       txring.push(data); 
+#ifdef HIGHPORTS      
       if(port == 2) 
         UCSR2B |= MASK(UDRIE2); 
-      else UCSR0B |= MASK(UDRIE0); 
+      else 
+#endif        
+        UCSR0B |= MASK(UDRIE0); 
     }
 
     void write(const char *data) { uint8_t i = 0, r; while ((r = data[i++])) write(r); }
@@ -158,12 +170,14 @@ class Host
     void rx_interrupt_handler(int p)
     {
       uint8_t c;
+#ifdef HIGHPORTS      
       if(p == 2)
       {
         c = UDR2;
         //i0().write(c);
       }
       else
+#endif      
       {
         c = UDR0;
       }
@@ -174,6 +188,7 @@ class Host
 
     void udre_interrupt_handler(int p)
     {
+#ifdef HIGHPORTS      
       if(p == 2)
       {
         if(txring.getCount() > 0)
@@ -182,6 +197,7 @@ class Host
           UCSR2B &= ~MASK(UDRIE2);
       }
       else
+#endif        
       {
         if(txring.getCount() > 0)
           UDR0 = txring.pop();

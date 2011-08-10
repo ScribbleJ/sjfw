@@ -4,7 +4,6 @@
 namespace ArduinoMap 
 {
 
-#ifdef __AVR_ATmega2560__
 #define AP_PA 0x20
 #define AP_PB 0x23
 #define AP_PC 0x26
@@ -19,6 +18,8 @@ namespace ArduinoMap
 #define AP_PL 0x109
 #define AP_PN 0xFFFF
 
+
+#if ((defined __AVR_ATmega2560__) || (defined __AVR_ATmega1280__))
 const uint16_t __portmap[70] PROGMEM = 
 {
   AP_PE  , // PE 0 ** 0 ** USART0_RX

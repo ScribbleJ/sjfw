@@ -20,6 +20,10 @@
 #include <avr/interrupt.h>
 #include <util/atomic.h>
 
+#if ((defined __AVR_ATmega2560__) || (defined __AVR_ATmega1280__))
+#define USE_MOAR_ANALOG
+#endif
+
 // Address to write the sampled data to
 volatile int16_t* adc_destination;
 
@@ -37,11 +41,13 @@ void initAnalogPin(uint8_t pin) {
 		DDRC &= ~(_BV(pin));
 		PORTC &= ~(_BV(pin));
 	}
+#ifdef USE_MOAR_ANALOG  
   else
   {
     DDRK &= ~(_BV(pin));
 		PORTK &= ~(_BV(pin));
   }
+#endif  
 
 	// enable a2d conversions, interrupt on completion
 	ADCSRA |= _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0) |
@@ -64,10 +70,12 @@ bool startAnalogRead(uint8_t pin, volatile int16_t* destination, volatile bool* 
 		// to 0 (the default).
 		ADMUX = (ANALOG_REF << 6) | (pin & 0b00000111);
 
+#ifdef USE_MOAR_ANALOG  
     if(pin > 7)
       ADCSRB |= _BV(MUX5);
     else
       ADCSRB &= ~(_BV(MUX5));
+#endif      
       
 		// start the conversion.
 		ADCSRA |= _BV(ADSC);
