@@ -73,17 +73,6 @@ bool printcurrent();
 
 
 /**************************/
-/** Write File            */
-/**************************/
-
-SdErrorCode startWrite(char* filename);
-void writeBytes(const uint8_t data, uint16_t size);
-uint32_t finishWrite();
-bool isWriting();
-
-
-
-/**************************/
 /** Read File             */
 /**************************/
 

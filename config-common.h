@@ -7,7 +7,7 @@
 // Maximum length of a single 'fragment' of Gcode; characters in-between spaces.
 #define MAX_GCODE_FRAG_SIZE 32
 // Gcode is a big structure here, 10 is a lot of ram.
-#define GCODE_BUFSIZE 5
+#define GCODE_BUFSIZE 10
 // Each source eats anough ram for 1 addtl gcode
 #define GCODE_SOURCES 4
 #define HOST_SOURCE 0

@@ -35,7 +35,7 @@ extern "C"
  *
  * Set to 1 to enable FAT write support, set to 0 to disable it.
  */
-#define FAT_WRITE_SUPPORT SD_RAW_WRITE_SUPPORT
+#define FAT_WRITE_SUPPORT 0
 
 /**
  * \ingroup fat_config
@@ -69,7 +69,7 @@ extern "C"
  * This can boost performance significantly, but may cause data loss
  * if the file is not properly closed.
  */
-#define FAT_DELAY_DIRENTRY_UPDATE 1
+#define FAT_DELAY_DIRENTRY_UPDATE 0
 
 /**
  * \ingroup fat_config

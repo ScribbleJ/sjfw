@@ -50,8 +50,8 @@ bool openPartition()
   /* open first partition */
   partition = partition_open(sd_raw_read,
                              sd_raw_read_interval,
-                             sd_raw_write,
-                             sd_raw_write_interval,
+                             0,
+                             0,
                              0);
 
   if(!partition)
@@ -61,8 +61,8 @@ bool openPartition()
     */
     partition = partition_open(sd_raw_read,
                                sd_raw_read_interval,
-                               sd_raw_write,
-                               sd_raw_write_interval,
+                               0,
+                               0,
                                -1);
   }
   if(!partition)
@@ -176,83 +176,10 @@ bool openFile(const char* name, struct fat_file_struct** file)
   return true;
 }
 
-bool deleteFile(char *name)
-{
-  struct fat_dir_entry_struct fileEntry;
-  if(!findFileInDir(name, &fileEntry))
-  {
-    return false;
-  }
-  fat_delete_file(fs, &fileEntry);
-  return true;
-}
-
-bool createFile(char *name)
-{
-  struct fat_dir_entry_struct fileEntry;
-  return fat_create_file(dd, name, &fileEntry) != 0;
-}
-
-bool capturing = false;
 bool playing = false;
-uint32_t capturedBytes = 0L;
 
 bool isReading() {
 	return playing;
-}
-
-bool isWriting() {
-	return capturing;
-}
-
-SdErrorCode startWrite(char* filename)
-{
-  reset();
-  SdErrorCode result = initCard();
-  if (result != SD_SUCCESS) {
-    return result;
-  }
-  capturedBytes = 0L;
-  file = 0;
-  // Always operate in truncation mode.
-  deleteFile(filename);
-  if (!createFile(filename)) {
-    return SD_ERR_FILE_NOT_FOUND;
-  }
-
-  if (!openFile(filename,&file)) {
-    return SD_ERR_PARTITION_READ;
-  }
-  if (file == 0) {
-    return SD_ERR_GENERIC;
-  }
-
-  capturing = true;
-  return SD_SUCCESS;
-}
-
-void writeBytes(uint8_t* dbuf, uint16_t size)
-{
-	if (file == 0) return;
-	// Casting away volatile is OK in this instance; we know where the
-	// data is located and that fat_write_file isn't caching
-	fat_write_file(file, dbuf, size);
-	capturedBytes += size;
-}
-
-
-uint32_t finishWrite()
-{
-  if (capturing) {
-    if (file != 0) {
-    	fat_close_file(file);
-    	sd_raw_sync();
-    }
-    file = 0;
-    capturing = false;
-  }
-  reset();
-  return capturedBytes;
 }
 
 uint8_t next_byte;
@@ -280,7 +207,6 @@ SdErrorCode startRead(char const* filename) {
   if (result != SD_SUCCESS && result != SD_ERR_CARD_LOCKED) {
     return result;
   }
-  capturedBytes = 0L;
   file = 0;
   if (!openFile(filename, &file) || file == 0) {
     return SD_ERR_FILE_NOT_FOUND;
@@ -299,7 +225,7 @@ void finishRead() {
   playing = false;
   if (file != 0) {
 	  fat_close_file(file);
-	  sd_raw_sync();
+	  //sd_raw_sync();
   }
   file = 0;
 }
@@ -308,8 +234,6 @@ void finishRead() {
 void reset() {
 	if (playing)
 		finishRead();
-	if (capturing)
-		finishWrite();
 	if (dd != 0) {
 		fat_close_dir(dd);
 		dd = 0;
@@ -325,7 +249,7 @@ void reset() {
 }
 
 bool autorun() {
-  if (playing || capturing)
+  if (playing)
     return false;
 
   SdErrorCode e = startRead("sjfwauto.gcd");
@@ -393,7 +317,7 @@ char const* getNextfile()
 
 
 bool printcurrent() {
-  if (playing || capturing)
+  if (playing)
     return false;
 
   SdErrorCode e = startRead(currentfile);

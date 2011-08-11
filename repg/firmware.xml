@@ -2,7 +2,7 @@
   <!--
      SJFW http://reprap.org/wiki/Sjfw
     -->
-  <board name="Arduino Mega1280 with EC (ToM, Gen4) " icon="icon-mb24.png">
+  <board name="Mega1280 Gen4 or Thing-O-Matic" icon="icon-mb24.png">
     <version major="1" minor="0"/>
     <programmer class="replicatorg.uploader.AvrdudeUploader">
       <protocol>stk500v1</protocol>
@@ -19,7 +19,7 @@
        />
   </board>
 
-  <board name="Arduino Mega2560 with EC (ToM, Gen4) " icon="icon-mb24.png">
+  <board name="Mega2560 Gen4 or Thing-O-Matic " icon="icon-mb24.png">
     <version major="1" minor="0"/>
     <programmer class="replicatorg.uploader.AvrdudeUploader">
       <protocol>stk500v2</protocol>
@@ -36,7 +36,7 @@
        />
   </board>
 
-  <board name="Arduino Mega1280 with 100k therm (RAMPS13) " icon="icon-mb24.png">
+  <board name="Mega1280 with 100k therm (RAMPS) " icon="icon-mb24.png">
     <version major="1" minor="0"/>
     <programmer class="replicatorg.uploader.AvrdudeUploader">
       <protocol>stk500v1</protocol>
@@ -49,11 +49,18 @@
        minor="2"
        relpath="firmware/1280-w-100k-v1.2.hex"
        name="v1.2"
-       description="sjfw v1.2 for 100k RAMPS13."
+       description="sjfw v1.2 for 100k."
+       />
+    <firmware
+       major="1"
+       minor="2"
+       relpath="firmware/1280-w-100k-v1.2-blfix.hex"
+       name="v1.2-blfix"
+       description="sjfw v1.2 for 100k with BOOTLOADER FIX"
        />
   </board>
 
-  <board name="Arduino Mega2560 with 100k therm (RAMPS13) " icon="icon-mb24.png">
+  <board name="Mega2560 with 100k therm (RAMPS) " icon="icon-mb24.png">
     <version major="1" minor="0"/>
     <programmer class="replicatorg.uploader.AvrdudeUploader">
       <protocol>stk500v2</protocol>
@@ -66,8 +73,16 @@
        minor="2"
        relpath="firmware/2560-w-100k-v1.2.hex"
        name="v1.2"
-       description="sjfw v1.2 for 100k RAMPS13."
+       description="sjfw v1.2 for 100k"
        />
+    <firmware
+       major="1"
+       minor="2"
+       relpath="firmware/2560-w-100k-v1.2-blfix.hex"
+       name="v1.2-blfix"
+       description="sjfw v1.2 for 100k with BOOTLOADER FIX"
+       />
+
   </board>
 
 

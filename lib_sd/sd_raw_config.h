@@ -36,7 +36,7 @@ extern "C"
  *
  * Set to 1 to enable MMC/SD write support, set to 0 to disable it.
  */
-#define SD_RAW_WRITE_SUPPORT 1
+#define SD_RAW_WRITE_SUPPORT 0
 
 /**
  * \ingroup sd_raw_config

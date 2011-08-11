@@ -7,7 +7,7 @@ USE_KEYPAD = 1
 #USE_BT = 1
 
 # EC for Gen3/4 only.  Others default to 100k Thermistors.
-USE_EXTRUDERCONTROLLER = 1
+#USE_EXTRUDERCONTROLLER = 1
 
 #CONFIG_PATH = ramps12
 #CONFIG_PATH = ramps13
@@ -21,19 +21,19 @@ CONFIG_PATH = generic
 
 
 # this needs to point to the directory where you have avrdude, avr-gcc, and such.
-AVR_TOOLS_PATH = /usr/bin/avr/bin
+AVR_TOOLS_PATH = /usr/bin
 AVR_GCC_PATH = $(AVR_TOOLS_PATH)
 
 #Reasonable settings for Atmega1280 (regardless of board)
-UPLOAD_RATE = 57600
-AVRDUDE_PROGRAMMER = stk500v1
-PORT = /dev/ttyUSB0
+#UPLOAD_RATE = 57600
+#AVRDUDE_PROGRAMMER = stk500v1
+#PORT = /dev/ttyUSB0
 #MCU = atmega1280
 
 # Reasonable settings for Atmega2560 (regardless of board)
-#UPLOAD_RATE = 115200
-#AVRDUDE_PROGRAMMER = stk500v2
-#PORT = /dev/ttyACM0
+UPLOAD_RATE = 115200
+AVRDUDE_PROGRAMMER = stk500v2
+PORT = /dev/ttyACM0
 MCU = atmega2560
 
 
@@ -85,9 +85,11 @@ Globals.cpp Temperature.cpp avr/ArduinoMap.cpp
 FORMAT = ihex
 
 # Place -D or -U options here
+CXXBENICE = -fno-default-inline 
+CXXBEMEAN = 
 CXXDEFS = -DF_CPU=$(F_CPU) $(EXTRA_DEFINES)
-CXXEXTRA = -fno-threadsafe-statics -fwrapv -fno-exceptions -ffunction-sections -fdata-sections -Wall
-CXXFLAGS = $(CXXDEFS) $(CXXINCS) -O$(OPT) $(CXXEXTRA)
+CXXEXTRA = -fno-threadsafe-statics -fwrapv -fno-exceptions -ffunction-sections -fdata-sections -Wall 
+CXXFLAGS = $(CXXDEFS) $(CXXINCS) -O$(OPT) $(CXXEXTRA) $(CXXBENICE)
 LDFLAGS = -lm
 
 # Programming support using avrdude. Settings and variables.
