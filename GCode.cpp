@@ -66,7 +66,9 @@ void GCode::wrapupmove()
 {
   if(!cps[G].isUnused())
   {
-    //dump_movedata();
+#ifdef DEBUG_MOVE  
+    dump_movedata();
+#endif    
 #ifndef REPRAP_COMPAT    
     Host::Instance(source).labelnum("done ", linenum, false); Host::Instance(source).labelnum(" G", cps[G].getInt());
 #endif    

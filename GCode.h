@@ -128,16 +128,16 @@ public:
     HOST.labelnum("L:",linenum,false);
     HOST.labelnum(" T:",(millis() - startmillis),false);
     HOST.labelnum(" F:",feed,false);
-    HOST.labelnum(" S:",movesteps,false);
-    HOST.labelnum(" LA:",leading_axis,false);
-    HOST.labelnum(" SI:",startinterval,false);
-    HOST.labelnum(" CI:",currentinterval,false);
-    HOST.labelnum(" FI:",fullinterval,false);
+    HOST.labelnum(" Steps:",movesteps,false);
+    HOST.labelnum(" Lead:",leading_axis,false);
+    HOST.labelnum(" StartI:",startinterval,false);
+    HOST.labelnum(" CurI:",currentinterval,false);
+    HOST.labelnum(" FinalI:",fullinterval,false);
     HOST.labelnum(" STA:",steps_to_accel,false);
-    HOST.labelnum(" ST:",steps_acceled,false);
-    HOST.labelnum(" AU:",accel_until,false);
-    HOST.labelnum(" DF:",decel_from,false);
-    HOST.labelnum(" AI:",accel_inc,true);
+    HOST.labelnum(" SAcceled:",steps_acceled,false);
+    HOST.labelnum(" SDeceled:",accel_until,false);
+    HOST.labelnum(" DFrom:",decel_from,false);
+    HOST.labelnum(" AInc:",accel_inc,true);
   }
 
   static Point& getLastpos() { return lastpos; }

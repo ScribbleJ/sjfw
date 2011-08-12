@@ -38,15 +38,6 @@ void Axis::dump_to_host()
   HOST.labelnum("p:",position,false);
   HOST.labelnum(" mi:",min_interval,false);
   HOST.labelnum(" mi:",max_interval,false);
-  HOST.labelnum(" ar:",accel_rate);
-  HOST.labelnum("SP:",step_pin.getPortIndex(),false);
-  HOST.labelnum(",",step_pin.getPinIndex(),false);
-  HOST.labelnum("EP:",enable_pin.getPortIndex(),false);
-  HOST.labelnum(",",enable_pin.getPinIndex(),false);
-  HOST.labelnum("DP:",dir_pin.getPortIndex(),false);
-  HOST.labelnum(",",dir_pin.getPinIndex(),false);
-  HOST.labelnum("IP:",min_pin.getPortIndex(),false);
-  HOST.labelnum(",",min_pin.getPinIndex(),false);
-  HOST.labelnum("AP:",max_pin.getPortIndex(),false);
-  HOST.labelnum(",",max_pin.getPinIndex(),true);
+  HOST.labelnum(" ar:",accel_rate, false);
+  HOST.labelnum(" stt:",steps_to_take);
 }

@@ -137,14 +137,6 @@ void Motion::reportConfigStatus(Host& h)
 }
 
 
-
-
-
-
-
-
-
-
 void Motion::disableAllMotors()
 {
   for(int ax=0;ax < NUM_AXES;ax++)
@@ -271,6 +263,10 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
   getMovesteps(gcode);
   gcode.startinterval = getLargestStartInterval(gcode);
   gcode.fullinterval = getLargestEndInterval(gcode);
+  // Tests show maximum ISR service rate of 16Khz-17khz, try to warn if people approach this limit.
+  if(gcode.fullinterval != 0 && gcode.fullinterval < 1000)
+    Host::Instance(gcode.source).labelnum("WARNING: STEP INTERVAL EXCEEDS LIMITS: ", gcode.fullinterval);
+    
   gcode.currentinterval = gcode.startinterval;
   getActualEndpos(gcode);
   gcode.decel_from  = 0;
@@ -316,9 +312,13 @@ void Motion::gcode_execute(GCode& gcode)
     }
     deltas[ax] = gcode.axismovesteps[ax];
     errors[ax] = gcode.movesteps / 2;
-    //AXES[ax].dump_to_host();
+#ifdef DEBUG_MOVES    
+    AXES[ax].dump_to_host();
   }
-  //gcode.dump_movedata();
+  gcode.dump_movedata();
+#else
+  }
+#endif
 
   // setup pointer to current move data for interrupt
   gcode.state = GCode::ACTIVE;
@@ -367,9 +367,19 @@ void Motion::handleInterrupt()
     return;
   }
 
+#ifdef INTERRUPT_STEPS
+  disableInterrupt();
+  sei();
+#endif  
+
   current_gcode->movesteps--;
 
   // Handle acceleration and deceleration
+  // So originally I wrote all this with a divmod and some folks thought that was
+  // a horrible idea.  Then I read Atmega appnote AVR446 and guess what?  It's 
+  // basically my original algorithm, with a divmod.  Anyone who wants me to 
+  // do this a different way should present some compelling evidence (and preferably,
+  // the algorithm!)
   uint32_t lastinterval = current_gcode->currentinterval + current_gcode->accel_remainder;
   current_gcode->accel_remainder=0;
   if(current_gcode->movesteps <= current_gcode->steps_acceled)
@@ -377,31 +387,25 @@ void Motion::handleInterrupt()
     // This is just here to log the data of the minimum steptime
     if(current_gcode->movesteps == current_gcode->steps_acceled)
     {
+      // kill leftover remainder, it's not for us.
+      lastinterval = current_gcode->currentinterval;
       current_gcode->fullinterval = lastinterval;
-      //AXES[0].dump_to_host();
     }
 
     // Decelerate!
-    while(lastinterval >= current_gcode->accel_inc)
-    {
-      current_gcode->currentinterval++;
-      lastinterval -= current_gcode->accel_inc;
-    }
-    current_gcode->accel_remainder = lastinterval;
+    current_gcode->currentinterval += lastinterval / current_gcode->accel_inc;
+    current_gcode->accel_remainder = lastinterval % current_gcode->accel_inc;
   }
   else if((current_gcode->currentinterval > current_gcode->fullinterval) && 
           (current_gcode->movesteps > current_gcode->decel_from))
   {
     // Accelerate!
-    while(lastinterval >= current_gcode->accel_inc)
-    {
-      current_gcode->currentinterval--;
-      lastinterval -= current_gcode->accel_inc;
-    }
-    current_gcode->accel_remainder = lastinterval;
+    current_gcode->currentinterval -= lastinterval / current_gcode->accel_inc;
+    current_gcode->accel_remainder = lastinterval % current_gcode->accel_inc;
     current_gcode->steps_acceled++;
   }
   setInterruptCycles(current_gcode->currentinterval);
+
 
   // Bresenham-style axis alignment algorithm
   for(int ax=0;ax<NUM_AXES;ax++)
@@ -430,15 +434,19 @@ void Motion::handleInterrupt()
     disableInterrupt();
     current_gcode->state = GCode::DONE;
   }
+#ifdef INTERRUPT_STEPS
+  else
+  {
+    enableInterrupt();
+  }
+#endif  
 }
 
 void Motion::setupInterrupt() 
 {
   // 16-bit registers that must be set/read with interrupts disabled:
   // TCNTn, OCRnA/B/C, ICRn
-  // "Fast PWM" and no prescaler.
-  //TCCR1A = _BV(WGM10) | _BV(WGM11);
-  //TCCR1B = _BV(WGM12) | _BV(WGM13) | _BV(CS10);
+  // "CTC" and no prescaler.
   TCCR1A = 0;
   TCCR1B = _BV(WGM12) | _BV(CS10);
 }
@@ -446,8 +454,6 @@ void Motion::setupInterrupt()
 
 void Motion::enableInterrupt() 
 {
-  // reset counter in case.
-  // TCNT1 = 0;
    // Enable timer
   PRR0 &= ~(_BV(PRTIM1));
   // Outcompare Compare match A interrupt
@@ -471,8 +477,9 @@ void Motion::setInterruptCycles(unsigned long cycles)
   }
   else
     OCR1A = cycles;
-}
 
+  TCNT1=0;
+}
 
 
 
