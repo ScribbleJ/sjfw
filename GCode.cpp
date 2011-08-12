@@ -5,6 +5,7 @@
 #include "Motion.h"
 #include "Temperature.h"
 #include "SDCard.h"
+#include "Eeprom.h"
 
 Point GCode::lastpos;
 float GCode::lastfeed;
@@ -323,6 +324,16 @@ void GCode::do_m_code()
       break;
     case 310: // NOT STANDARD - report axis configuration status
       MOTION.reportConfigStatus(Host::Instance(source));
+      state = DONE;
+      break;
+    // case 400,402 handled by GcodeQueue immediately, not queued.
+    case 401: // Execute stored eeprom code.
+      Host::Instance(source).write("EEPROM READ: ");
+      if(eeprom::beginRead())
+        Host::Instance(source).write("BEGUN");
+      else
+        Host::Instance(source).write("FAIL");
+      Host::Instance(source).endl();
       state = DONE;
       break;
     default:

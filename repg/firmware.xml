@@ -17,6 +17,13 @@
        name="v1.3"
        description="sjfw v1.3 for ThingOMatic/Gen4."
        />
+    <firmware
+       major="1"
+       minor="4"
+       relpath="firmware/1280-w-ec-v1.4.hex"
+       name="v1.4"
+       description="sjfw v1.4 for ThingOMatic/Gen4."
+       />
   </board>
 
   <board name="Mega2560 Gen4 or Thing-O-Matic " icon="icon-mb24.png">
@@ -34,6 +41,14 @@
        name="v1.3"
        description="sjfw v1.3 for ThingOMatic/Gen4."
        />
+    <firmware
+       major="1"
+       minor="4"
+       relpath="firmware/2560-w-ec-v1.4.hex"
+       name="v1.4"
+       description="sjfw v1.4 for ThingOMatic/Gen4."
+       />
+
   </board>
 
   <board name="Mega1280 with 100k therm (RAMPS) " icon="icon-mb24.png">
@@ -51,6 +66,14 @@
        name="v1.3"
        description="sjfw v1.3 for 100k."
        />
+    <firmware
+       major="1"
+       minor="4"
+       relpath="firmware/1280-w-100k-v1.4.hex"
+       name="v1.4"
+       description="sjfw v1.4 for 100k."
+       />
+
   </board>
 
   <board name="Mega2560 with 100k therm (RAMPS) " icon="icon-mb24.png">
@@ -68,6 +91,14 @@
        name="v1.3"
        description="sjfw v1.3 for 100k"
        />
+    <firmware
+       major="1"
+       minor="4"
+       relpath="firmware/2560-w-100k-v1.4.hex"
+       name="v1.4"
+       description="sjfw v1.4 for 100k"
+       />
+
   </board>
 
 

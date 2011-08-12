@@ -8,6 +8,7 @@
 #include "Time.h"
 #include <avr/interrupt.h>
 #include "Globals.h"
+#include "Eeprom.h"
 
 #ifdef HAS_LCD
 #include "LCDKeypad.h"
@@ -40,6 +41,7 @@ int main(void)
 #ifdef HAS_BT
     BT.write("AUTORUN FAIL\n");
 #endif    
+    eeprom::beginRead();
   }
 #endif
 #endif
@@ -63,6 +65,12 @@ int main(void)
  
     // Updates temperature information; scans temperature sources
     TEMPERATURE.update();
+
+    // Checks to see if gcodes are waiting to run and runs them if so.
+    GCODES.handlenext();
+
+    // Manage Eeprom operations
+    eeprom::update();
 
     // Checks to see if gcodes are waiting to run and runs them if so.
     GCODES.handlenext();

@@ -9,11 +9,12 @@
 // Gcode is a big structure here, 10 is a lot of ram.
 #define GCODE_BUFSIZE 10
 // Each source eats anough ram for 1 addtl gcode
-#define GCODE_SOURCES 4
+#define GCODE_SOURCES 5
 #define HOST_SOURCE 0
 #define SD_SOURCE   1
 #define BT_SOURCE   2
 #define LCD_SOURCE  3
+#define EEPROM_SOURCE 4
 
 // How often to update the temperature display on the LCD.
 #define LCD_REFRESH_MILLIS 1000
@@ -30,6 +31,7 @@
 #define HOST_BAUD 57600
 // if defined, INTERRUPT_STEPS allows the comm ISRs to interrupt the movement ISR.
 //#define INTERRUPT_STEPS
+//#define COMMS_ERR2
 
 #define BT_BAUD 9600
 //#define BT_DEBUG

@@ -13,7 +13,8 @@
 extern LCDKeypad LCDKEYPAD;
 #endif
 
-#include "Temperature.h"
+#include "Eeprom.h"
+
 
 
 
@@ -89,6 +90,8 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
   uint8_t ourcrc = 0;
   bool packetdone = false;
 
+  // Does nothing if eeprom is not writing.
+  eeprom::writebytes(bytes, numbytes + 1);
   
   if(crc_state[source] == NOCRC && bytes[0] == 'N')
     crc_state[source] = CRC;
@@ -134,6 +137,7 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
   bytes[numbytes] = 0;
   //HOST.write("did: "); HOST.write(bytes); HOST.write("\n");
 
+
   if(numbytes == 0 and !packetdone)
     return;
 
@@ -158,8 +162,21 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
       line_number[source]++;
       c.setLinenumber(line_number[source]);
 
+#ifdef COMMS_ERR
+      static int foo = 0;
+      if((line_number[source] != l) || (source == HOST_SOURCE && foo++ > 4))
+      {
+        foo = 0;
+#else        
       if(line_number[source] != l)
       {
+#endif      
+        // Special handling for eeprom reads
+        if(source == EEPROM_SOURCE)
+        {
+          line_number[source] = l;
+          break;
+        }
         //crc[source] = 0;
         //crc_state[source] = NOCRC;
         Host::Instance(source).labelnum("Invalid line:",l);
@@ -169,7 +186,25 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
       }
       break;
     case 'M':
+      // EEPROM write begin must start immediately so we do not miss whatever may come in
       c[M].setInt(bytes+1);
+      if(c[M].getInt() == 400)
+      {
+        eeprom::Stop();
+        c[M].unset();
+        Host::Instance(source).write("EEPROM STOP");
+        Host::Instance(source).endl();
+      }
+      if(c[M].getInt() == 402)
+      {
+        Host::Instance(source).write("EEPROM ");
+        if(eeprom::beginWrite())
+          Host::Instance(source).write("BEGIN");
+        else
+          Host::Instance(source).write("FAIL");
+        Host::Instance(source).endl();
+        c[M].unset();
+      }
       break;
     case 'G':
       c[G].setInt(bytes+1);
@@ -235,11 +270,22 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
   {
     //HOST.write("Packet parsed.\n");
     //HOST.labelnum("Ending line number:", (int) line_number, true);
+
+#ifdef COMMS_ERR2      
+    static int comms_err = 0;
+    switch(crc_state[source])
+    {
+      case CRCCOMPLETE:
+        if((crc[source] != ourcrc) || (source == HOST_SOURCE && comms_err++ > 4))
+        {
+          comms_err = 0;
+#else          
     switch(crc_state[source])
     {
       case CRCCOMPLETE:
         if(crc[source] != ourcrc)
         {
+#endif        
           //HOST.labelnum("CRC COMPUTED: ", crc, true);
           //HOST.labelnum("CRC RECVD: ", ourcrc, true);
           //crc[source] = 0;
@@ -278,7 +324,11 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
 
     if(needserror[source])
     {
-      Host::Instance(source).rxerror("Unknown.", line_number[source]);
+      if(source == EEPROM_SOURCE) // Fail differrently so as not to confuse the host
+        Host::Instance(source).write("WARNING: SERIOUS EEPROM FAIL\n");
+      else
+        Host::Instance(source).rxerror("Unknown.", line_number[source]);
+
       line_number[source]--;
       c.reset();
       needserror[source] = false;
