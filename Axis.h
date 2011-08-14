@@ -8,15 +8,49 @@
 #include "config.h"
 #include "Host.h"
 #include "AvrPort.h"
+#include <math.h>
 
 class Axis
 {
   public:
-	Axis(Pin step_pin, Pin dir_pin, Pin enable_pin, Pin min_pin, Pin max_pin, 
-       float steps_per_unit, bool dir_inverted,
-       float max_feedrate, float avg_feedrate, float min_feedrate, 
-       float accel_rate_in_units, bool disable_after_move);
+  Axis(Pin step_pin, Pin dir_pin, Pin enable_pin, Pin min_pin, Pin max_pin, 
+           float steps_per_unit, bool dir_inverted, 
+           float max_feedrate, float home_feedrate, float min_feedrate, 
+           float accel_rate_in_units, bool disable_after_move)
+           :step_pin(step_pin), dir_pin(dir_pin), enable_pin(enable_pin), min_pin(min_pin), max_pin(max_pin)
+  {
+    // Initialize class data
+    this->steps_per_unit = steps_per_unit;
+    this->spu_int = steps_per_unit;
+    this->disable_after_move = disable_after_move;
+    max_feed     = max_feedrate;
+    min_interval = interval_from_feedrate(max_feedrate);
+    avg_interval = interval_from_feedrate(home_feedrate);
+    max_interval = interval_from_feedrate(min_feedrate);
+    start_feed   = min_feedrate;
+    accel_rate = accel_rate_in_units;
+    position = 0;
+    relative = false;
+    this->dir_inverted = dir_inverted;
+    steps_to_take = 0;
+    steps_remaining = 0;
 
+    // Initialize pins we control.
+    if(!step_pin.isNull()) { step_pin.setDirection(true); step_pin.setValue(false); }
+    if(!dir_pin.isNull())  { dir_pin.setDirection(true); dir_pin.setValue(false); }
+    if(!enable_pin.isNull()) { enable_pin.setDirection(true); enable_pin.setValue(true); }
+    if(!min_pin.isNull()) { min_pin.setDirection(false); min_pin.setValue(PULLUPS); }
+    if(!max_pin.isNull()) { max_pin.setDirection(false); max_pin.setValue(PULLUPS); }
+  }
+    
+  void dump_to_host()
+  {
+    HOST.labelnum("p:",position,false);
+    HOST.labelnum(" mi:",min_interval,false);
+    HOST.labelnum(" mi:",max_interval,false);
+    HOST.labelnum(" ar:",accel_rate, false);
+    HOST.labelnum(" stt:",steps_to_take);
+  }
   // Interval measured in clock ticks
   // feedrate in mm/min
   // F_CPU is clock ticks/second
@@ -26,8 +60,12 @@ class Axis
     return a;
   }
 
-  void dump_to_host();
-	
+  inline uint32_t int_interval_from_feedrate(uint32_t feedrate)
+  {
+    // Max error - roughly 2.5%.  Only used for accel so not really a problem.
+    return ((uint32_t)F_CPU * 60) / (feedrate * spu_int);
+  }
+
 	bool isMoving() { return (steps_remaining > 0); };
   // Doesn't take into account position is not updated during move.
   float getCurrentPosition() { return position; }
@@ -35,12 +73,13 @@ class Axis
   void  setAbsolute() { relative = false; }
   void  setRelative() { relative = true; }
   bool  isRelative()  { return relative; }
-  void  setMinimumFeedrate(float feedrate) { if(feedrate <= 0) return; max_interval = interval_from_feedrate(feedrate); }
-  void  setMaximumFeedrate(float feedrate) { if(feedrate <= 0) return; min_interval = interval_from_feedrate(feedrate); }
+  void  setMinimumFeedrate(float feedrate) { if(feedrate <= 0) return; start_feed = feedrate; max_interval = interval_from_feedrate(feedrate); }
+  void  setMaximumFeedrate(float feedrate) { if(feedrate <= 0) return; max_feed = feedrate; min_interval = interval_from_feedrate(feedrate); }
   void  setAverageFeedrate(float feedrate) { if(feedrate <= 0) return; avg_interval = interval_from_feedrate(feedrate); }
   // WARNING! BECAUSE OF THE WAY WE STORE ACCEL DATA< YOU MUST USE THE ABOVE THREE CALLS TO RESET THE FEEDRATES AFTER CHANGING THE STEPS
-  void  setStepsPerUnit(float steps) { if(steps <= 0) return; steps_per_unit = steps; }
+  void  setStepsPerUnit(float steps) { if(steps <= 0) return; steps_per_unit = steps; spu_int = steps; }
   void  setAccel(float rate) { if(rate <= 0) return; accel_rate = rate; }
+  float getAccel() { return accel_rate; }
   void  disable() { if(!enable_pin.isNull()) enable_pin.setValue(true); }
   void  enable() { if(!enable_pin.isNull()) enable_pin.setValue(false); }
 
@@ -58,11 +97,38 @@ class Axis
     
     return steps_per_unit * d; 
   }
+  float    getStartFeed(float feed) { return start_feed < feed ? start_feed : feed; }
+  float    getEndFeed(float feed) { return max_feed < feed ? max_feed : feed; }
   uint32_t getStartInterval(float feed) { uint32_t i = interval_from_feedrate(feed); return i < max_interval ? max_interval : i; }
   uint32_t getEndInterval(float feed) { uint32_t i = interval_from_feedrate(feed); return i < min_interval ? min_interval : i; }
   uint32_t getAccelRate() { return accel_rate; }
-  uint32_t getAccelTime() { return ((max_interval - min_interval) / accel_rate); }
-  uint32_t getTimePerAccel() { return ((float)1 / (float)((accel_rate * steps_per_unit) / ((float)F_CPU))); }
+
+  static float getAccelTime(float startfeed, float endfeed, uint32_t accel)
+  { 
+    startfeed /= 60.0f;
+    endfeed   /= 60.0f;
+    return (float)(endfeed - startfeed) / (float)accel;
+  }
+  int32_t getTimePerAccel() { return ((float)1 / (float)((accel_rate * steps_per_unit) / ((float)F_CPU))); }
+
+
+
+
+
+  uint32_t getAccelDist(float start_feed, float end_feed, float accel) 
+  { 
+    end_feed /= 60.0f;
+    start_feed /= 60.0f;
+    float distance_in_mm = ((end_feed * end_feed) - (start_feed * start_feed)) / (2.0f * accel);
+    return (float)steps_per_unit * distance_in_mm;
+  }
+  
+  static float getFinalVelocity(float start_feed, float dist, float accel)
+  {
+    start_feed /= 60.0f;
+    return sqrt((start_feed * start_feed) + (2.0f * accel * dist));
+  }
+
   float getEndpos(float start, uint32_t steps, bool dir) 
   { 
     return start + (float)((float)steps / steps_per_unit * (dir ? 1.0 : -1.0));
@@ -204,8 +270,10 @@ private:
 	volatile uint32_t steps_remaining;
 
 	float steps_per_unit;
+  uint32_t spu_int;
 
   uint32_t min_interval, avg_interval, max_interval;
+  float    start_feed, max_feed;
   uint32_t accel_rate;
 
   int homing_dir;

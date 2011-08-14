@@ -27,11 +27,12 @@
 // larger is overkill 
 #define HOST_RECV_BUFSIZE 200
 // SEND buffer must be large enough to hold as much text as we might spew in a loop; it's a lot.
-#define HOST_SEND_BUFSIZE 200
+#define HOST_SEND_BUFSIZE 500
 #define HOST_BAUD 57600
 // if defined, INTERRUPT_STEPS allows the comm ISRs to interrupt the movement ISR.
 //#define INTERRUPT_STEPS
 //#define COMMS_ERR2
+#define DEBUG_MOVE
 
 #define BT_BAUD 9600
 //#define BT_DEBUG

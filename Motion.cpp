@@ -174,6 +174,30 @@ void Motion::getMovesteps(GCode& gcode)
   }
 }
 
+float Motion::getSmallestStartFeed(GCode& gcode)
+{
+  float mi = 9999999;
+  for(int ax=0;ax < NUM_AXES;ax++)
+  {
+    if(gcode.axismovesteps[ax] == 0) continue;
+    float t = AXES[ax].getStartFeed(gcode.feed);
+    if(t < mi) mi = t;
+  }
+  return mi;
+}
+
+float Motion::getSmallestEndFeed(GCode& gcode)
+{
+  float mi = 9999999;
+  for(int ax=0;ax < NUM_AXES;ax++)
+  {
+    if(gcode.axismovesteps[ax] == 0) continue;
+    float t = AXES[ax].getEndFeed(gcode.feed);
+    if(t < mi) mi = t;
+  }
+  return mi;
+}
+
 unsigned long Motion::getLargestStartInterval(GCode& gcode)
 {
   unsigned long mi = 0;
@@ -220,12 +244,12 @@ void Motion::getActualEndpos(GCode& gcode)
 }
 
 
+#define ACCEL_INC_TIME F_CPU/1000
 void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
 {
   if(gcode.state >= GCode::PREPARED)
     return;
 
-  
   if(gcode[G].isUnused())
     return;
 
@@ -263,19 +287,38 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
   getMovesteps(gcode);
   gcode.startinterval = getLargestStartInterval(gcode);
   gcode.fullinterval = getLargestEndInterval(gcode);
-  // Tests show maximum ISR service rate of 16Khz-17khz, try to warn if people approach this limit.
-  if(gcode.fullinterval != 0 && gcode.fullinterval < 1000)
-    Host::Instance(gcode.source).labelnum("WARNING: STEP INTERVAL EXCEEDS LIMITS: ", gcode.fullinterval);
-    
   gcode.currentinterval = gcode.startinterval;
   getActualEndpos(gcode);
-  gcode.decel_from  = 0;
-  gcode.accel_inc   = getLargestTimePerAccel(gcode);
 
-  long intervaldiff = gcode.startinterval - gcode.fullinterval;
-  if(intervaldiff > 0)
-    gcode.decel_from  = gcode.movesteps / 2;
- 
+  gcode.startfeed = getSmallestStartFeed(gcode);
+  gcode.maxfeed   = getSmallestEndFeed(gcode);
+  gcode.endfeed   = gcode.startfeed;
+  gcode.currentfeed = gcode.startfeed;
+  float accel = AXES[gcode.leading_axis].getAccel();
+  HOST.labelnum("F1: ", gcode.startfeed);
+  HOST.labelnum("F2: ", gcode.maxfeed);
+  HOST.labelnum("Accel: ", accel);
+  uint32_t dist = AXES[gcode.leading_axis].getAccelDist(gcode.startfeed, gcode.maxfeed, accel);
+  HOST.labelnum("Dist: ", dist);
+  float accelTime = AXES[gcode.leading_axis].getAccelTime(gcode.startfeed, gcode.maxfeed, accel);
+  HOST.labelnum("Time: ", accelTime);
+
+  uint32_t halfmove = gcode.movesteps >> 1;
+  HOST.labelnum("Half:", halfmove);
+  if(halfmove <= dist)
+  {
+    gcode.accel_until = halfmove+1;
+    gcode.decel_from  = halfmove;
+  }
+  else
+  {
+    gcode.accel_until =  gcode.movesteps - dist;
+    gcode.decel_from  =  dist;
+  }
+
+  gcode.accel_inc   = (float)((float)accel * 60.0f / 1000.0f);
+  gcode.accel_timer = ACCEL_INC_TIME;
+
   gcode.steps_acceled=0;
   gcode.accel_remainder=0;
 
@@ -311,8 +354,8 @@ void Motion::gcode_execute(GCode& gcode)
       return;
     }
     deltas[ax] = gcode.axismovesteps[ax];
-    errors[ax] = gcode.movesteps / 2;
-#ifdef DEBUG_MOVES    
+    errors[ax] = gcode.movesteps >> 1;
+#ifdef DEBUG_MOVE
     AXES[ax].dump_to_host();
   }
   gcode.dump_movedata();
@@ -353,7 +396,7 @@ void Motion::writePositionToHost(GCode& gc)
 void Motion::handleInterrupt()
 {
   // interruptOverflow for step intervals > 16bit
-  if(interruptOverflow)
+  if(interruptOverflow > 0)
   {
     setInterruptCycles(60000);
     interruptOverflow--;
@@ -374,39 +417,6 @@ void Motion::handleInterrupt()
 
   current_gcode->movesteps--;
 
-  // Handle acceleration and deceleration
-  // So originally I wrote all this with a divmod and some folks thought that was
-  // a horrible idea.  Then I read Atmega appnote AVR446 and guess what?  It's 
-  // basically my original algorithm, with a divmod.  Anyone who wants me to 
-  // do this a different way should present some compelling evidence (and preferably,
-  // the algorithm!)
-  uint32_t lastinterval = current_gcode->currentinterval + current_gcode->accel_remainder;
-  current_gcode->accel_remainder=0;
-  if(current_gcode->movesteps <= current_gcode->steps_acceled)
-  {
-    // This is just here to log the data of the minimum steptime
-    if(current_gcode->movesteps == current_gcode->steps_acceled)
-    {
-      // kill leftover remainder, it's not for us.
-      lastinterval = current_gcode->currentinterval;
-      current_gcode->fullinterval = lastinterval;
-    }
-
-    // Decelerate!
-    current_gcode->currentinterval += lastinterval / current_gcode->accel_inc;
-    current_gcode->accel_remainder = lastinterval % current_gcode->accel_inc;
-  }
-  else if((current_gcode->currentinterval > current_gcode->fullinterval) && 
-          (current_gcode->movesteps > current_gcode->decel_from))
-  {
-    // Accelerate!
-    current_gcode->currentinterval -= lastinterval / current_gcode->accel_inc;
-    current_gcode->accel_remainder = lastinterval % current_gcode->accel_inc;
-    current_gcode->steps_acceled++;
-  }
-  setInterruptCycles(current_gcode->currentinterval);
-
-
   // Bresenham-style axis alignment algorithm
   for(int ax=0;ax<NUM_AXES;ax++)
   {
@@ -423,6 +433,26 @@ void Motion::handleInterrupt()
       errors[ax] = errors[ax] + deltas[current_gcode->leading_axis];
     }
   }
+
+  // Handle acceleration and deceleration
+  current_gcode->accel_timer += current_gcode->currentinterval;
+  if(current_gcode->accel_timer > ACCEL_INC_TIME)
+  {
+    current_gcode->accel_timer -= ACCEL_INC_TIME;
+
+    if(current_gcode->movesteps >= current_gcode->accel_until)
+    { 
+      current_gcode->currentfeed += current_gcode->accel_inc;
+      if(current_gcode->currentfeed > current_gcode->maxfeed)
+        current_gcode->currentfeed = current_gcode->maxfeed;
+
+      current_gcode->currentinterval = AXES[current_gcode->leading_axis].int_interval_from_feedrate(current_gcode->currentfeed);
+
+      setInterruptCycles(current_gcode->currentinterval);
+      current_gcode->steps_acceled++;
+    }
+  }
+
 
   if(!axesAreMoving())
   {
@@ -447,8 +477,11 @@ void Motion::setupInterrupt()
   // 16-bit registers that must be set/read with interrupts disabled:
   // TCNTn, OCRnA/B/C, ICRn
   // "CTC" and no prescaler.
-  TCCR1A = 0;
-  TCCR1B = _BV(WGM12) | _BV(CS10);
+  //TCCR1A = 0;
+  //TCCR1B = _BV(WGM12) | _BV(CS10);
+  // "Fast PWM", top = OCR1A
+  TCCR1A = _BV(WGM11) | _BV(WGM10);
+  TCCR1B = _BV(WGM13) | _BV(WGM12) | _BV(CS10);
 }
 
 
@@ -478,7 +511,7 @@ void Motion::setInterruptCycles(unsigned long cycles)
   else
     OCR1A = cycles;
 
-  TCNT1=0;
+  //TCNT1=0;
 }
 
 
