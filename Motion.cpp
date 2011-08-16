@@ -294,17 +294,17 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
   float accel = AXES[gcode.leading_axis].getAccel();
   gcode.accel = accel;
 #ifdef DEBUG_MOVE
-  HOST.labelnum("F1: ", gcode.startfeed);
-  HOST.labelnum("F2: ", gcode.maxfeed);
-  HOST.labelnum("Accel: ", accel);
+//  HOST.labelnum("F1: ", gcode.startfeed);
+//  HOST.labelnum("F2: ", gcode.maxfeed);
+//  HOST.labelnum("Accel: ", accel);
 #endif
   uint32_t dist = AXES[gcode.leading_axis].getAccelDist(gcode.startfeed, gcode.maxfeed, accel);
   float accelTime = AXES[gcode.leading_axis].getAccelTime(gcode.startfeed, gcode.maxfeed, accel);
   uint32_t halfmove = gcode.movesteps >> 1;
 #ifdef DEBUG_MOVE
-  HOST.labelnum("Dist: ", dist);
-  HOST.labelnum("Time: ", accelTime);
-  HOST.labelnum("Half:", halfmove);
+//  HOST.labelnum("Dist: ", dist);
+//  HOST.labelnum("Time: ", accelTime);
+//  HOST.labelnum("Half:", halfmove);
 #endif
   if(halfmove <= dist)
   {
@@ -320,7 +320,7 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
   gcode.accel_inc   = (float)((float)accel * 60.0f / 1000.0f);
   gcode.accel_timer = ACCEL_INC_TIME;
 
-  gcode.currentinterval = AXES[gcode.leading_axis].interval_from_feedrate(gcode.startfeed);
+  gcode.currentinterval = AXES[gcode.leading_axis].int_interval_from_feedrate(gcode.startfeed);
   gcode.optimized = false;
 
   *lastend = gcode.endpos;
@@ -365,8 +365,19 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
   float ratio2 = 0;
   int   dirchanges = 0;
   int   usedaxes   = 0;
+  bool  fail = false;
+
+  if(gcode.leading_axis != nextg.leading_axis)
+    fail = true;
+
   for(int ax=0;ax < NUM_AXES;ax++)
   {
+    if(gcode[ax].isUnused() != gcode[ax].isUnused())
+    {
+      fail = true;
+      continue;
+    }
+    
     if(gcode[ax].isUnused())
       continue;
 
@@ -415,7 +426,7 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
     nextg.startfeed = nextg.maxfeed;
   }
   // 4:
-  else if(abs(dirchanges) != usedaxes)
+  else if(abs(dirchanges) != usedaxes || fail)
   {
     ;
   }
@@ -505,7 +516,7 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
     }
   }
 
-  gcode.currentinterval = AXES[gcode.leading_axis].interval_from_feedrate(gcode.startfeed);
+  gcode.currentinterval = AXES[gcode.leading_axis].int_interval_from_feedrate(gcode.startfeed);
   gcode.currentfeed = gcode.startfeed;
 
 }
@@ -539,7 +550,7 @@ void Motion::handle_unopt(GCode &gcode)
     }
   }
 
-  gcode.currentinterval = AXES[gcode.leading_axis].interval_from_feedrate(gcode.startfeed);
+  gcode.currentinterval = AXES[gcode.leading_axis].int_interval_from_feedrate(gcode.startfeed);
   gcode.currentfeed = gcode.startfeed;
 
 }
@@ -572,11 +583,11 @@ void Motion::gcode_execute(GCode& gcode)
     deltas[ax] = gcode.axismovesteps[ax];
     errors[ax] = gcode.movesteps >> 1;
 #ifdef DEBUG_MOVE
-    AXES[ax].dump_to_host();
+//    AXES[ax].dump_to_host();
 #endif
   }
 
-  if(!gcode.optimized)
+  if(!gcode.optimized && GCODES.shouldOptimize())
   {
     // It's possible we had our start parameters optimized by the previous code but didn't
     // get optimized ourselves.

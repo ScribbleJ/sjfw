@@ -56,6 +56,7 @@ public:
 
   void enableOptimize() { optimize_gcode = true; };
   void disableOptimize() { optimize_gcode = false; };
+  bool shouldOptimize() { return optimize_gcode; };
 
 private:
   GCode codes_buf[GCODE_BUFSIZE];
