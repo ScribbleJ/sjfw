@@ -90,6 +90,10 @@ public:
 
   // Run all the math on a G0/G1 movement Gcode to deal with movement later
   void gcode_precalc(GCode& gcode, float& feedin, Point* lastend);
+  // Run extra math to do G1 even better
+  void gcode_optimize(GCode& gcode, GCode& nextg);
+  // Handle a gcode which is not optimized, but may have been mixed about by an optimized one
+  void handle_unopt(GCode& gcode);
   // Actually execute a (precalculated) movement gcode.
   void gcode_execute(GCode& gcode);
 

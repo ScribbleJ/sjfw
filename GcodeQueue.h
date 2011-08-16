@@ -33,6 +33,7 @@ private:
       chars_in_line[x] = 0;
       needserror[x] = false;
     }
+    optimize_gcode = false;
   }
   GcodeQueue(GcodeQueue const&);
   void operator=(const GcodeQueue&);
@@ -53,6 +54,9 @@ public:
   // Dump all precalculated data and recompute
   void Invalidate();
 
+  void enableOptimize() { optimize_gcode = true; };
+  void disableOptimize() { optimize_gcode = false; };
+
 private:
   GCode codes_buf[GCODE_BUFSIZE];
   RingBufferT<GCode> codes;
@@ -64,6 +68,7 @@ private:
   uint8_t chars_in_line[GCODE_SOURCES];
   bool needserror[GCODE_SOURCES];
   bool invalidate_codes;
+  bool optimize_gcode;
 };
   
 extern GcodeQueue& GCODES;  

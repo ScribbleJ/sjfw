@@ -95,24 +95,21 @@ public:
     movesteps=0;
     leading_axis=0;
 
-    startinterval=0;
     currentinterval=0;
-    fullinterval=0;
-    steps_to_accel=0;
     accel_until=0;
     decel_from=0;
     accel_inc=0;
-    steps_acceled=0;
-    accel_remainder=0;
-
   }
 
   static void resetlastpos(Point& lp);
 
   // Stuff to do if it's a G move code, otherwise not I guess.
   // This function MAY get called repeatedly before the execute() function.
-  // Or, it MAY not get called at all.  No guarantees.
+  // it WILL be called at least once.
   void prepare();
+  // This function optimizes chained moves to only slow down as required.
+  // It is only performed when the gcodes are already prepared.
+  void optimize(GCode& next);
   // Do some stuff and return.  This function will be called repeatedly while 
   // the state is still ACTIVE, and you can set up an interrupt for precise timings.
   void execute();
@@ -130,11 +127,11 @@ public:
     HOST.labelnum(" F:",feed,false);
     HOST.labelnum(" Steps:",movesteps,false);
     HOST.labelnum(" Lead:",leading_axis,false);
-    HOST.labelnum(" StartI:",startinterval,false);
     HOST.labelnum(" CurI:",currentinterval,false);
-    HOST.labelnum(" FinalI:",fullinterval,false);
-    HOST.labelnum(" STA:",steps_to_accel,false);
-    HOST.labelnum(" SAcceled:",steps_acceled,false);
+    HOST.labelnum(" CurF:",currentfeed,false);
+    HOST.labelnum(" StartF:",startfeed,false);
+    HOST.labelnum(" MaxF:",maxfeed,false);
+    HOST.labelnum(" EndF:",endfeed,false);
     HOST.labelnum(" AUnt:",accel_until,false);
     HOST.labelnum(" DFrom:",decel_from,false);
     HOST.labelnum(" AInc:",accel_inc,true);
@@ -165,21 +162,18 @@ public:
   uint32_t axismovesteps[NUM_AXES];
   bool          axisdirs[NUM_AXES];
   int           leading_axis;
+  bool     optimized;
 
-  uint32_t startinterval;
   uint32_t currentinterval;
-  uint32_t fullinterval;
   uint32_t startfeed;
   uint32_t maxfeed;
   uint32_t endfeed;
   uint32_t currentfeed;
-  uint32_t steps_to_accel;
   uint32_t accel_until;
   uint32_t decel_from;
+  float    accel;
   uint32_t accel_inc;
   uint32_t accel_timer;
-  uint32_t steps_acceled;
-  uint32_t accel_remainder;
   Point         endpos;
   Point         startpos;
 

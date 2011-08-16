@@ -62,8 +62,16 @@ void GcodeQueue::handlenext()
   unsigned int codesinqueue = codes.getCount();
   unsigned int less = loops < codesinqueue ? loops : codesinqueue;
   for(unsigned int x=1;x<less;x++)
+  {
     codes.peek(x).prepare();
-
+    if(optimize_gcode)
+    {
+      if(x+1 < less && codes.peek(x+1).state == GCode::PREPARED)
+      {
+        codes.peek(x).optimize(codes.peek(x+1));
+      }
+    }
+  }
   ++loops;
 }
 

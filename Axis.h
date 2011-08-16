@@ -24,9 +24,6 @@ class Axis
     this->spu_int = steps_per_unit;
     this->disable_after_move = disable_after_move;
     max_feed     = max_feedrate;
-    min_interval = interval_from_feedrate(max_feedrate);
-    avg_interval = interval_from_feedrate(home_feedrate);
-    max_interval = interval_from_feedrate(min_feedrate);
     start_feed   = min_feedrate;
     accel_rate = accel_rate_in_units;
     position = 0;
@@ -46,8 +43,8 @@ class Axis
   void dump_to_host()
   {
     HOST.labelnum("p:",position,false);
-    HOST.labelnum(" mi:",min_interval,false);
-    HOST.labelnum(" mi:",max_interval,false);
+    HOST.labelnum(" sf:", start_feed, false);
+    HOST.labelnum(" mf:", max_feed, false);
     HOST.labelnum(" ar:",accel_rate, false);
     HOST.labelnum(" stt:",steps_to_take);
   }
@@ -73,9 +70,9 @@ class Axis
   void  setAbsolute() { relative = false; }
   void  setRelative() { relative = true; }
   bool  isRelative()  { return relative; }
-  void  setMinimumFeedrate(float feedrate) { if(feedrate <= 0) return; start_feed = feedrate; max_interval = interval_from_feedrate(feedrate); }
-  void  setMaximumFeedrate(float feedrate) { if(feedrate <= 0) return; max_feed = feedrate; min_interval = interval_from_feedrate(feedrate); }
-  void  setAverageFeedrate(float feedrate) { if(feedrate <= 0) return; avg_interval = interval_from_feedrate(feedrate); }
+  void  setMinimumFeedrate(float feedrate) { if(feedrate <= 0) return; start_feed = feedrate; }
+  void  setMaximumFeedrate(float feedrate) { if(feedrate <= 0) return; max_feed = feedrate;  }
+  void  setAverageFeedrate(float feedrate) { if(feedrate <= 0) return;  }
   // WARNING! BECAUSE OF THE WAY WE STORE ACCEL DATA< YOU MUST USE THE ABOVE THREE CALLS TO RESET THE FEEDRATES AFTER CHANGING THE STEPS
   void  setStepsPerUnit(float steps) { if(steps <= 0) return; steps_per_unit = steps; spu_int = steps; }
   void  setAccel(float rate) { if(rate <= 0) return; accel_rate = rate; }
@@ -99,8 +96,8 @@ class Axis
   }
   float    getStartFeed(float feed) { return start_feed < feed ? start_feed : feed; }
   float    getEndFeed(float feed) { return max_feed < feed ? max_feed : feed; }
-  uint32_t getStartInterval(float feed) { uint32_t i = interval_from_feedrate(feed); return i < max_interval ? max_interval : i; }
-  uint32_t getEndInterval(float feed) { uint32_t i = interval_from_feedrate(feed); return i < min_interval ? min_interval : i; }
+  uint32_t getStartInterval(float feed) { uint32_t i = interval_from_feedrate(feed); return i; }
+  uint32_t getEndInterval(float feed) { uint32_t i = interval_from_feedrate(feed); return i ; }
   uint32_t getAccelRate() { return accel_rate; }
 
   static float getAccelTime(float startfeed, float endfeed, uint32_t accel)
@@ -127,6 +124,12 @@ class Axis
   {
     start_feed /= 60.0f;
     return sqrt((start_feed * start_feed) + (2.0f * accel * dist));
+  }
+
+  float getSpeedAtEnd(float start_feed, float accel, uint32_t movesteps)
+  {
+    start_feed /= 60.0f;
+    return  sqrt((start_feed * start_feed) + (2.0f * accel * (float)((float)movesteps * steps_per_unit)));
   }
 
   float getEndpos(float start, uint32_t steps, bool dir) 
@@ -272,7 +275,6 @@ private:
 	float steps_per_unit;
   uint32_t spu_int;
 
-  uint32_t min_interval, avg_interval, max_interval;
   float    start_feed, max_feed;
   uint32_t accel_rate;
 

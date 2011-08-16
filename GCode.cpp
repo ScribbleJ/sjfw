@@ -14,15 +14,31 @@ float GCode::lastfeed;
 // It WILL get called at least once.
 void GCode::prepare()
 {
+  // preparecalls only for reporting - not used.
   preparecalls++;
+
+
   if(state == PREPARED)
     return;
 
+  // Only GCodes need preparing.
   if(cps[G].isUnused())
     state = PREPARED;
   else
     MOTION.gcode_precalc(*this,lastfeed,&lastpos);
 }
+
+void GCode::optimize(GCode& next)
+{
+  if(state != PREPARED)
+    return;
+
+  if(next.state != PREPARED)
+    return;
+
+  MOTION.gcode_optimize(*this, next);
+}
+
 
 // Do some stuff and return.  This function will be called repeatedly while 
 // the state is still ACTIVE, and you can set up an interrupt for precise timings.
@@ -324,6 +340,13 @@ void GCode::do_m_code()
       break;
     case 310: // NOT STANDARD - report axis configuration status
       MOTION.reportConfigStatus(Host::Instance(source));
+      state = DONE;
+      break;
+    case 350: // NOT STANDARD - change gcode optimization
+      if(!cps[P].isUnused() && cps[P].getInt() == 1)
+        GCODES.enableOptimize();
+      else
+        GCODES.disableOptimize();
       state = DONE;
       break;
     // case 400,402 handled by GcodeQueue immediately, not queued.
