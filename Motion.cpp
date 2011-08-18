@@ -308,7 +308,7 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
 #endif
   if(halfmove <= dist)
   {
-    gcode.accel_until = halfmove+1;
+    gcode.accel_until = gcode.movesteps - halfmove;
     gcode.decel_from  = halfmove;
   }
   else
@@ -316,6 +316,8 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
     gcode.accel_until =  gcode.movesteps - dist;
     gcode.decel_from  =  dist;
   }
+
+  //gcode.fastaccel = gcode.movesteps - ((gcode.movesteps - gcode.accel_until) / 8);
 
   gcode.accel_inc   = (float)((float)accel * 60.0f / 1000.0f);
   gcode.accel_timer = ACCEL_INC_TIME;
@@ -367,8 +369,8 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
   int   usedaxes   = 0;
   bool  fail = false;
 
-  if(gcode.leading_axis != nextg.leading_axis)
-    fail = true;
+  //if(gcode.leading_axis != nextg.leading_axis)
+  //  fail = true;
 
   for(int ax=0;ax < NUM_AXES;ax++)
   {
@@ -408,8 +410,6 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
       ratio2 = nextg.maxfeed / f2;
     }
 
-    if(AXES[ax].getStartFeed(5000) < smallestjerk)
-      smallestjerk = AXES[ax].getStartFeed(5000);
   }
 
   // Possible cases:
@@ -516,6 +516,7 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
     }
   }
 
+  gcode.fastaccel = gcode.movesteps - ((gcode.movesteps - gcode.accel_until) / 8);
   gcode.currentinterval = AXES[gcode.leading_axis].int_interval_from_feedrate(gcode.startfeed);
   gcode.currentfeed = gcode.startfeed;
 
@@ -550,6 +551,7 @@ void Motion::handle_unopt(GCode &gcode)
     }
   }
 
+  gcode.fastaccel = gcode.movesteps - ((gcode.movesteps - gcode.accel_until) / 8);
   gcode.currentinterval = AXES[gcode.leading_axis].int_interval_from_feedrate(gcode.startfeed);
   gcode.currentfeed = gcode.startfeed;
 
@@ -600,8 +602,8 @@ void Motion::gcode_execute(GCode& gcode)
   gcode.state = GCode::ACTIVE;
   current_gcode = &gcode;
 
-  setInterruptCycles(gcode.currentinterval);
   enableInterrupt();
+  setInterruptCycles(gcode.currentinterval);
 }
 
 bool Motion::axesAreMoving() 
@@ -628,6 +630,10 @@ void Motion::writePositionToHost(GCode& gc)
 
 void Motion::handleInterrupt()
 {
+  if(busy)
+    return;
+
+
   // interruptOverflow for step intervals > 16bit
   if(interruptOverflow > 0)
   {
@@ -644,7 +650,7 @@ void Motion::handleInterrupt()
   }
 
 #ifdef INTERRUPT_STEPS
-  disableInterrupt();
+  busy = true;
   sei();
 #endif  
 
@@ -675,7 +681,11 @@ void Motion::handleInterrupt()
 
     if(current_gcode->movesteps >= current_gcode->accel_until && current_gcode->currentfeed < current_gcode->maxfeed)
     { 
-      current_gcode->currentfeed += current_gcode->accel_inc;
+      //if(current_gcode->movesteps >= current_gcode->fastaccel)
+      //  current_gcode->currentfeed += current_gcode->accel_inc*16;
+      //else
+        current_gcode->currentfeed += current_gcode->accel_inc;
+
       if(current_gcode->currentfeed > current_gcode->maxfeed)
         current_gcode->currentfeed = current_gcode->maxfeed;
 
@@ -685,7 +695,11 @@ void Motion::handleInterrupt()
     }
     else if(current_gcode->movesteps <= current_gcode->decel_from && current_gcode->currentfeed > current_gcode->endfeed)
     { 
-      current_gcode->currentfeed -= current_gcode->accel_inc;
+      //if(current_gcode->movesteps < (current_gcode->decel_from / 8))
+      //  current_gcode->currentfeed -= current_gcode->accel_inc*16;
+      //else
+        current_gcode->currentfeed -= current_gcode->accel_inc;
+
       if(current_gcode->currentfeed < current_gcode->endfeed)
         current_gcode->currentfeed = current_gcode->endfeed;
 
@@ -707,11 +721,9 @@ void Motion::handleInterrupt()
     disableInterrupt();
     current_gcode->state = GCode::DONE;
   }
+
 #ifdef INTERRUPT_STEPS
-  else
-  {
-    enableInterrupt();
-  }
+  busy = false;
 #endif  
 }
 

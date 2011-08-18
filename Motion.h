@@ -27,6 +27,7 @@ private:
   {
     setupInterrupt();
     interruptOverflow=0;
+    busy = false;
   };
   Motion(Motion&);
   Motion& operator=(Motion&);
@@ -36,6 +37,7 @@ private:
   volatile unsigned long deltas[NUM_AXES];
   volatile long errors[NUM_AXES];
   volatile int interruptOverflow;
+  bool busy;
 
 public:
   // Return request Axis

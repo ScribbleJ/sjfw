@@ -170,6 +170,7 @@ public:
   uint32_t endfeed;
   uint32_t currentfeed;
   uint32_t accel_until;
+  uint32_t fastaccel;
   uint32_t decel_from;
   float    accel;
   uint32_t accel_inc;
