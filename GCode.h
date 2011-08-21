@@ -101,8 +101,6 @@ public:
     accel_inc=0;
   }
 
-  static void resetlastpos(Point& lp);
-
   // Stuff to do if it's a G move code, otherwise not I guess.
   // This function MAY get called repeatedly before the execute() function.
   // it WILL be called at least once.
@@ -137,15 +135,12 @@ public:
     HOST.labelnum(" AInc:",accel_inc,true);
   }
 
-  static Point& getLastpos() { return lastpos; }
-
 private:
   CodeParam cps[T+1];                    
   unsigned long lastms;
   unsigned long startmillis; // Time execution began
   unsigned int preparecalls;
   unsigned int executecalls;
-  static Point lastpos;
   static float lastfeed;
 
   void do_m_code();

@@ -36,3 +36,9 @@
 
 #define BT_BAUD 9600
 //#define BT_DEBUG
+
+// The temporal resolution of the acceleration management subsystem. Higher number
+// give smoother acceleration but may impact performance
+#define ACCELERATION_TICKS_PER_SECOND 40L
+#define MAX_JERK 2000
+

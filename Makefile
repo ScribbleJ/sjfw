@@ -78,8 +78,8 @@ EXTRA_DEFINES = $(LCD_DEFINES) $(SD_DEFINES) $(BOARD_DEFINES) $(KEYPAD_DEFINES) 
 
 
 F_CPU = 16000000
-CXXSRC = $(EXTRA_FILES) avr/AvrPort.cpp Host.cpp Time.cpp GcodeQueue.cpp GCode.cpp Axis.cpp Motion.cpp \
-Globals.cpp Temperature.cpp avr/ArduinoMap.cpp Eeprom.cpp
+CXXSRC = $(EXTRA_FILES) avr/AvrPort.cpp Host.cpp Time.cpp GcodeQueue.cpp GCode.cpp Axis.cpp GrblMotion.cpp GrblPlanner.cpp \
+Motion.cpp Globals.cpp Temperature.cpp avr/ArduinoMap.cpp Eeprom.cpp
 
 
 FORMAT = ihex

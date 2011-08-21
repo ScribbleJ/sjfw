@@ -14,6 +14,8 @@
 #include "Temperature.h"
 #include "GCode.h"
 #include "GcodeQueue.h"
+#include "Motion.h"
+
 
 #ifdef HAS_SD
 #include "SDCard.h"
@@ -366,7 +368,7 @@ private:
       return false;
 
     GCode t;
-    Point& p = GCode::getLastpos();
+    Point p = MOTION.getCurrentPosition();
     switch(key)
     {
       case '5':
@@ -418,7 +420,7 @@ private:
 
   void display_MOTORS()
   {
-    Point& lastpos = GCode::getLastpos();
+    Point lastpos = MOTION.getCurrentPosition();
     LCD.label("X:", lastpos[X]);
     LCD.setCursor(8,0);
     LCD.label("Y:", lastpos[Y]);
