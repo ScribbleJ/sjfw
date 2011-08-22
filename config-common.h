@@ -27,18 +27,12 @@
 // larger is overkill 
 #define HOST_RECV_BUFSIZE 200
 // SEND buffer must be large enough to hold as much text as we might spew in a loop; it's a lot.
-#define HOST_SEND_BUFSIZE 200
+#define HOST_SEND_BUFSIZE 500
 #define HOST_BAUD 57600
 // if defined, INTERRUPT_STEPS allows the comm ISRs to interrupt the movement ISR.
 //#define INTERRUPT_STEPS
 //#define COMMS_ERR2
-//#define DEBUG_MOVE
+#define DEBUG_MOVE
 
 #define BT_BAUD 9600
 //#define BT_DEBUG
-
-// The temporal resolution of the acceleration management subsystem. Higher number
-// give smoother acceleration but may impact performance
-#define ACCELERATION_TICKS_PER_SECOND 40L
-#define MAX_JERK 2000
-

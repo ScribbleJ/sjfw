@@ -26,7 +26,11 @@ class Axis
     max_feed     = max_feedrate;
     start_feed   = min_feedrate;
     accel_rate = accel_rate_in_units;
+    position = 0;
+    relative = false;
     this->dir_inverted = dir_inverted;
+    steps_to_take = 0;
+    steps_remaining = 0;
 
     // Initialize pins we control.
     if(!step_pin.isNull()) { step_pin.setDirection(true); step_pin.setValue(false); }
@@ -35,14 +39,37 @@ class Axis
     if(!min_pin.isNull()) { min_pin.setDirection(false); min_pin.setValue(PULLUPS); }
     if(!max_pin.isNull()) { max_pin.setDirection(false); max_pin.setValue(PULLUPS); }
   }
-
     
   void dump_to_host()
   {
+    HOST.labelnum("p:",position,false);
     HOST.labelnum(" sf:", start_feed, false);
     HOST.labelnum(" mf:", max_feed, false);
     HOST.labelnum(" ar:",accel_rate, false);
+    HOST.labelnum(" stt:",steps_to_take);
   }
+  // Interval measured in clock ticks
+  // feedrate in mm/min
+  // F_CPU is clock ticks/second
+  uint32_t interval_from_feedrate(float feedrate)
+  {
+    float a = (float)(F_CPU * 60.0f) / (feedrate * steps_per_unit);
+    return a;
+  }
+
+  inline uint32_t int_interval_from_feedrate(uint32_t feedrate)
+  {
+    // Max error - roughly 2.5%.  Only used for accel so not really a problem.
+    return ((uint32_t)F_CPU * 60) / (feedrate * spu_int);
+  }
+
+	bool isMoving() { return (steps_remaining > 0); };
+  // Doesn't take into account position is not updated during move.
+  float getCurrentPosition() { return position; }
+  void  setCurrentPosition(float pos) { position = pos; }
+  void  setAbsolute() { relative = false; }
+  void  setRelative() { relative = true; }
+  bool  isRelative()  { return relative; }
   void  setMinimumFeedrate(float feedrate) { if(feedrate <= 0) return; start_feed = feedrate; }
   void  setMaximumFeedrate(float feedrate) { if(feedrate <= 0) return; max_feed = feedrate;  }
   void  setAverageFeedrate(float feedrate) { if(feedrate <= 0) return;  }
@@ -53,32 +80,114 @@ class Axis
   void  disable() { if(!enable_pin.isNull()) enable_pin.setValue(true); }
   void  enable() { if(!enable_pin.isNull()) enable_pin.setValue(false); }
 
-  inline void setDirection(bool direction)
+  float getMovesteps(float start, float end, bool& dir) 
+  { 
+    float d = end - start; 
+
+    if(d<0) 
+    {
+      d = d * -1; 
+      dir=false;
+    }
+    else
+      dir=true;
+    
+    return steps_per_unit * d; 
+  }
+  float    getStartFeed(float feed) { return start_feed < feed ? start_feed : feed; }
+  float    getStartFeed() { return start_feed; }
+  float    getEndFeed(float feed) { return max_feed < feed ? max_feed : feed; }
+  float    getMaxFeed() { return max_feed; }
+  uint32_t getStartInterval(float feed) { uint32_t i = interval_from_feedrate(feed); return i; }
+  uint32_t getEndInterval(float feed) { uint32_t i = interval_from_feedrate(feed); return i ; }
+  uint32_t getAccelRate() { return accel_rate; }
+
+  static float getAccelTime(float startfeed, float endfeed, uint32_t accel)
+  { 
+    startfeed /= 60.0f;
+    endfeed   /= 60.0f;
+    return (float)(endfeed - startfeed) / (float)accel;
+  }
+  int32_t getTimePerAccel() { return ((float)1 / (float)((accel_rate * steps_per_unit) / ((float)F_CPU))); }
+
+
+
+
+
+  uint32_t getAccelDist(float start_feed, float end_feed, float accel) 
+  { 
+    end_feed /= 60.0f;
+    start_feed /= 60.0f;
+    float distance_in_mm = ((end_feed * end_feed) - (start_feed * start_feed)) / (2.0f * accel);
+    return (float)steps_per_unit * distance_in_mm;
+  }
+  
+  static float getFinalVelocity(float start_feed, float dist, float accel)
   {
-    if(!dir_pin.isNull())  { dir_pin.setValue(dir_inverted ? !direction : direction); }
+    start_feed /= 60.0f;
+    return sqrt((start_feed * start_feed) + (2.0f * accel * dist));
   }
 
-
-  inline bool doStep(bool direction)
+  float getSpeedAtEnd(float start_feed, float accel, uint32_t movesteps)
   {
+    start_feed /= 60.0f;
+    return  sqrt((start_feed * start_feed) + (2.0f * accel * (float)((float)movesteps * steps_per_unit)));
+  }
+
+  float getEndpos(float start, uint32_t steps, bool dir) 
+  { 
+    return start + (float)((float)steps / steps_per_unit * (dir ? 1.0 : -1.0));
+  }
+
+  inline void doStep()
+  {
+    if(steps_remaining == 0) return;
     if(direction)
     {
       if(!max_pin.isNull() && max_pin.getValue() != END_INVERT)
       {
-        return false;
+        position += (float)(steps_to_take-steps_remaining) / steps_per_unit;
+        steps_remaining = 0;
+        //HOST.write("AES\n");
+        return;
       }
     }
     else
     {
       if(!min_pin.isNull() && min_pin.getValue() != END_INVERT)
       {
-        return false;
+        position -= (float)(steps_to_take-steps_remaining) / steps_per_unit;
+        steps_remaining = 0;
+        //HOST.write("IES\n");
+        return;
       }
     }
 
     step_pin.setValue(true);
     step_pin.setValue(false);
+
+    if(--steps_remaining == 0)
+    {
+      //HOST.labelnum("FINISH MOVE, ", steps_to_take, true);
+      position += (float)((float)steps_to_take / steps_per_unit * (direction ? 1.0 : -1.0));
+      //if(disable_after_move) disable();
+    }
   }
+
+  bool setupMove(float supposed_position, bool dir, uint32_t steps)
+  {
+    if(supposed_position != position)
+      return false;
+    direction = dir;
+    steps_to_take = steps;
+    steps_remaining = steps;
+    if(direction) dir_pin.setValue(!dir_inverted);
+    else dir_pin.setValue(dir_inverted);
+    if(steps != 0) enable();
+    return true;
+  }  
+
+  uint32_t getRemainingSteps() { return steps_remaining; }
 
   void disableIfConfigured() { if(disable_after_move) disable(); }
 
@@ -156,11 +265,15 @@ class Axis
     if(END_INVERT)
       h.write(" EINV ");
   }
-
   float getStepsPerMM() { return steps_per_unit; }
+
 private:
   static bool PULLUPS;
   static bool END_INVERT;
+  volatile float position;
+	volatile bool direction;
+	volatile uint32_t steps_to_take;
+	volatile uint32_t steps_remaining;
 
 	float steps_per_unit;
   uint32_t spu_int;
@@ -176,6 +289,7 @@ private:
 	 Pin enable_pin;
 	 Pin min_pin;
 	 Pin max_pin;
+	bool relative;
   bool disable_after_move;
 
 };

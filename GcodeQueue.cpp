@@ -49,7 +49,7 @@ void GcodeQueue::handlenext()
     for(unsigned int x=0;x<codes.getCount();x++)
       codes.peek(x).state = GCode::NEW;
 
-    // TODO: INVALIDATE CODES
+    GCode::resetlastpos(MOTION.getCurrentPosition());
     HOST.write("\nINVALIDATED CODES\n");
     invalidate_codes = false;
     return;

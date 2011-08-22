@@ -24,19 +24,27 @@ private:
     Axis(Z_STEP_PIN,Z_DIR_PIN,Z_ENABLE_PIN,Z_MIN_PIN,Z_MAX_PIN,Z_STEPS_PER_UNIT,Z_INVERT_DIR,Z_MAX_FEED,Z_AVG_FEED,Z_START_FEED,Z_ACCEL_RATE,Z_DISABLE),
     Axis(A_STEP_PIN,A_DIR_PIN,A_ENABLE_PIN,Pin(),Pin(),A_STEPS_PER_UNIT,A_INVERT_DIR,A_MAX_FEED,A_AVG_FEED,A_START_FEED,A_ACCEL_RATE,A_DISABLE)
   })
-  { relative = false; };
+  {
+    setupInterrupt();
+    interruptOverflow=0;
+    busy = false;
+  };
   Motion(Motion&);
   Motion& operator=(Motion&);
 
   Axis AXES[NUM_AXES];
-  bool relative; // are we using relatie positions?
+  volatile GCode* volatile current_gcode;
+  volatile unsigned long deltas[NUM_AXES];
+  volatile long errors[NUM_AXES];
+  volatile int interruptOverflow;
+  bool busy;
 
 public:
   // Return request Axis
   Axis& getAxis(int idx) { return AXES[idx]; }
 
   // Returns current position of all Axes
-  Point getCurrentPosition();
+  Point& getCurrentPosition();
   // Sets current position; doesn't cause a move, just updates the current position variables.
   void setCurrentPosition(GCode &gcode);
   // Interpret movement data as absolute
@@ -63,11 +71,19 @@ public:
   void setAxisDisable(GCode& gcode);
   void setEndstopGlobals(bool inverted, bool pulledup);
   void reportConfigStatus(Host& h);
-
   // Motors automatically enabled when used
   void disableAllMotors();
   void wrapup(GCode& gcode) { checkdisable(gcode); }
   void checkdisable(GCode& gcode);
+
+  // Calculate the number of steps for each axis in a move.
+  void getMovesteps(GCode& gcode);
+  // These three functions select the data to use during a move
+  unsigned long getLargestStartInterval(GCode& gcode);
+  unsigned long getLargestEndInterval(GCode& gcode);
+  unsigned long getLargestTimePerAccel(GCode& gcode);
+  float getSmallestStartFeed(GCode& gcode);
+  float getSmallestEndFeed(GCode& gcode);
 
   // Uses step data to determine the actual ending position of a move
   // (seldom /precisely/ the requested position)
@@ -75,12 +91,23 @@ public:
 
 
   // Run all the math on a G0/G1 movement Gcode to deal with movement later
-  void gcode_precalc(GCode& gcode, float& feedin);
+  void gcode_precalc(GCode& gcode, float& feedin, Point* lastend);
+  // Run extra math to do G1 even better
+  void gcode_optimize(GCode& gcode, GCode& nextg);
+  // Handle a gcode which is not optimized, but may have been mixed about by an optimized one
+  void handle_unopt(GCode& gcode);
   // Actually execute a (precalculated) movement gcode.
   void gcode_execute(GCode& gcode);
 
   // Debugging and output to host...
   void writePositionToHost(GCode& gcode);
+
+  // Functions for handling pulsing motors using a timer interrupt for timing.
+  void handleInterrupt();
+  void setupInterrupt(); 
+  void enableInterrupt(); 
+  void disableInterrupt(); 
+  void setInterruptCycles(unsigned long cycles); 
 };
 
 extern Motion& MOTION;

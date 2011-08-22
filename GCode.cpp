@@ -7,6 +7,7 @@
 #include "SDCard.h"
 #include "Eeprom.h"
 
+Point GCode::lastpos;
 float GCode::lastfeed;
 // Stuff to do if it's a G move code, otherwise not I guess.
 // This function MAY get called repeatedly before the execute() function.
@@ -24,7 +25,7 @@ void GCode::prepare()
   if(cps[G].isUnused())
     state = PREPARED;
   else
-    MOTION.gcode_precalc(*this,lastfeed);
+    MOTION.gcode_precalc(*this,lastfeed,&lastpos);
 }
 
 void GCode::optimize(GCode& next)
@@ -35,6 +36,7 @@ void GCode::optimize(GCode& next)
   if(next.state != PREPARED)
     return;
 
+  MOTION.gcode_optimize(*this, next);
 }
 
 
@@ -375,4 +377,13 @@ void GCode::do_m_code()
   }
 #endif
 }
+
+void GCode::resetlastpos(Point& lp) 
+{ 
+  lastpos = lp; 
+}
+
+
+
+
 
