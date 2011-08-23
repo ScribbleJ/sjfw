@@ -12,10 +12,10 @@
     </programmer>
     <firmware
        major="1"
-       minor="3"
-       relpath="firmware/1280-w-ec-v1.3.hex"
-       name="v1.3"
-       description="sjfw v1.3 for ThingOMatic/Gen4."
+       minor="5"
+       relpath="firmware/1280-w-ec-v1.5.hex"
+       name="v1.5"
+       description="sjfw v1.5 for ThingOMatic/Gen4."
        />
     <firmware
        major="1"
@@ -36,10 +36,10 @@
     </programmer>
     <firmware
        major="1"
-       minor="3"
-       relpath="firmware/2560-w-ec-v1.3.hex"
-       name="v1.3"
-       description="sjfw v1.3 for ThingOMatic/Gen4."
+       minor="5"
+       relpath="firmware/2560-w-ec-v1.5.hex"
+       name="v1.5"
+       description="sjfw v1.5 for ThingOMatic/Gen4."
        />
     <firmware
        major="1"
@@ -61,10 +61,10 @@
     </programmer>
     <firmware
        major="1"
-       minor="3"
-       relpath="firmware/1280-w-100k-v1.3.hex"
-       name="v1.3"
-       description="sjfw v1.3 for 100k."
+       minor="5"
+       relpath="firmware/1280-w-100k-v1.5.hex"
+       name="v1.5"
+       description="sjfw v1.5 for 100k."
        />
     <firmware
        major="1"
@@ -86,10 +86,10 @@
     </programmer>
     <firmware
        major="1"
-       minor="3"
-       relpath="firmware/2560-w-100k-v1.3.hex"
-       name="v1.3"
-       description="sjfw v1.3 for 100k"
+       minor="5"
+       relpath="firmware/2560-w-100k-v1.5.hex"
+       name="v1.5"
+       description="sjfw v1.5 for 100k"
        />
     <firmware
        major="1"
