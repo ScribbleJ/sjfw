@@ -61,6 +61,7 @@ while(1)
   {
     chomp $line;
     $line =~ s/\(.*$//o;
+    $line =~ s/\;.*$//o;
 
     $line = "N$linenum $line";
     my $ck = 0;
