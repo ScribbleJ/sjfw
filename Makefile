@@ -30,6 +30,12 @@ AVR_GCC_PATH = $(AVR_TOOLS_PATH)
 #PORT = /dev/ttyUSB0
 #MCU = atmega1280
 
+#Reasonable settings for Atmega644p
+#UPLOAD_RATE = 38400
+#AVRDUDE_PROGRAMMER = avrisp2
+#PORT = /dev/ttyUSB0
+#MCU = atmega644p
+
 # Reasonable settings for Atmega2560 (regardless of board)
 UPLOAD_RATE = 115200
 AVRDUDE_PROGRAMMER = stk500v2

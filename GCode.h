@@ -37,7 +37,7 @@ public:
     switch(state)
     {
       case UNUSED:
-        HOST.write("U");
+        HOST.write('U');
         break;
       case FLOAT:
         HOST.write(f, 10,5);
@@ -122,6 +122,7 @@ public:
 
   void dump_movedata()
   {
+#ifdef DEBUG_MOVE  
     HOST.labelnum("L:",linenum,false);
     HOST.labelnum(" T:",(millis() - startmillis),false);
     HOST.labelnum(" F:",feed,false);
@@ -135,6 +136,7 @@ public:
     HOST.labelnum(" AUnt:",accel_until,false);
     HOST.labelnum(" DFrom:",decel_from,false);
     HOST.labelnum(" AInc:",accel_inc,true);
+#endif    
   }
 
   static Point& getLastpos() { return lastpos; }
@@ -160,12 +162,11 @@ public:
   // preparsed data specific to G1 type moves.
   uint32_t movesteps;
   uint32_t axismovesteps[NUM_AXES];
-  bool          axisdirs[NUM_AXES];
-  int           leading_axis;
+  bool     axisdirs[NUM_AXES];
+  int      leading_axis;
   bool     optimized;
 
   float actualmm;
-  float axisspeeds[NUM_AXES];
   float axisratio[NUM_AXES];
   
   uint32_t currentinterval;
@@ -173,14 +174,15 @@ public:
   uint32_t maxfeed;
   uint32_t endfeed;
   uint32_t currentfeed;
+
   uint32_t accel_until;
-  uint32_t fastaccel;
   uint32_t decel_from;
   float    accel;
   uint32_t accel_inc;
   uint32_t accel_timer;
-  Point         endpos;
-  Point         startpos;
+
+  Point    endpos;
+  Point    startpos;
 
 };
 

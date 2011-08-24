@@ -6,6 +6,7 @@
 #include "Globals.h"
 #include "GcodeQueue.h"
 #include "ArduinoMap.h"
+#include <avr/pgmspace.h>
 
 
 
@@ -307,22 +308,23 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
     HOST.labelnum("MM: ", gcode.actualmm);
 #endif    
 
+  float axisspeeds[NUM_AXES];
   // Calculate individual axis movement speeds
   float mult = gcode.feed/gcode.actualmm;
   for(int ax=0;ax<NUM_AXES;ax++)
   {
-    gcode.axisspeeds[ax] = (gcode.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult;
+    axisspeeds[ax] = (gcode.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult;
 #ifdef DEBUG_MOVE    
     //HOST.labelnum("SP[", ax, false);
-    //HOST.labelnum("]:", gcode.axisspeeds[ax]);
+    //HOST.labelnum("]:", axisspeeds[ax]);
 #endif
   }
 
   // Calculate ratio of movement speeds to main axis
   for(int ax=0;ax < NUM_AXES;ax++)
   {
-    if(gcode.axisspeeds[ax] != 0)
-      gcode.axisratio[ax] = gcode.axisspeeds[gcode.leading_axis] / gcode.axisspeeds[ax];
+    if(axisspeeds[ax] != 0)
+      gcode.axisratio[ax] = axisspeeds[gcode.leading_axis] / axisspeeds[ax];
     else
       gcode.axisratio[ax] = 0;
 #ifdef DEBUG_MOVE
@@ -337,16 +339,16 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
   float littlediff = 0;
   for(int ax = 0;ax<NUM_AXES;ax++)
   {
-    if(gcode.axisspeeds[ax] > AXES[ax].getMaxFeed())
+    if(axisspeeds[ax] > AXES[ax].getMaxFeed())
     {
-      float d = (gcode.axisspeeds[ax] - AXES[ax].getMaxFeed()) * gcode.axisratio[ax];
+      float d = (axisspeeds[ax] - AXES[ax].getMaxFeed()) * gcode.axisratio[ax];
       if(d > bigdiff)
         bigdiff = d;
     }
 
-    if(gcode.axisspeeds[ax] > AXES[ax].getStartFeed())
+    if(axisspeeds[ax] > AXES[ax].getStartFeed())
     {
-      float d = (gcode.axisspeeds[ax] - AXES[ax].getStartFeed()) * gcode.axisratio[ax];
+      float d = (axisspeeds[ax] - AXES[ax].getStartFeed()) * gcode.axisratio[ax];
       if(d > littlediff)
         littlediff = d;
     }
@@ -355,8 +357,8 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
   HOST.labelnum("BD:", bigdiff);
   HOST.labelnum("LD:", littlediff);
 #endif
-  gcode.maxfeed = gcode.axisspeeds[gcode.leading_axis] - bigdiff;
-  gcode.startfeed = gcode.axisspeeds[gcode.leading_axis] - littlediff;
+  gcode.maxfeed = axisspeeds[gcode.leading_axis] - bigdiff;
+  gcode.startfeed = axisspeeds[gcode.leading_axis] - littlediff;
   gcode.endfeed   = gcode.startfeed;
   gcode.currentfeed = gcode.startfeed;
 
@@ -427,17 +429,20 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
   int   usedaxes   = 0;
   bool  fail = false;
 
+  //
+  float axisspeeds[NUM_AXES];
+  float nextspeeds[NUM_AXES];
   // Calculate individual axis max movement speeds
   float mult1 = gcode.feed / gcode.actualmm;
   float mult2 = nextg.feed / nextg.actualmm;
   for(int ax=0;ax<NUM_AXES;ax++)
   {
-    gcode.axisspeeds[ax] = (float)((float)gcode.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult1;
-    nextg.axisspeeds[ax] = (float)((float)nextg.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult2;
+    axisspeeds[ax] = (float)((float)gcode.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult1;
+    nextspeeds[ax] = (float)((float)nextg.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult2;
 #ifdef DEBUG_MOVE    
     HOST.labelnum("ASP[", ax, false);
-    HOST.labelnum("]:", gcode.axisspeeds[ax],false);
-    HOST.labelnum(",", nextg.axisspeeds[ax]);
+    HOST.labelnum("]:", axisspeeds[ax],false);
+    HOST.labelnum(",", nextspeeds[ax]);
 #endif
   }
 
@@ -451,7 +456,7 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
       fail = true;
 
     // If one axis is increasing while another is decreasing, we must fail.
-    if(gcode.axisspeeds[ax] > nextg.axisspeeds[ax])
+    if(axisspeeds[ax] > nextspeeds[ax])
       dirchanges++;
     else
       dirchanges--;
@@ -459,7 +464,7 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
 
 
     // store the greatest difference above the 'jerk speed' and which axis it was on.
-    float diff = fabs(gcode.axisspeeds[ax] - nextg.axisspeeds[ax]);
+    float diff = fabs(axisspeeds[ax] - nextspeeds[ax]);
     if(diff > AXES[ax].getStartFeed() && diff > feeddiff)
     {
       feeddiff = diff;
@@ -472,7 +477,7 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
   //  fail = true;
 
   // This makes no sense.
-  if(nextg.axisspeeds[gcode.leading_axis] > gcode.axisspeeds[gcode.leading_axis]) direction = true;
+  if(nextspeeds[gcode.leading_axis] > axisspeeds[gcode.leading_axis]) direction = true;
 
 #ifdef DEBUG_MOVE    
     HOST.labelnum("FD[", diffaxis, false);
@@ -508,7 +513,7 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
     //                ratio of axis with biggest diff to primary
     //                                            speed of biggest diff axis in next move
     //                                                                          difference minus jerk
-    gcode.endfeed   = gcode.axisratio[diffaxis] * (nextg.axisspeeds[diffaxis] + (feeddiff - AXES[diffaxis].getStartFeed()));
+    gcode.endfeed   = gcode.axisratio[diffaxis] * (nextspeeds[diffaxis] + (feeddiff - AXES[diffaxis].getStartFeed()));
     //                 - speed of primary in this move - in next move - 
     //                                 jerk
     //                                                                  ratio of next move 
@@ -687,7 +692,7 @@ void Motion::gcode_execute(GCode& gcode)
   // Make sure they have configured the axis!
   if(AXES[0].isInvalid())
   {
-    Host::Instance(gcode.source).write("!! AXIS ARE NOT CONFIGURED !!\n");
+    Host::Instance(gcode.source).write_P(PSTR("!! AXIS ARE NOT CONFIGURED !!\n"));
     gcode.state = GCode::DONE;
     return;
   }

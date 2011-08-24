@@ -6,6 +6,7 @@
 #include "Temperature.h"
 #include "SDCard.h"
 #include "Eeprom.h"
+#include <avr/pgmspace.h>
 
 Point GCode::lastpos;
 float GCode::lastfeed;
@@ -128,9 +129,9 @@ void GCode::do_g_code()
       break;
     default:
       Host::Instance(source).labelnum("warn ",linenum, false); 
-      Host::Instance(source).write(" GCODE "); 
+      Host::Instance(source).write_P(PSTR(" GCODE ")); 
       Host::Instance(source).write(cps[G].getInt(), 10); 
-      Host::Instance(source).write(" NOT SUPPORTED\n");
+      Host::Instance(source).write_P(PSTR(" NOT SUPPORTED\n"));
       state = DONE;
       break;
   }
@@ -217,7 +218,7 @@ void GCode::do_m_code()
       break; 
     case 115: // Get Firmware Version and Capabilities
       Host::Instance(source).labelnum("prog ", linenum, false);
-      Host::Instance(source).write(" PROTOCOL_VERSION:SJ FIRMWARE_NAME:sjfw FREE_RAM:");
+      Host::Instance(source).write_P(PSTR(" PROTOCOL_VERSION:SJ FIRMWARE_NAME:sjfw FREE_RAM:"));
       Host::Instance(source).write(getFreeRam(),10);
       Host::Instance(source).endl();
       state = DONE;
@@ -273,9 +274,9 @@ void GCode::do_m_code()
       Host::Instance(source).labelnum("prog ", linenum, false);
       Host::Instance(source).write(sdcard::getCurrentfile());
       if(sdcard::printcurrent())
-        Host::Instance(source).write(" BEGUN");
+        Host::Instance(source).write_P(PSTR(" BEGUN"));
       else
-        Host::Instance(source).write(" FAIL");
+        Host::Instance(source).write_P(PSTR(" FAIL"));
      
       Host::Instance(source).endl();
       state = DONE;
@@ -351,17 +352,17 @@ void GCode::do_m_code()
       break;
     // case 400,402 handled by GcodeQueue immediately, not queued.
     case 401: // Execute stored eeprom code.
-      Host::Instance(source).write("EEPROM READ: ");
+      Host::Instance(source).write_P(PSTR("EEPROM READ: "));
       if(eeprom::beginRead())
-        Host::Instance(source).write("BEGUN");
+        Host::Instance(source).write_P(PSTR("BEGUN"));
       else
-        Host::Instance(source).write("FAIL");
+        Host::Instance(source).write_P(PSTR("FAIL"));
       Host::Instance(source).endl();
       state = DONE;
       break;
     default:
       Host::Instance(source).labelnum("warn ", linenum, false);
-      Host::Instance(source).write(" MCODE "); Host::Instance(source).write(cps[M].getInt(), 10); Host::Instance(source).write(" NOT SUPPORTED\n");
+      Host::Instance(source).write_P(PSTR(" MCODE ")); Host::Instance(source).write(cps[M].getInt(), 10); Host::Instance(source).write_P(PSTR(" NOT SUPPORTED\n"));
       state = DONE;
       break;
   }
@@ -371,7 +372,7 @@ void GCode::do_m_code()
     if(linenum != -1)
       Host::Instance(source).labelnum("done ", linenum, false);
     else
-      Host::Instance(source).write("done ");
+      Host::Instance(source).write_P(PSTR("done "));
 
     Host::Instance(source).labelnum(" M", cps[M].getInt(), true);
   }

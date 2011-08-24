@@ -148,7 +148,6 @@ class Axis
       {
         position += (float)(steps_to_take-steps_remaining) / steps_per_unit;
         steps_remaining = 0;
-        //HOST.write("AES\n");
         return;
       }
     }
@@ -158,7 +157,6 @@ class Axis
       {
         position -= (float)(steps_to_take-steps_remaining) / steps_per_unit;
         steps_remaining = 0;
-        //HOST.write("IES\n");
         return;
       }
     }
@@ -243,27 +241,27 @@ class Axis
   void reportConfigStatus(Host& h)
   {
     if(steps_per_unit == 1)
-      h.write(" no steps_per_unit ");
+      h.write_P(PSTR(" no steps_per_unit "));
     if(accel_rate == 1)
-      h.write(" no accel ");
+      h.write_P(PSTR(" no accel "));
     if(step_pin.isNull())
-      h.write(" no step ");
+      h.write_P(PSTR(" no step "));
     if(dir_pin.isNull())
-      h.write(" no dir ");
+      h.write_P(PSTR(" no dir "));
     if(enable_pin.isNull())
-      h.write(" no enable ");
+      h.write_P(PSTR(" no enable "));
     if(min_pin.isNull())
-      h.write(" no min ");
+      h.write_P(PSTR(" no min "));
     if(max_pin.isNull())
-      h.write(" no max ");
+      h.write_P(PSTR(" no max "));
     if(disable_after_move)
-      h.write(" DIS ");
+      h.write_P(PSTR(" DIS "));
     if(dir_inverted)
-      h.write(" INV ");
+      h.write_P(PSTR(" INV "));
     if(PULLUPS)
-      h.write(" EPULL ");
+      h.write_P(PSTR(" EPULL "));
     if(END_INVERT)
-      h.write(" EINV ");
+      h.write_P(PSTR(" EINV "));
   }
   float getStepsPerMM() { return steps_per_unit; }
 

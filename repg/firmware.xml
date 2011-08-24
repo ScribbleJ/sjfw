@@ -24,6 +24,7 @@
        name="v1.4"
        description="sjfw v1.4 for ThingOMatic/Gen4."
        />
+
   </board>
 
   <board name="Mega2560 Gen4 or Thing-O-Matic " icon="icon-mb24.png">
@@ -101,6 +102,31 @@
 
   </board>
 
+  <board name="Mega644p " icon="icon-mb24.png">
+    <version major="1" minor="0"/>
+    <programmer class="replicatorg.uploader.AvrdudeUploader">
+      <protocol>avrisp</protocol>
+      <speed>38400</speed>
+      <arch>m644p</arch>
+      <manualreset>true</manualreset>
+    </programmer>
+    <firmware
+       major="1"
+       minor="5"
+       relpath="firmware/644p-w-ec-v1.5.hex"
+       name="Exctruder Controller v1.5"
+       description="sjfw v1.5 for Gen3"
+       />
+    <firmware
+       major="1"
+       minor="5"
+       relpath="firmware/644p-w-100k-v1.5.hex"
+       name="100k Thermistor v1.5"
+       description="sjfw v1.5 for 644p"
+       />
 
+  </board>
+
+ 
 
 </boards>

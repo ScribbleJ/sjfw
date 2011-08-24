@@ -19,7 +19,7 @@ namespace ArduinoMap
 #define AP_PN 0xFFFF
 
 
-#if ((defined __AVR_ATmega2560__) || (defined __AVR_ATmega1280__))
+#if ((defined __AVR_ATmega2560__) || (defined __AVR_ATmega1280__) || (defined __AVR_ATmega644P__))
 const uint16_t __portmap[70] PROGMEM = 
 {
   AP_PE  , // PE 0 ** 0 ** USART0_RX
@@ -169,7 +169,86 @@ const uint8_t __pinmap[70] PROGMEM =
 };
   
 #else
+#if ((defined __AVR_ATmega644P__))
+const uint16_t __portmap[32] PROGMEM = 
+{
+  AP_PB, // PB0 - 00
+  AP_PB, // PB1 - 01
+  AP_PB, // PB2 - 02
+  AP_PB, // PB3 - 03
+  AP_PB, // PB4 - 04
+  AP_PB, // PB5 - 05
+  AP_PB, // PB6 - 06
+  AP_PB, // PB7 - 07
+  AP_PD, // PD0 - 08
+  AP_PD, // PD1 - 09
+  AP_PD, // PD2 - 10
+  AP_PD, // PD3 - 11
+  AP_PD, // PD4 - 12
+  AP_PD, // PD5 - 13
+  AP_PD, // PD6 - 14
+  AP_PD, // PD7 - 15
+  AP_PC, // PC0 - 16
+  AP_PC, // PC1 - 17
+  AP_PC, // PC2 - 18
+  AP_PC, // PC3 - 19
+  AP_PC, // PC4 - 20
+  AP_PC, // PC5 - 21
+  AP_PC, // PC6 - 22
+  AP_PC, // PC7 - 23
+  AP_PA, // PA0 - 24
+  AP_PA, // PA1 - 25
+  AP_PA, // PA2 - 26
+  AP_PA, // PA3 - 27
+  AP_PA, // PA4 - 28
+  AP_PA, // PA5 - 29
+  AP_PA, // PA6 - 30
+  AP_PA  // PA7 - 31
+};
+
+
+const uint8_t __pinmap[32] PROGMEM = 
+{
+  0, // PB0 - 00
+  1, // PB1 - 01
+  2, // PB2 - 02
+  3, // PB3 - 03
+  4, // PB4 - 04
+  5, // PB5 - 05
+  6, // PB6 - 06
+  7, // PB7 - 07
+  0, // PD0 - 08
+  1, // PD1 - 09
+  2, // PD2 - 10
+  3, // PD3 - 11
+  4, // PD4 - 12
+  5, // PD5 - 13
+  6, // PD6 - 14
+  7, // PD7 - 15
+  0, // PC0 - 16
+  1, // PC1 - 17
+  2, // PC2 - 18
+  3, // PC3 - 19
+  4, // PC4 - 20
+  5, // PC5 - 21
+  6, // PC6 - 22
+  7, // PC7 - 23
+  0, // PA0 - 24
+  1, // PA1 - 25
+  2, // PA2 - 26
+  3, // PA3 - 27
+  4, // PA4 - 28
+  5, // PA5 - 29
+  6, // PA6 - 30
+  7  // PA7 - 31
+};
+
+
+
+
+#else
 #error NO PINS DEFINED FOR PROCESSOR
+#endif
 #endif
 
 

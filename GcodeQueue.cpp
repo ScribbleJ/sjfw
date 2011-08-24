@@ -5,6 +5,7 @@
 #include "Globals.h"
 #include <stdlib.h>
 #include <errno.h>
+#include <avr/pgmspace.h>
 
 // REMOVEME
 #include "Time.h"
@@ -50,7 +51,7 @@ void GcodeQueue::handlenext()
       codes.peek(x).state = GCode::NEW;
 
     GCode::resetlastpos(MOTION.getCurrentPosition());
-    HOST.write("\nINVALIDATED CODES\n");
+    HOST.write_P(PSTR("\nINVALIDATED CODES\n"));
     invalidate_codes = false;
     return;
   }
@@ -200,16 +201,16 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
       {
         eeprom::Stop();
         c[M].unset();
-        Host::Instance(source).write("EEPROM STOP");
+        Host::Instance(source).write_P(PSTR("EEPROM STOP"));
         Host::Instance(source).endl();
       }
       if(c[M].getInt() == 402)
       {
-        Host::Instance(source).write("EEPROM ");
+        Host::Instance(source).write_P(PSTR("EEPROM "));
         if(eeprom::beginWrite())
-          Host::Instance(source).write("BEGIN");
+          Host::Instance(source).write_P(PSTR("BEGIN"));
         else
-          Host::Instance(source).write("FAIL");
+          Host::Instance(source).write_P(PSTR("FAIL"));
         Host::Instance(source).endl();
         c[M].unset();
       }
@@ -333,7 +334,7 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
     if(needserror[source])
     {
       if(source == EEPROM_SOURCE) // Fail differrently so as not to confuse the host
-        Host::Instance(source).write("WARNING: SERIOUS EEPROM FAIL\n");
+        Host::Instance(source).write_P(PSTR("WARNING: SERIOUS EEPROM FAIL\n"));
       else
         Host::Instance(source).rxerror("Unknown.", line_number[source]);
 
@@ -347,12 +348,16 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
     c.source = source;
     enqueue(sources[source]);
 
+#ifdef HAS_BT
     if(source == HOST_SOURCE || source == BT_SOURCE)
+#else
+    if(source == HOST_SOURCE)
+#endif    
     {
 #ifndef REPRAP_COMPAT    
       Host::Instance(source).labelnum("ok ", codes.getCount(), true);
 #else
-      Host::Instance(source).write("ok \n");
+      Host::Instance(source).write_P(PSTR("ok \n"));
 #endif      
     }
   }

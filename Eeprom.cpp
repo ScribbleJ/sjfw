@@ -3,6 +3,7 @@
 #include <string.h>
 #include "Host.h"
 #include "GcodeQueue.h"
+#include <avr/pgmspace.h>
 
 #define EEPROM_MAX 4095
 
@@ -61,7 +62,7 @@ namespace eeprom
       
     if(eepromptr + len >= EEPROM_MAX)
     {
-      HOST.write("EEPROM OVERFLOW");
+      HOST.write_P(PSTR("EEPROM OVERFLOW"));
       HOST.endl();
       writing = false;
       return false;
@@ -97,7 +98,7 @@ namespace eeprom
         break;
       if(buf[x] == 0xFF)
       {
-        HOST.write("READPAST\n");
+        HOST.write_P(PSTR("READPAST\n"));
         buf[x] = '\n';
         reading = false;
       }

@@ -12,6 +12,7 @@
 #include <avr/interrupt.h>
 #include <stdlib.h>
 #include "config.h"
+#include <avr/pgmspace.h>
 
 #define MASK(PIN) (1 << PIN)
 #if ((defined __AVR_ATmega2560__) || (defined __AVR_ATmega1280__))
@@ -92,7 +93,9 @@ class Host
     }
     void write_P(const char* data)
     {
-
+      char c;
+      while ((c = pgm_read_byte(data++)))
+        write(c);
     }
 
     void endl()

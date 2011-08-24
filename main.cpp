@@ -3,7 +3,6 @@
 
 #include "GcodeQueue.h"
 #include "Host.h"
-#include "ExtruderCommands.h"
 #include "Temperature.h"
 #include "Time.h"
 #include <avr/interrupt.h>
@@ -14,9 +13,11 @@
 #include "LCDKeypad.h"
 extern LCDKeypad LCDKEYPAD;
 #endif 
+#ifdef HAS_SD
+#include "SDCard.h"
+#endif
 
 #include "config.h"
-#include "SDCard.h"
 int main(void)
 {
   sei();
@@ -26,7 +27,6 @@ int main(void)
   sdcard::reset();
   // SD Card autorun only will occur if you also have an LCD.  
   // Otherwise, it seems dangerous...
-#ifdef HAS_LCD
 #ifdef SD_AUTORUN
   if(sdcard::autorun())
   {
@@ -44,12 +44,13 @@ int main(void)
     eeprom::beginRead();
   }
 #endif
-#endif
+#else
+  eeprom::beginRead();
 #endif
 
-  HOST.write("start\n");
+  HOST.write_P(PSTR("start\n"));
 #ifdef HAS_BT
-  BT.write("start\n");
+  BT.write_P(PSTR("start\n"));
 #endif  
   // TODO: check to see whether interleaving calls to GCODES.handlenext really gains me anything.
   for (;;) { 
