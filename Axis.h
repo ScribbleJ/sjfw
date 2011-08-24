@@ -31,6 +31,8 @@ class Axis
     this->dir_inverted = dir_inverted;
     steps_to_take = 0;
     steps_remaining = 0;
+    minstop_pos = 10000;
+    maxstop_pos = 10000;
 
     // Initialize pins we control.
     if(!step_pin.isNull()) { step_pin.setDirection(true); step_pin.setValue(false); }
@@ -146,7 +148,10 @@ class Axis
     {
       if(!max_pin.isNull() && max_pin.getValue() != END_INVERT)
       {
-        position += (float)(steps_to_take-steps_remaining) / steps_per_unit;
+        if(maxstop_pos < 9000)
+          position = maxstop_pos;
+        else
+          position += (float)(steps_to_take-steps_remaining) / steps_per_unit;
         steps_remaining = 0;
         return;
       }
@@ -155,7 +160,10 @@ class Axis
     {
       if(!min_pin.isNull() && min_pin.getValue() != END_INVERT)
       {
-        position -= (float)(steps_to_take-steps_remaining) / steps_per_unit;
+        if(minstop_pos < 9000)
+          position = minstop_pos;
+        else
+          position -= (float)(steps_to_take-steps_remaining) / steps_per_unit;
         steps_remaining = 0;
         return;
       }
@@ -233,10 +241,16 @@ class Axis
     max_pin.setDirection(false); max_pin.setValue(PULLUPS);
   }
 
+  void setMinStopPos(float v) { minstop_pos = v; }
+  void setMaxStopPos(float v) { maxstop_pos = v; }
+
   void setInvert(bool v) { dir_inverted = v; }
   void setDisable(bool v) { disable_after_move = v; }
   static void setPULLUPS(bool v) { PULLUPS = v; };
   static void setEND_INVERT(bool v) { END_INVERT = v; };
+
+  
+
   bool isInvalid() { return step_pin.isNull(); }
   void reportConfigStatus(Host& h)
   {
@@ -280,6 +294,9 @@ private:
   uint32_t accel_rate;
 
   int homing_dir;
+  // Automatically set positions when hitting endstops.
+  float minstop_pos;
+  float maxstop_pos;
 	
 	 Pin step_pin;
 	 Pin dir_pin;

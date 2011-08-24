@@ -7,9 +7,12 @@
 #include "SDCard.h"
 #include "Eeprom.h"
 #include <avr/pgmspace.h>
+#include "ArduinoMap.h"
 
 Point GCode::lastpos;
 float GCode::lastfeed;
+Pin   GCode::fanpin = Pin();
+
 // Stuff to do if it's a G move code, otherwise not I guess.
 // This function MAY get called repeatedly before the execute() function.
 // It WILL get called at least once.
@@ -179,6 +182,20 @@ void GCode::do_m_code()
 
       state = DONE;
       break;
+    case 106: // Fan on
+      if(!fanpin.isNull())
+      {
+        fanpin.setValue(true);
+      }
+      state = DONE;
+      break;
+    case 107: // Fan off
+      if(!fanpin.isNull())
+      {
+        fanpin.setValue(false);
+      }
+      state = DONE;
+      break;
     case 109: // Set Extruder Temperature
       if(state != ACTIVE && TEMPERATURE.setHotend(cps[S].getInt()))
         state = ACTIVE;
@@ -218,7 +235,7 @@ void GCode::do_m_code()
       break; 
     case 115: // Get Firmware Version and Capabilities
       Host::Instance(source).labelnum("prog ", linenum, false);
-      Host::Instance(source).write_P(PSTR(" PROTOCOL_VERSION:SJ FIRMWARE_NAME:sjfw FREE_RAM:"));
+      Host::Instance(source).write_P(PSTR(" VERSION:" SJFW_VERSION " FREE_RAM:"));
       Host::Instance(source).write(getFreeRam(),10);
       Host::Instance(source).endl();
       state = DONE;
@@ -300,20 +317,35 @@ void GCode::do_m_code()
         TEMPERATURE.changeOutputPinPlatform(cps[S].getInt());
       state = DONE;
       break;
-    // NOT STANDARD - set thermistor table
-    case 501: case 502: case 503: case 504: case 505: case 506: case 507: case 508: case 509: case 510:
-    case 511: case 512: case 513: case 514: case 515: case 516: case 517: case 518: case 519: case 520:
-      if(!cps[P].isUnused() && !cps[S].isUnused())
-      {
-        TEMPERATURE.changeTempTable(cps[P].getInt(), cps[S].getInt(), cps[M].getInt() - 501);
-      }
-      state = DONE;
-      break;
     case 211: // NOT STANDARD - request temp reports at regular interval
       if(cps[P].isUnused())
         TEMPERATURE.changeReporting(0, Host::Instance(source));
       else
         TEMPERATURE.changeReporting(cps[P].getInt(), Host::Instance(source));
+      state = DONE;
+      break;
+    case 215: // NOT STANDARD - set arbitrary digital pin
+      if(!cps[P].isUnused() && !cps[S].isUnused())
+      {
+        doPinSet(cps[P].getInt(), cps[S].getInt());
+      }
+      state = DONE;
+      break;
+    case 216: // NOT STANDARD - set fan pin
+      if(!cps[P].isUnused())
+      {
+        fanpin = Pin(ArduinoMap::getPort(cps[P].getInt()),  ArduinoMap::getPinnum(cps[P].getInt()));
+        fanpin.setDirection(true);
+        fanpin.setValue(false);
+      }
+      state = DONE;
+      break;
+    case 220: // NOT STANDARD - set endstop minimum positions
+      MOTION.setMinStopPos(*this);
+      state = DONE;
+      break;
+    case 221: // NOT STANDARD - set endstop minimum positions
+      MOTION.setMaxStopPos(*this);
       state = DONE;
       break;
     case 300: // NOT STANDARD - set axis STEP pin
@@ -369,6 +401,15 @@ void GCode::do_m_code()
       Host::Instance(source).endl();
       state = DONE;
       break;
+    // NOT STANDARD - set thermistor table
+    case 501: case 502: case 503: case 504: case 505: case 506: case 507: case 508: case 509: case 510:
+    case 511: case 512: case 513: case 514: case 515: case 516: case 517: case 518: case 519: case 520:
+      if(!cps[P].isUnused() && !cps[S].isUnused())
+      {
+        TEMPERATURE.changeTempTable(cps[P].getInt(), cps[S].getInt(), cps[M].getInt() - 501);
+      }
+      state = DONE;
+      break;
     default:
       Host::Instance(source).labelnum("warn ", linenum, false);
       Host::Instance(source).write_P(PSTR(" MCODE ")); Host::Instance(source).write(cps[M].getInt(), 10); Host::Instance(source).write_P(PSTR(" NOT SUPPORTED\n"));
@@ -393,7 +434,10 @@ void GCode::resetlastpos(Point& lp)
   lastpos = lp; 
 }
 
-
-
-
+void GCode::doPinSet(int arduinopin, int on)
+{
+  Pin p = Pin(ArduinoMap::getPort(arduinopin),  ArduinoMap::getPinnum(arduinopin));
+  p.setDirection(true);
+  p.setValue(on == 0 ? false : true);
+}
 

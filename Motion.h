@@ -67,6 +67,8 @@ public:
   void setEnablePins(GCode& gcode);
   void setMinPins(GCode& gcode);
   void setMaxPins(GCode& gcode);
+  void setMinStopPos(GCode& gcode);
+  void setMaxStopPos(GCode& gcode);
   void setAxisInvert(GCode& gcode);
   void setAxisDisable(GCode& gcode);
   void setEndstopGlobals(bool inverted, bool pulledup);

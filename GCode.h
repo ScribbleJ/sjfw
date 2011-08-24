@@ -14,6 +14,8 @@
 #include <string.h>
 #include "Point.h"
 #include "Time.h"
+#include "AvrPort.h"
+
 
 // CodeParameter; basically a fancy union/variable datatype.
 class CodeParam
@@ -152,9 +154,17 @@ private:
 
   void do_m_code();
   void do_g_code();
+
+  // TODO: this class is the WRONG PLACE for these functions
   void write_temps_to_host(int port);
+  // set arbitrary arduino pin
+  void doPinSet(int arduinopin, int on);
 
 public:
+  // TODO: this should be ELSEWHERE.
+  static Pin fanpin;
+
+  // all good
   float feed;
   int source;
 

@@ -48,6 +48,8 @@ MCU = atmega2560
 ########################
 # Stuff you prolly don't need to change from here down.
 ########################
+SJFW_VERSION = 1.6
+
 ifeq ($(USE_LCD),1)
  LCD_FILES = LCDKeypad.cpp
  LCD_DEFINES = -DHAS_LCD
@@ -80,7 +82,7 @@ endif
   
 
 EXTRA_FILES = $(LCD_FILES) $(SD_FILES) $(BOARD_FILES) $(KEYPAD_FILES) $(BT_FILES)
-EXTRA_DEFINES = $(LCD_DEFINES) $(SD_DEFINES) $(BOARD_DEFINES) $(KEYPAD_DEFINES) $(BT_DEFINES)
+EXTRA_DEFINES = $(LCD_DEFINES) $(SD_DEFINES) $(BOARD_DEFINES) $(KEYPAD_DEFINES) $(BT_DEFINES) -DSJFW_VERSION='"$(SJFW_VERSION)"'
 
 
 F_CPU = 16000000

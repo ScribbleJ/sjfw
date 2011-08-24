@@ -113,6 +113,27 @@ void Motion::setAxisInvert(GCode& gcode)
   }
 }
 
+void Motion::setMinStopPos(GCode& gcode)
+{
+  for(int ax=0;ax < NUM_AXES;ax++)
+  {
+    if(gcode[ax].isUnused()) continue;
+    AXES[ax].setMinStopPos(gcode[ax].getFloat());
+  }
+}
+
+void Motion::setMaxStopPos(GCode& gcode)
+{
+  for(int ax=0;ax < NUM_AXES;ax++)
+  {
+    if(gcode[ax].isUnused()) continue;
+    AXES[ax].setMaxStopPos(gcode[ax].getFloat());
+  }
+}
+
+
+
+
 void Motion::setAxisDisable(GCode& gcode)
 {
   for(int ax=0;ax < NUM_AXES;ax++)
