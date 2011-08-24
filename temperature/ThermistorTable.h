@@ -21,8 +21,6 @@
 #include <stdint.h>
 
 int16_t thermistorToCelsius(int16_t reading, int8_t table_idx);
-
-// initThermTable should be called on boot.
-void initThermistorTables();
+void putThermistorEntry(int16_t adc_val, int16_t temp_val, int8_t which);
 
 #endif // THERMISTOR_TABLE

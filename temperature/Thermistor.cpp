@@ -82,3 +82,9 @@ Thermistor::SensorState Thermistor::update() {
 	current_temp = thermistorToCelsius(temp,table_index);
 	return SS_OK;
 }
+
+void Thermistor::changeTable(int16_t adc_val, int16_t temp_val, int8_t which)
+{
+  putThermistorEntry(adc_val, temp_val, which);
+}
+

@@ -300,6 +300,15 @@ void GCode::do_m_code()
         TEMPERATURE.changeOutputPinPlatform(cps[S].getInt());
       state = DONE;
       break;
+    // NOT STANDARD - set thermistor table
+    case 501: case 502: case 503: case 504: case 505: case 506: case 507: case 508: case 509: case 510:
+    case 511: case 512: case 513: case 514: case 515: case 516: case 517: case 518: case 519: case 520:
+      if(!cps[P].isUnused() && !cps[S].isUnused())
+      {
+        TEMPERATURE.changeTempTable(cps[P].getInt(), cps[S].getInt(), cps[M].getInt() - 501);
+      }
+      state = DONE;
+      break;
     case 211: // NOT STANDARD - request temp reports at regular interval
       if(cps[P].isUnused())
         TEMPERATURE.changeReporting(0, Host::Instance(source));

@@ -18,12 +18,10 @@
 #include "ThermistorTable.h"
 #include <stdint.h>
 #include <avr/pgmspace.h>
+#include <string.h>
 
 const static int NUMTEMPS = 20;
 
-// Default thermistor table.  If no thermistor table is loaded into eeprom,
-// this will be copied in by the initTable() method.
-//
 // Thermistor lookup table for RepRap Temperature Sensor Boards (http://make.rrrf.org/ts)
 // Made with createTemperatureLookup.py (http://svn.reprap.org/trunk/reprap/firmware/Arduino/utilities/createTemperatureLookup.py)
 // ./createTemperatureLookup.py --r0=100000 --t0=25 --r1=0 --r2=4700 --beta=4066 --max-adc=1023
@@ -35,7 +33,7 @@ const static int NUMTEMPS = 20;
 // max adc: 1023
 typedef int16_t TempTable[NUMTEMPS][2];
 
-const TempTable default_table PROGMEM = {
+TempTable default_table = {
   {1, 841},
   {54, 255},
   {107, 209},
@@ -58,6 +56,7 @@ const TempTable default_table PROGMEM = {
   {1008, 3}
 };
 
+
 typedef struct {
 	int16_t adc;
 	int16_t value;
@@ -65,8 +64,18 @@ typedef struct {
 
 inline Entry getEntry(int8_t entryIdx, int8_t which) {
 	Entry rv;
-		memcpy_P(&rv, (const void*)&(default_table[entryIdx][0]), sizeof(Entry));
+		memcpy(&rv, &(default_table[entryIdx][0]), sizeof(Entry));
 	return rv;
+}
+
+void putThermistorEntry(int16_t adc_val, int16_t temp_val, int8_t which) {
+  if(which < 0)
+    return;
+  if(which >= NUMTEMPS)
+    return;
+
+  default_table[which][0] = adc_val;
+  default_table[which][1] = temp_val;
 }
 
 int16_t thermistorToCelsius(int16_t reading, int8_t table_idx) {
@@ -90,17 +99,17 @@ int16_t thermistorToCelsius(int16_t reading, int8_t table_idx) {
   Entry et = getEntry(top,table_idx);
   if (bottom == 0 && reading < eb.adc) {
 	  // out of scale; safety mode
-	  return 255;
+	  return 1024;
   }
   if (top == NUMTEMPS-1 && reading > et.adc) {
 	  // out of scale; safety mode
-	  return 255;
+	  return 1024;
   }
 
   int16_t celsius  = eb.value +
 		  ((reading - eb.adc) * (et.value - eb.value)) / (et.adc - eb.adc);
-  if (celsius > 255)
-	  celsius = 255;
+  if (celsius > 300)
+	  celsius = 1024;
   return celsius;
 }
 

@@ -63,6 +63,10 @@ public:
     // Changes FET pin
     void changeOutputPinHotend(int pin) { return; }
     void changeOutputPinPlatform(int pin) { return; }
+    // Changes Temperature Table
+    void changeTempTable(adc_val, int16_t temp_val, int8_t which) { return; }
+
+
 
 
 #else
@@ -104,6 +108,12 @@ public:
     { 
       changePinPlatform(ArduinoMap::getPort(pin), ArduinoMap::getPinnum(pin));
     }
+    void changeTempTable(int16_t adc_val, int16_t temp_val, int8_t which)
+    {
+      hotend_therm.changeTable(adc_val, temp_val, which);
+    }
+
+
 
 
 #endif
