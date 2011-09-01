@@ -9,6 +9,12 @@
 #include <avr/pgmspace.h>
 #include "ArduinoMap.h"
 
+#ifdef HAS_LCD
+#include "LCDKeypad.h"
+extern LCDKeypad LCDKEYPAD;
+#endif
+
+
 Point GCode::lastpos;
 float GCode::lastfeed;
 Pin   GCode::fanpin = Pin();
@@ -359,6 +365,38 @@ void GCode::do_m_code()
       MOTION.setMaxStopPos(*this);
       state = DONE;
       break;
+#ifdef HAS_LCD      
+    case 250: // NOT STANDARD - LCD RS pin
+      if(!cps[P].isUnused())
+        LCDKEYPAD.setRS(cps[P].getInt());
+      state = DONE;
+      break;
+    case 251: // NOT STANDARD - LCD RW pin
+      if(!cps[P].isUnused())
+        LCDKEYPAD.setRW(cps[P].getInt());
+      state = DONE;
+      break;
+    case 252: // NOT STANDARD - LCD E pin
+      if(!cps[P].isUnused())
+        LCDKEYPAD.setE(cps[P].getInt());
+      state = DONE;
+      break;
+    case 253: // NOT STANDARD - LCD D pins
+      if(!cps[P].isUnused() && !cps[S].isUnused())
+        LCDKEYPAD.setD(cps[S].getInt(), cps[P].getInt());
+      state = DONE;
+      break;
+    case 254: // NOT STANDARD - Keypad Row Pins
+      if(!cps[P].isUnused() && !cps[S].isUnused())
+        LCDKEYPAD.setRowPin(cps[S].getInt(), cps[P].getInt());
+      state = DONE;
+      break;
+    case 255: // NOT STANDARD - Keypad Col Pins
+      if(!cps[P].isUnused() && !cps[S].isUnused())
+        LCDKEYPAD.setColPin(cps[S].getInt(), cps[P].getInt());
+      state = DONE;
+      break;
+#endif
     case 300: // NOT STANDARD - set axis STEP pin
       MOTION.setStepPins(*this);
       state = DONE;
@@ -440,9 +478,9 @@ void GCode::do_m_code()
 #endif
 }
 
-void GCode::resetlastpos(Point& lp) 
+void GCode::resetlastpos() 
 { 
-  lastpos = lp; 
+  lastpos = MOTION.getCurrentPosition();
 }
 
 void GCode::doPinSet(int arduinopin, int on)

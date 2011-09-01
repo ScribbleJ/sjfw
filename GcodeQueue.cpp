@@ -9,11 +9,6 @@
 
 // REMOVEME
 #include "Time.h"
-#ifdef HAS_LCD
-#include "LCDKeypad.h"
-extern LCDKeypad LCDKEYPAD;
-#endif
-
 #include "Eeprom.h"
 
 
@@ -50,7 +45,7 @@ void GcodeQueue::handlenext()
     for(unsigned int x=0;x<codes.getCount();x++)
       codes.peek(x).state = GCode::NEW;
 
-    GCode::resetlastpos(MOTION.getCurrentPosition());
+    GCode::resetlastpos();
     HOST.write_P(PSTR("\nINVALIDATED CODES\n"));
     invalidate_codes = false;
     return;
@@ -254,19 +249,6 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
     case 'T':
       //c[T].setInt(bytes+1);
       break;
-    // SPECIAL HANDLING FOR PINSETTING
-#ifdef HAS_LCD      
-    case '^':
-      if(c[M].isUnused() || c[G].isUnused())
-        break;        
-      LCDKEYPAD.doLCDSettings(bytes+1, numbytes);
-      break;
-    case '&':
-      if(c[M].isUnused() || c[G].isUnused())
-        break;
-      LCDKEYPAD.doKeypadSettings(bytes+1, numbytes);
-      break;
-#endif      
     case 0:
       ; // noise
       break;

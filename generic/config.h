@@ -101,7 +101,7 @@
 #define KEYPAD_BUTTONMAP "123A", "456B", "789C", "*0#D"
 #define KEYPAD_ROWPINS Pin(), Pin(), Pin(), Pin()
 #define KEYPAD_COLPINS Pin(), Pin(), Pin(), Pin()
-#define KEYPAD_DEBOUNCE_MICROS 50
+#define KEYPAD_DEBOUNCE_MICROS 1000
 
 
 

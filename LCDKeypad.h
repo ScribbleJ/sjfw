@@ -77,18 +77,12 @@ public:
 
   }
 
-  void doLCDSettings(char const* str, int charsin)
-  {
-    LCD.parseSettings(str, charsin);
-    LCD.reinit();
-  }
-
-  void doKeypadSettings(char const* str, int charsin)
-  {
-    KEYPAD.parseSettings(str, charsin);
-    KEYPAD.reinit();
-  }
-
+  void setRS(int pin) { LCD.setRS(pin); }
+  void setRW(int pin) { LCD.setRW(pin); }
+  void setE(int pin) { LCD.setE(pin); }
+  void setD(int n, int pin) { LCD.setD(n, pin); }
+  void setRowPin(int n, int pin) { KEYPAD.setRowPin(n, pin); }
+  void setColPin(int n, int pin) { KEYPAD.setColPin(n, pin); }
 
   void changeMode(MODE which)
   {
@@ -207,6 +201,10 @@ private:
         adjustTempBed(-5);
         handled = true;
         break;
+      case 'D':
+        LCD.reinit();
+        handled = true;
+        break;
     }
     if(handled)
     {
@@ -268,34 +266,35 @@ private:
 
   void display_TEMP()
   {
+    LCD.home();
     int t=0;
     if(lcd_x>16)
-      LCD.write("Hotend: ");
+      LCD.write_P(PSTR("Hotend: "));
     else
-      LCD.write("H:");
+      LCD.write_P(PSTR("H:"));
     t = TEMPERATURE.getHotend();
     if(t == 1024)
-      LCD.write("MISSING!");
+      LCD.write_P(PSTR("MISSING!"));
     else
     {
       LCD.write(t);
       LCD.setCursor(lcd_x > 16 ? 11 : 6,0);
-      LCD.write("/ ");
+      LCD.write_P(PSTR("/ "));
       LCD.write(TEMPERATURE.getHotendST());
     }
     LCD.setCursor(0,1);
     if(lcd_x>16)
-      LCD.write("Bed   : ");
+      LCD.write_P(PSTR("Bed   : "));
     else
-      LCD.write("B:");
+      LCD.write_P(PSTR("B:"));
     t = TEMPERATURE.getPlatform();
     if(t == 1024)
-      LCD.write("MISSING!");
+      LCD.write_P(PSTR("MISSING!"));
     else
     {
       LCD.write(t);
       LCD.setCursor(lcd_x > 16 ? 11 : 6,1);
-      LCD.write("/ ");
+      LCD.write_P(PSTR("/ "));
       LCD.write(TEMPERATURE.getPlatformST());
     }
     LCD.setCursor(lcd_x > 16 ? 16 : 12,0);
@@ -324,7 +323,6 @@ private:
     if(currentmode != TEMP)
       return;
 
-    LCD.clear();
     display_TEMP();
   }
 
@@ -464,8 +462,9 @@ private:
   void switchmode_MENU()
   {
     currentmode = MENU;
+    LCD.reinit();
     LCD.clear();
-    LCD.write("MAIN MENU");
+    LCD.write_P(PSTR("MAIN MENU"));
   }
 
 
@@ -499,7 +498,7 @@ private:
 #ifdef HAS_SD    
     if(sdcard::isReading())
     {
-      LCD.write("Printing: ");
+      LCD.write_P(PSTR("Printing: "));
       LCD.setCursor(0,1);
       LCD.write(sdcard::getCurrentfile());
       tagline();
@@ -508,19 +507,19 @@ private:
     if(sdcard::getCurrentfile()[0] == 0)
       sdcard::getNextfile();
 
-    LCD.write("SD File Select");
+    LCD.write_P(PSTR("SD File Select"));
     LCD.setCursor(0,1);
-    LCD.write("> ");
+    LCD.write_P(PSTR("> "));
     LCD.write(sdcard::getCurrentfile());
     if(lcd_y > 2)
     {
       LCD.setCursor(0,2);
-      LCD.write("6=NEXT #=PRINT");
+      LCD.write_P(PSTR("6=NEXT #=PRINT"));
     }
 #else
-    LCD.write("Get SD from");
+    LCD.write_P(PSTR("Get SD from"));
     LCD.setCursor(0,1);
-    LCD.write("Kliment on IRC");
+    LCD.write_P(PSTR("Kliment on IRC"));
 #endif    
     tagline();
   }
@@ -531,9 +530,9 @@ private:
       return;
     LCD.setCursor(0,3);
     if(lcd_x > 16)
-      LCD.write("SJFW by ScribbleJ");
+      LCD.write_P(PSTR("SJFW by ScribbleJ"));
     else
-      LCD.write("ScribbleJ's SJFW");
+      LCD.write_P(PSTR("ScribbleJ's SJFW"));
   }
 
 };

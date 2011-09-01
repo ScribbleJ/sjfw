@@ -11,10 +11,12 @@
 #include <stdio.h>
 #include <string.h>
 #include "AvrPort.h"
+#include "ArduinoMap.h"
 #include "RingBuffer.h"
 #include "Time.h"
 #include "config.h"
 #include <stdlib.h>
+#include <avr/pgmspace.h>
 
 class LiquidCrystal {
 public:
@@ -99,76 +101,6 @@ public:
     writeDDRAM(0);
   }
    
-
-  // Reads configuration from specially-formatted string.
-  void parseSettings(char const* str, int charsin)
-  {
-#define LCD_PS_2(FOO)                                       \
-    if(str[x+1] == '-')                                     \
-    {                                                       \
-      FOO(PortNull,0);                                    \
-      x+=2;                                                 \
-      continue;                                             \
-    }                                                       \
-    FOO(Port::getPortFromLetter(str[x+1]), str[x+2]-'0');   \
-    x+=2;
-
-#define LCD_PS_D(FOO,BAR)                                   \
-    if(str[x+1] == '-')                                     \
-    {                                                       \
-      FOO(PortNull,0,BAR);                                \
-      x+=2;                                                 \
-      continue;                                             \
-    }                                                       \
-    FOO(Port::getPortFromLetter(str[x+1]), str[x+2]-'0',BAR);\
-    x+=2;
-
-
-
-    for(int x=0;x<charsin && str[x]!='*' && str[x]>32;x++)
-    {
-      switch(str[x])
-      {
-        case 'S':
-          LCD_PS_2(setRS);
-          break;
-        case 'W':
-          LCD_PS_2(setRW);
-          break;
-        case 'E':
-          LCD_PS_2(setE);
-          break;
-        case '0':
-          LCD_PS_D(setD,0);
-          break;
-        case '1':
-          LCD_PS_D(setD,1);
-          break;
-        case '2':
-          LCD_PS_D(setD,2);
-          break;
-        case '3':
-          LCD_PS_D(setD,3);
-          break;
-        case '4':
-          LCD_PS_D(setD,4);
-          break;
-        case '5':
-          LCD_PS_D(setD,5);
-          break;
-        case '6':
-          LCD_PS_D(setD,6);
-          break;
-        case '7':
-          LCD_PS_D(setD,7);
-          break;
-      }
-    }
-    if(!_data_pins[7].isNull())
-      reinit();
-  }
-
-
   // Clears the screen AND resets cursor to "home"
   void clear() { command(0x01); }
 
@@ -265,6 +197,14 @@ public:
   }
   void write(int16_t n) { write((int32_t)n); }
   void write(uint16_t n) {write((int32_t)n);}
+
+  void write_P(const char* data)
+  {
+    char c;
+    while ((c = pgm_read_byte(data++)))
+      write(c);
+  }
+
 
   void label(char const* str, float n) { write(str); write(n); } 
   void label(char const* str, char const* str2) { write(str); write(str2); }
@@ -469,10 +409,17 @@ private:
   Pin _enable_pin;
   Pin _data_pins[8];
 public:
-  void setRS(Port& p, int bit) { _rs_pin = Pin(p, bit); }
-  void setRW(Port& p, int bit) { _rw_pin = Pin(p, bit); }
-  void setE(Port& p, int bit)  { _enable_pin = Pin(p, bit); }
-  void setD(Port& p, int bit, int D) { _data_pins[D] = Pin(p, bit); }
+  // Set by Port, Pin
+  void setRS(Port p, int bit) { _rs_pin = Pin(p, bit); }
+  void setRW(Port p, int bit) { _rw_pin = Pin(p, bit); }
+  void setE(Port p, int bit)  { _enable_pin = Pin(p, bit); }
+  void setD(Port p, int bit, int D) { _data_pins[D] = Pin(p, bit); if(D == 7) reinit(); }
+  // Set by Arduino Pin
+  void setRS(int p) { setRS(ArduinoMap::getPort(p), ArduinoMap::getPinnum(p)); }
+  void setRW(int p) { setRW(ArduinoMap::getPort(p), ArduinoMap::getPinnum(p)); }
+  void setE(int p)  { setE(ArduinoMap::getPort(p), ArduinoMap::getPinnum(p)); }
+  void setD(int D, int p) { setD(ArduinoMap::getPort(p), ArduinoMap::getPinnum(p), D); }
+  //
   void setLineStart(int l, int s) { _linestarts[l] = s; }
   void setNumRows(int l) { _numlines = l; }
   void setNumCols(int l) { _numcols = l; }

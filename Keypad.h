@@ -6,6 +6,7 @@
  */
 
 #include "AvrPort.h"
+#include "ArduinoMap.h"
 #include "Time.h"
 #include "config.h"
 
@@ -114,36 +115,11 @@ public:
     return 0;
   }
 
-  // Reads configuration from specially-formatted string.
-  void parseSettings(char const* str, int charsin)
-  {
-#define KP_PS(FOO)                                   \
-    if(str[x+2] == '-')                                     \
-    {                                                       \
-      FOO(PortNull,0,str[x+1]-'0');                                  \
-      x+=3;                                                 \
-      continue;                                             \
-    }                                                       \
-    FOO(Port::getPortFromLetter(str[x+2]), str[x+3]-'0',str[x+1]-'0');\
-    x+=3;
-
-
-    for(int x=0;x<charsin && str[x]!='*' && str[x]>32;x++)
-    {
-      switch(str[x])
-      {
-        case 'C':
-          KP_PS(setColPin);
-          break;
-        case 'R':
-          KP_PS(setRowPin);
-          break;
-      }
-    }
-  }
-
-  void setColPin(Port& p, int pin, int n) { colpins[n] = Pin(p, pin); }
+  void setColPin(Port& p, int pin, int n) { colpins[n] = Pin(p, pin); if(n == 0) reinit(); }
   void setRowPin(Port& p, int pin, int n) { rowpins[n] = Pin(p, pin); }
+  // using Arduino schema
+  void setColPin(int n, int pin) { colpins[n] = Pin(ArduinoMap::getPort(pin), ArduinoMap::getPinnum(pin)); if(n ==0) reinit(); }
+  void setRowPin(int n, int pin) { rowpins[n] = Pin(ArduinoMap::getPort(pin), ArduinoMap::getPinnum(pin)); }
 
 private:
   Pin colpins[KP_COLS];

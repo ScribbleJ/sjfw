@@ -103,7 +103,7 @@ public:
     accel_inc=0;
   }
 
-  static void resetlastpos(Point& lp);
+  static void resetlastpos();
 
   // Stuff to do if it's a G move code, otherwise not I guess.
   // This function MAY get called repeatedly before the execute() function.
