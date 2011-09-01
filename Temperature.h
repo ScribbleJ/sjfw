@@ -64,10 +64,9 @@ public:
     void changeOutputPinHotend(int pin) { return; }
     void changeOutputPinPlatform(int pin) { return; }
     // Changes Temperature Table
-    void changeTempTable(adc_val, int16_t temp_val, int8_t which) { return; }
-
-
-
+    void changeTempTable(int16_t adc_val, int16_t temp_val, int8_t which) { return; }
+    // Toggles fan
+    bool setFan(bool on) { return EC.dofanreq(on); }
 
 #else
     Thermistor hotend_therm;

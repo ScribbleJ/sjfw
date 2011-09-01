@@ -95,6 +95,8 @@ void MBIEC::handle_command_response(uint16_t p)
     case SLAVE_CMD_GET_PLATFORM_SP:
       platform_set_temp = p;
       break;
+    default:
+      break;
   }
   lastresponsetime = millis();
 }
@@ -160,7 +162,7 @@ void MBIEC::update()
     SLAVE_CMD_GET_SP,
     SLAVE_CMD_GET_PLATFORM_SP
   };
-  static const uint8_t cmdnum = 4;
+  static const uint8_t cmdnum = 5;
   static int cmd = 0;
   dotoolreq(commands[cmd++]);
   if(cmd >= cmdnum)
@@ -232,6 +234,44 @@ bool MBIEC::dotoolreq(uint8_t command_id, uint16_t param)
 
   return true;
 }
+
+bool MBIEC::dofanreq(bool on)
+{
+  unsigned long now = millis();
+  if(now - lastrequesttime < MIN_REQUEST_INTERVAL)
+  {
+    return false;
+  }
+  lastrequesttime = now;
+  uint8_t toolnum = 0;
+  uint8_t c = 2;
+  uint8_t crc = 0;
+
+  unsigned int command_id = SLAVE_CMD_TOGGLE_FAN;
+
+  last_command = command_id;
+
+  write(0xD5); // start byte
+
+  c = 3;
+  write(c); // packet length
+
+  crc = crc_update(crc, toolnum);
+  write(toolnum); // tool num
+
+  c = command_id;
+  crc = crc_update(crc, c);
+  write(c); // Command num
+  c = on ? 0x01 : 0x00;
+  crc = crc_update(crc, c);
+  write(c); // param byte1
+
+  write(crc); // crc
+  speak();
+
+  return true;
+}
+
 
 bool MBIEC::dotoolreq(uint8_t command_id)
 {

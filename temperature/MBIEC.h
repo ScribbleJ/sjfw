@@ -39,6 +39,7 @@ class MBIEC
     uint16_t handle_rx_char(uint8_t c);
     bool    dotoolreq(uint8_t command_id, uint16_t param);
     bool    dotoolreq(uint8_t command_id);
+    bool    dofanreq(bool on);
 
     void scan_input()
     {

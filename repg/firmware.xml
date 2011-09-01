@@ -19,10 +19,10 @@
        />
     <firmware
        major="1"
-       minor="4"
-       relpath="firmware/1280-w-ec-v1.4.hex"
-       name="v1.4"
-       description="sjfw v1.4 for ThingOMatic/Gen4."
+       minor="6"
+       relpath="firmware/1280-w-ec-v1.6.hex"
+       name="v1.6"
+       description="sjfw v1.6 for ThingOMatic/Gen4."
        />
 
   </board>
@@ -44,10 +44,10 @@
        />
     <firmware
        major="1"
-       minor="4"
-       relpath="firmware/2560-w-ec-v1.4.hex"
-       name="v1.4"
-       description="sjfw v1.4 for ThingOMatic/Gen4."
+       minor="6"
+       relpath="firmware/2560-w-ec-v1.6.hex"
+       name="v1.6"
+       description="sjfw v1.6 for ThingOMatic/Gen4."
        />
 
   </board>
@@ -69,10 +69,10 @@
        />
     <firmware
        major="1"
-       minor="4"
-       relpath="firmware/1280-w-100k-v1.4.hex"
-       name="v1.4"
-       description="sjfw v1.4 for 100k."
+       minor="6"
+       relpath="firmware/1280-w-100k-v1.6.hex"
+       name="v1.6"
+       description="sjfw v1.6 for 100k."
        />
 
   </board>
@@ -94,10 +94,10 @@
        />
     <firmware
        major="1"
-       minor="4"
-       relpath="firmware/2560-w-100k-v1.4.hex"
-       name="v1.4"
-       description="sjfw v1.4 for 100k"
+       minor="6"
+       relpath="firmware/2560-w-100k-v1.6.hex"
+       name="v1.6"
+       description="sjfw v1.6 for 100k"
        />
 
   </board>
@@ -119,10 +119,10 @@
        />
     <firmware
        major="1"
-       minor="5"
-       relpath="firmware/644p-w-100k-v1.5.hex"
-       name="100k Thermistor v1.5"
-       description="sjfw v1.5 for 644p"
+       minor="6"
+       relpath="firmware/644p-w-100k-v1.6.hex"
+       name="100k Thermistor v1.6"
+       description="sjfw v1.6 for 644p"
        />
 
   </board>

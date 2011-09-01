@@ -182,6 +182,7 @@ void GCode::do_m_code()
 
       state = DONE;
       break;
+#ifndef USE_MBIEC
     case 106: // Fan on
       if(!fanpin.isNull())
       {
@@ -196,6 +197,16 @@ void GCode::do_m_code()
       }
       state = DONE;
       break;
+#else
+    case 106: // Fan on
+      if(TEMPERATURE.setFan(true))
+        state = DONE;
+      break;
+    case 107: // Fan off
+      if(TEMPERATURE.setFan(false))
+        state = DONE;
+      break;
+#endif
     case 109: // Set Extruder Temperature
       if(state != ACTIVE && TEMPERATURE.setHotend(cps[S].getInt()))
         state = ACTIVE;
