@@ -78,15 +78,6 @@ public:
   void wrapup(GCode& gcode) { checkdisable(gcode); }
   void checkdisable(GCode& gcode);
 
-  // Calculate the number of steps for each axis in a move.
-  void getMovesteps(GCode& gcode);
-  // These three functions select the data to use during a move
-  unsigned long getLargestStartInterval(GCode& gcode);
-  unsigned long getLargestEndInterval(GCode& gcode);
-  unsigned long getLargestTimePerAccel(GCode& gcode);
-  float getSmallestStartFeed(GCode& gcode);
-  float getSmallestEndFeed(GCode& gcode);
-
   // Uses step data to determine the actual ending position of a move
   // (seldom /precisely/ the requested position)
   void getActualEndpos(GCode& gcode);
@@ -104,12 +95,27 @@ public:
   // Debugging and output to host...
   void writePositionToHost(GCode& gcode);
 
+private:
+  // Calculate the number of steps for each axis in a move.
+  void getMovesteps(GCode& gcode);
+  // These three functions select the data to use during a move
+  unsigned long getLargestStartInterval(GCode& gcode);
+  unsigned long getLargestEndInterval(GCode& gcode);
+  unsigned long getLargestTimePerAccel(GCode& gcode);
+  float getSmallestStartFeed(GCode& gcode);
+  float getSmallestEndFeed(GCode& gcode);
+
+
+
   // Functions for handling pulsing motors using a timer interrupt for timing.
+public:  
   void handleInterrupt();
+private:  
   void setupInterrupt(); 
   void enableInterrupt(); 
   void disableInterrupt(); 
   void setInterruptCycles(unsigned long cycles); 
+
 };
 
 extern Motion& MOTION;

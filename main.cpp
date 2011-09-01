@@ -18,40 +18,10 @@ extern LCDKeypad LCDKEYPAD;
 #endif
 
 #include "config.h"
-int main(void)
+
+
+void mainloop()
 {
-  sei();
-  init_time();
-
-#ifdef HAS_SD
-  sdcard::reset();
-  // SD Card autorun only will occur if you also have an LCD.  
-  // Otherwise, it seems dangerous...
-#ifdef SD_AUTORUN
-  if(sdcard::autorun())
-  {
-    HOST.write("AUTORUN GOOD\n");
-#ifdef HAS_BT
-    BT.write("AUTORUN GOOD\n");
-#endif
-  }
-  else
-  {
-    HOST.write("AUTORUN FAIL\n");
-#ifdef HAS_BT
-    BT.write("AUTORUN FAIL\n");
-#endif    
-    eeprom::beginRead();
-  }
-#endif
-#else
-  eeprom::beginRead();
-#endif
-
-  HOST.write_P(PSTR("start\n"));
-#ifdef HAS_BT
-  BT.write_P(PSTR("start\n"));
-#endif  
   // TODO: check to see whether interleaving calls to GCODES.handlenext really gains me anything.
   for (;;) { 
     // Checks to see if gcodes are waiting to run and runs them if so.
@@ -98,6 +68,47 @@ int main(void)
 #endif
 
   }
+
+
+}
+
+
+
+
+int main(void)
+{
+  sei();
+  init_time();
+
+#ifdef HAS_SD
+  sdcard::reset();
+#ifdef SD_AUTORUN
+  if(sdcard::autorun())
+  {
+    HOST.write("AUTORUN GOOD\n");
+#ifdef HAS_BT
+    BT.write("AUTORUN GOOD\n");
+#endif
+  }
+  else
+  {
+    HOST.write("AUTORUN FAIL\n");
+#ifdef HAS_BT
+    BT.write("AUTORUN FAIL\n");
+#endif    
+    eeprom::beginRead();
+  }
+#endif
+#else
+  eeprom::beginRead();
+#endif
+
+  HOST.write_P(PSTR("start\n"));
+#ifdef HAS_BT
+  BT.write_P(PSTR("start\n"));
+#endif  
+
+  mainloop();
 
   return 0;
 }
