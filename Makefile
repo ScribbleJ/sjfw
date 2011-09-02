@@ -5,6 +5,7 @@ USE_SD = 1
 USE_LCD = 1
 USE_KEYPAD = 1
 #USE_BT = 1
+USE_MARLIN = 1
 
 # EC for Gen3/4 only.  Others default to 100k Thermistors.
 #USE_EXTRUDERCONTROLLER = 1
@@ -42,7 +43,7 @@ MCU = atmega2560
 ########################
 # Stuff you prolly don't need to change from here down.
 ########################
-SJFW_VERSION = 1.6
+SJFW_VERSION = 1.7
 
 ifeq ($(USE_LCD),1)
  LCD_FILES = LCDKeypad.cpp
@@ -66,22 +67,31 @@ endif
 ifeq ($(MCU),atmega644p)
   OPT = s
 else
-  OPT = 2
+  OPT = 0
 endif
 ifeq ($(USE_BT),1)
   BT_FILES = 
   BT_DEFINES = -DHAS_BT
 endif
+ifeq ($(USE_MARLIN),1)
+  MOTION_FILES = Marlin.cpp
+  MOTION_DEFINES = -DUSE_MARLIN
+else
+  MOTION_FILES = Motion.cpp Axis.cpp
+  MOTION_DEFINES =
+endif
+
+
 
   
 
-EXTRA_FILES = $(LCD_FILES) $(SD_FILES) $(BOARD_FILES) $(KEYPAD_FILES) $(BT_FILES)
-EXTRA_DEFINES = $(LCD_DEFINES) $(SD_DEFINES) $(BOARD_DEFINES) $(KEYPAD_DEFINES) $(BT_DEFINES) -DSJFW_VERSION='"$(SJFW_VERSION)"'
+EXTRA_FILES = $(MOTION_FILES) $(LCD_FILES) $(SD_FILES) $(BOARD_FILES) $(KEYPAD_FILES) $(BT_FILES)
+EXTRA_DEFINES = $(MOTION_DEFINES) $(LCD_DEFINES) $(SD_DEFINES) $(BOARD_DEFINES) $(KEYPAD_DEFINES) $(BT_DEFINES) -DSJFW_VERSION='"$(SJFW_VERSION)"'
 
 
 F_CPU = 16000000
-CXXSRC = $(EXTRA_FILES) avr/AvrPort.cpp Host.cpp Time.cpp GcodeQueue.cpp GCode.cpp Axis.cpp Motion.cpp \
-Globals.cpp Temperature.cpp avr/ArduinoMap.cpp Eeprom.cpp
+CXXSRC = $(EXTRA_FILES) avr/AvrPort.cpp Host.cpp Time.cpp GcodeQueue.cpp GCode.cpp \
+Globals.cpp Temperature.cpp avr/ArduinoMap.cpp Eeprom.cpp 
 
 
 FORMAT = ihex
@@ -115,7 +125,7 @@ OBJ = $(CXXSRC:.cpp=.o)
 
 # Combine all necessary flags and optional flags.
 # Add target processor to flags.
-ALL_CXXFLAGS = -mmcu=$(MCU) -I. -I./$(CONFIG_PATH) -I./lib_sd -I./avr -I/home/chris/gcc-avr/include $(CXXFLAGS)
+ALL_CXXFLAGS = -mmcu=$(MCU) -I. -I./$(CONFIG_PATH) -I./lib_sd -I./avr -I/usr/lib/avr/include $(CXXFLAGS)
 
 # Default target.
 all: build sizeafter

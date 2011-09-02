@@ -80,12 +80,13 @@ public:
     for(int x=0;x<T;x++)
     {
       cps[x].unset();
+#ifndef USE_MARLIN      
       if(x<=E)
       {
         axismovesteps[x] = 0;
         axisdirs[x] = false;
       }
-
+#endif
     }
     
     state = NEW;
@@ -94,6 +95,8 @@ public:
     lastms = 0;
     linenum = -1;
     feed=0;
+
+#ifndef USE_MARLIN      
     movesteps=0;
     leading_axis=0;
 
@@ -101,6 +104,7 @@ public:
     accel_until=0;
     decel_from=0;
     accel_inc=0;
+#endif // USE_MARLIN      
   }
 
   static void resetlastpos();
@@ -122,6 +126,7 @@ public:
 
   void setLinenumber(int32_t num) { linenum = num; };
 
+#ifndef USE_MARLIN
   void dump_movedata()
   {
 #ifdef DEBUG_MOVE  
@@ -140,6 +145,7 @@ public:
     HOST.labelnum(" AInc:",accel_inc,true);
 #endif    
   }
+#endif
 
   static Point& getLastpos() { return lastpos; }
 
@@ -168,6 +174,7 @@ public:
   float feed;
   int source;
 
+#ifndef USE_MARLIN
   // This was separated out, maybe will be again...
   // preparsed data specific to G1 type moves.
   uint32_t movesteps;
@@ -193,6 +200,7 @@ public:
 
   Point    endpos;
   Point    startpos;
+#endif  
 
 };
 

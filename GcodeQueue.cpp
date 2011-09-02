@@ -1,6 +1,5 @@
 #include "GcodeQueue.h"
 
-#include "Motion.h"
 #include "Host.h"
 #include "Globals.h"
 #include <stdlib.h>

@@ -2,12 +2,16 @@
 #include "GcodeQueue.h"
 #include "Time.h"
 #include "Globals.h"
-#include "Motion.h"
 #include "Temperature.h"
 #include "SDCard.h"
 #include "Eeprom.h"
 #include <avr/pgmspace.h>
 #include "ArduinoMap.h"
+#ifndef USE_MARLIN
+#include "Motion.h"
+#else
+#include "Marlin.h"
+#endif
 
 #ifdef HAS_LCD
 #include "LCDKeypad.h"
@@ -24,8 +28,13 @@ Pin   GCode::fanpin = Pin();
 // It WILL get called at least once.
 void GCode::prepare()
 {
+#ifdef USE_MARLIN
+  state = PREPARED;
+  return;
+#else
   // preparecalls only for reporting - not used.
   preparecalls++;
+
 
 
   if(state == PREPARED)
@@ -36,10 +45,12 @@ void GCode::prepare()
     state = PREPARED;
   else
     MOTION.gcode_precalc(*this,lastfeed,&lastpos);
+#endif
 }
 
 void GCode::optimize(GCode& next)
 {
+#ifndef USE_MARLIN
   if(state != PREPARED)
     return;
 
@@ -47,6 +58,7 @@ void GCode::optimize(GCode& next)
     return;
 
   MOTION.gcode_optimize(*this, next);
+#endif
 }
 
 
@@ -91,6 +103,7 @@ void GCode::dump_to_host()
 
 void GCode::wrapupmove()
 {
+#ifndef USE_MARLIN
   if(!cps[G].isUnused())
   {
 #ifdef DEBUG_MOVE  
@@ -101,6 +114,7 @@ void GCode::wrapupmove()
 #endif    
     MOTION.wrapup(*this);
   }
+#endif
 }
 
 
@@ -111,7 +125,11 @@ void GCode::do_g_code()
   {
     case 0:
     case 1: // Linear Move
+#ifdef USE_MARLIN
+      state = DONE;  // TODO: implement!
+#else
       MOTION.gcode_execute(*this);
+#endif      
       break;
     case 4: // Pause for P millis
       if(millis() - cps[P].getInt() > startmillis)
@@ -125,15 +143,27 @@ void GCode::do_g_code()
       state = DONE;
       break;
     case 90: // Absolute positioning
+#ifndef USE_MARLIN    
       MOTION.setAbsolute();
+#else
+      // TODO
+#endif
       state = DONE;
       break;
     case 91: // Relative positioning
+#ifndef USE_MARLIN    
       MOTION.setRelative();
+#else
+    // TODO
+#endif    
       state = DONE;
       break;
     case 92: // Set position
+#ifndef USE_MARLIN    
       MOTION.setCurrentPosition(*this);
+#else
+      // TODO
+#endif      
       state = DONE;
       break;
     default:
@@ -166,7 +196,11 @@ void GCode::do_m_code()
     case 0: // Finish up and shut down.
     case 18: // 18 used by RepG.
     case 84: // "Stop Idle Hold" == shut down motors.
+#ifndef USE_MARLIN    
       MOTION.disableAllMotors();
+#else
+      // TODO
+#endif      
       state = DONE;
       break;
     case 104: // Set Extruder Temperature (Fast)
@@ -246,7 +280,10 @@ void GCode::do_m_code()
       Host::Instance(source).write(' ');
 #endif      
       Host::Instance(source).write("C: ");
+#ifndef USE_MARLIN      
       MOTION.writePositionToHost(*this);
+#endif      
+      // TODO
       Host::Instance(source).endl();
       state = DONE;
       break; 
@@ -280,20 +317,25 @@ void GCode::do_m_code()
         state = DONE;
       }
       break;
+#ifdef USE_MARLIN
+#define SETOBJ(x) Marlin::x
+#else
+#define SETOBJ(x) MOTION.x
+#endif
     case 200: // NOT STANDARD - set Steps Per Unit
-      MOTION.setStepsPerUnit(*this);
+      SETOBJ(setStepsPerUnit(*this));
       state = DONE;
       break;
     case 201: // NOT STANDARD - set Feedrates
-      MOTION.setMinimumFeedrate(*this);
+      SETOBJ(setMinimumFeedrate(*this));
       state = DONE;
       break;
     case 202: // NOT STANDARD - set Feedrates
-      MOTION.setMaximumFeedrate(*this);
+      SETOBJ(setMaximumFeedrate(*this));
       state = DONE;
       break;
     case 203: // NOT STANDARD - set Feedrates
-      MOTION.setAverageFeedrate(*this);
+      SETOBJ(setAverageFeedrate(*this));
       state = DONE;
       break;
 #ifdef HAS_SD
@@ -317,7 +359,7 @@ void GCode::do_m_code()
       break;
 #endif
     case 206: // NOT STANDARD - set accel rate
-      MOTION.setAccel(*this);
+      SETOBJ(setAccel(*this));
       state = DONE;
       break;
     case 207: // NOT STANDARD - set hotend thermistor pin
@@ -358,11 +400,11 @@ void GCode::do_m_code()
       state = DONE;
       break;
     case 220: // NOT STANDARD - set endstop minimum positions
-      MOTION.setMinStopPos(*this);
+      SETOBJ(setMinStopPos(*this));
       state = DONE;
       break;
     case 221: // NOT STANDARD - set endstop minimum positions
-      MOTION.setMaxStopPos(*this);
+      SETOBJ(setMaxStopPos(*this));
       state = DONE;
       break;
 #ifdef HAS_LCD      
@@ -398,39 +440,39 @@ void GCode::do_m_code()
       break;
 #endif
     case 300: // NOT STANDARD - set axis STEP pin
-      MOTION.setStepPins(*this);
+      SETOBJ(setStepPins(*this));
       state = DONE;
       break;
     case 301: // NOT STANDARD - set axis DIR pin
-      MOTION.setDirPins(*this);
+      SETOBJ(setDirPins(*this));
       state = DONE;
       break;
     case 302: // NOT STANDARD - set axis ENABLE pin
-      MOTION.setEnablePins(*this);
+      SETOBJ(setEnablePins(*this));
       state = DONE;
       break;
     case 304: // NOT STANDARD - set axis MIN pin
-      MOTION.setMinPins(*this);
+      SETOBJ(setMinPins(*this));
       state = DONE;
       break;
     case 305: // NOT STANDARD - set axis MAX pin
-      MOTION.setMaxPins(*this);
+      SETOBJ(setMaxPins(*this));
       state = DONE;
       break;
     case 307: // NOT STANDARD - set axis invert
-      MOTION.setAxisInvert(*this);
+      SETOBJ(setAxisInvert(*this));
       state = DONE;
       break;
     case 308: // NOT STANDARD - set axis disable
-      MOTION.setAxisDisable(*this);
+      SETOBJ(setAxisDisable(*this));
       state = DONE;
       break;
     case 309: // NOT STANDARD - set global endstop invert, endstop pullups.
-      MOTION.setEndstopGlobals(cps[P].getInt() == 1 ? true: false, cps[S].getInt() == 1 ? true: false);
+      SETOBJ(setEndstopGlobals(cps[P].getInt() == 1 ? true: false, cps[S].getInt() == 1 ? true: false));
       state = DONE;
       break;
     case 310: // NOT STANDARD - report axis configuration status
-      MOTION.reportConfigStatus(Host::Instance(source));
+      SETOBJ(reportConfigStatus(Host::Instance(source)));
       state = DONE;
       break;
     case 350: // NOT STANDARD - change gcode optimization
@@ -480,7 +522,10 @@ void GCode::do_m_code()
 
 void GCode::resetlastpos() 
 { 
+#ifndef USE_MARLIN
   lastpos = MOTION.getCurrentPosition();
+#endif
+  // TODO?
 }
 
 void GCode::doPinSet(int arduinopin, int on)
