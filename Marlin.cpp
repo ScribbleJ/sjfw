@@ -29,9 +29,7 @@
 #include <math.h>
 #include <util/atomic.h>
 #include <string.h>
-#ifdef DEBUG_MOVE
 #include "Host.h"
-#endif
 
 #define AXESLOOP(x) for(int x=0;x<NUM_AXIS;x++)
 
@@ -65,13 +63,20 @@ namespace Marlin
 
   bool RELATIVEMOVES = false;
 
+  volatile bool needs_recompute = false;
+
 #ifdef DEBUG_MOVE
   void dump_block(block_t *b)
   {
     // Fields used by the bresenham algorithm for tracing the line
-    HOST.labelnum("SX:", b->steps[X_AXIS]);
+    AXESLOOP(ax)
+    {
+      HOST.write(ax);
+      HOST.write(':');
+      HOST.labelnum("S:", b->steps[ax]);
+      HOST.labelnum("SPD:", b->speed[ax]);
+    }
     HOST.labelnum("SEC:", b->step_event_count);
-    HOST.labelnum("SPDX:", b->speed[X_AXIS]);
     HOST.labelnum("NS:", b->nominal_speed);
     HOST.labelnum("NR:", b->nominal_rate);
     HOST.labelnum("MM:", b->millimeters);
@@ -311,7 +316,7 @@ namespace Marlin
       // speed accordingly. Remember current->entry_factor equals the exit factor of 
       // the previous block.
       if(previous->entry_speed < current->entry_speed) {
-        float max_entry_speed = max_allowable_speed(-current->acceleration, previous->entry_speed, previous->millimeters);
+        float max_entry_speed = max_allowable_speed(-previous->acceleration, previous->entry_speed, previous->millimeters);
         if (max_entry_speed < current->entry_speed) {
           current->entry_speed = max_entry_speed;
         }
@@ -457,10 +462,15 @@ namespace Marlin
 
     for(int ax=0;ax<NUM_AXIS;ax++)
     {
-      if(RELATIVEMOVES)
-        block->requestedposition[ax] = ((float)position[ax] / axis_steps_per_unit[X_AXIS]) + gcode[ax].getFloat();
+      if(gcode[ax].isUnused())
+        block->requestedposition[ax] = ((float)position[ax] / axis_steps_per_unit[ax]);
       else
-        block->requestedposition[ax] = gcode[ax].getFloat();
+      {
+        if(RELATIVEMOVES)
+          block->requestedposition[ax] = ((float)position[ax] / axis_steps_per_unit[ax]) + gcode[ax].getFloat();
+        else
+          block->requestedposition[ax] = gcode[ax].getFloat();
+      }
     }
 
     if(gcode[F].isUnused())
@@ -489,23 +499,21 @@ void plan_buffer_line(block_t* block)
 {
 
     long target[NUM_AXIS];
+    block->step_event_count = 0;
     AXESLOOP(ax)
     {
       // Calculate target position in absolute steps
       target[ax] = lround(block->requestedposition[ax]*axis_steps_per_unit[ax]);
       // Number of steps for each axis
       block->steps[ax] = labs(target[ax]-position[ax]);
+      if(block->steps[ax] > block->step_event_count)
+        block->step_event_count = block->steps[ax];
     }
-    block->step_event_count = max(block->steps[X_AXIS], max(block->steps[Y_AXIS], max(block->steps[Z_AXIS], block->steps[E_AXIS])));
 
     // Bail if this is a zero-length block
     if (block->step_event_count == 0) { 
       return; 
     };
-
-#ifdef DEBUG_MOVE
-    HOST.write("Accepted Marlin move\n");
-#endif    
 
     float delta_mm[NUM_AXIS];
     AXESLOOP(ax)
@@ -529,16 +537,18 @@ void plan_buffer_line(block_t* block)
 #endif    
 
     // Limit speed per axis
-    float speed_factor = 1;
+    float speed_factor=1;
     float tmp_speed_factor;
 
     AXESLOOP(ax)
     {
       if(abs(block->speed[ax]) > max_feedrate[ax])
+      {
         tmp_speed_factor = max_feedrate[ax] / (float)abs(block->speed[ax]);
 
-      if(speed_factor > tmp_speed_factor) 
-        speed_factor = tmp_speed_factor;
+        if(speed_factor > tmp_speed_factor) 
+          speed_factor = tmp_speed_factor;
+      }
     }
     multiplier = multiplier * speed_factor;
 
@@ -563,8 +573,10 @@ void plan_buffer_line(block_t* block)
     block->acceleration = axis_steps_per_sqr_second[X_AXIS];
     // Limit acceleration per axis
     AXESLOOP(ax)
+    {
       if((block->acceleration * block->steps[ax] / block->step_event_count) > axis_steps_per_sqr_second[ax])
-      block->acceleration = axis_steps_per_sqr_second[ax];
+        block->acceleration = axis_steps_per_sqr_second[ax];
+    }
 
 #ifdef DEBUG_MOVE
   HOST.labelnum("tps:", travel_per_step);
@@ -611,8 +623,11 @@ void plan_buffer_line(block_t* block)
       if(block->steps[ax] != 0) enable(ax);
 
     // Update position 
-    memcpy(position, target, sizeof(target)); // position[] = target[]
-    memcpy(block->endposition, position, sizeof(block->endposition));
+    AXESLOOP(ax)
+    {
+      position[ax] = target[ax];
+      block->endposition[ax] = target[ax];
+    }
   }
 
 
@@ -725,6 +740,8 @@ void plan_buffer_line(block_t* block)
   //  The slope of acceleration is calculated with the leib ramp alghorithm.
 
   void st_wake_up() {
+    if(needs_recompute)
+      return;
     //  TCNT1 = 0;
     ENABLE_STEPPER_DRIVER_INTERRUPT();  
 #ifdef DEBUG_MOVE
@@ -785,7 +802,7 @@ void plan_buffer_line(block_t* block)
     } // The busy-flag is used to avoid reentering this interrupt
 
     busy = true;
-    //sei(); // Re enable interrupts (normally disabled while inside an interrupt handler)
+    sei(); // Re enable interrupts (normally disabled while inside an interrupt handler)
 
     // If there is no current block, attempt to pop one from the buffer
     if (current_block == NULL) {
@@ -848,14 +865,38 @@ void plan_buffer_line(block_t* block)
       if (!current_block->axisdirections[ax]) 
       {   // -direction
         DIR_PINS[ax].setValue(INVERT_DIRS[ax]);
-        if(!MIN_PINS[ax].isNull() && MIN_PINS[ax].getValue() != ENDSTOP_INVERT)
-          step_events_completed = current_block->step_event_count;
+        if(!MIN_PINS[ax].isNull() && MIN_PINS[ax].getValue() != ENDSTOP_INVERT && current_block->steps[ax])
+        {
+          float sr = (float)current_block->step_event_count / (float)current_block->steps[ax];
+          current_block->endposition[ax] += (float)(current_block->step_event_count - step_events_completed) * sr;
+          current_block->steps[ax] = 0;
+          AXESLOOP(foo) if(current_block->steps[foo]) continue;
+          DISABLE_STEPPER_DRIVER_INTERRUPT();
+          current_block->busy = false;
+          current_block = NULL;
+          needs_recompute = true;
+          busy = false;
+          return;
+          //step_events_completed = current_block->step_event_count;
+        }
       }
       else // +direction
       {
         DIR_PINS[ax].setValue(!INVERT_DIRS[ax]);
         if(!MAX_PINS[ax].isNull() && MAX_PINS[ax].getValue() != ENDSTOP_INVERT)
-          step_events_completed = current_block->step_event_count;
+        {
+          float sr = (float)current_block->step_event_count / (float)current_block->steps[ax];
+          current_block->endposition[ax] -= (float)(current_block->step_event_count - step_events_completed) * sr;
+          current_block->steps[ax] = 0;
+          AXESLOOP(foo) if(current_block->steps[foo]) continue;
+          DISABLE_STEPPER_DRIVER_INTERRUPT();
+          current_block->busy = false;
+          current_block = NULL;
+          needs_recompute = true;
+          busy = false;
+          return;
+          //step_events_completed = current_block->step_event_count;
+        }
       }
     }
 
@@ -917,11 +958,20 @@ void plan_buffer_line(block_t* block)
     }       
     // If current block is finished, reset pointer 
     step_events_completed += 1;  
-    if (step_events_completed >= current_block->step_event_count) {
+    if (step_events_completed >= current_block->step_event_count) 
+    {
+      if(needs_recompute)
+      {
+          DISABLE_STEPPER_DRIVER_INTERRUPT();
+          current_block->busy = false;
+          current_block = NULL;
+          needs_recompute = true;
+          busy = false;
+          return;
+      }
       current_block = NULL;
       plan_discard_current_block();
     }   
-
     busy=false;
   }
 
@@ -931,7 +981,7 @@ void plan_buffer_line(block_t* block)
   // Timer interrupt for E. e_steps is set in the main routine;
   // Timer 0 is shared with millies
   ISR(TIMER0_COMPA_vect)
-  {
+  
     // Critical section needed because Timer 1 interrupt has higher priority. 
     // The pin set functions are placed on trategic position to comply with the stepper driver timing.
     STEP_PINS[E_AXIS].setValue(false);
@@ -978,10 +1028,9 @@ void plan_buffer_line(block_t* block)
   Point& getCurrentPosition()
   {
     static Point p;
-    p[X] = position[X];
-    p[Y] = position[Y];
-    p[Z] = position[Z];
-    p[E] = position[E];
+    AXESLOOP(ax)
+      p[ax] = (float)position[ax] / axis_steps_per_unit[ax];
+
     return p;
   }
   // Sets current position; doesn't cause a move, just updates the current position variables.
@@ -990,7 +1039,7 @@ void plan_buffer_line(block_t* block)
     for(int ax=0;ax<NUM_AXIS;ax++)
     {
       if(!gcode[ax].isUnused())
-        position[ax] = gcode[ax].getFloat();
+        position[ax] = gcode[ax].getFloat() * axis_steps_per_unit[ax];
     }
     return;
   }
@@ -1145,7 +1194,7 @@ void plan_buffer_line(block_t* block)
   // Motors automatically enabled when used
   void disableAllMotors() { AXESLOOP(ax) { disable(ax); } }
   void wrapup(GCode& gcode) { return; }
-  void checkdisable(GCode& gcode) { return; }
+  void checkdisable(GCode& gcode) { check_axes_activity(); }
 
   bool isBufferEmpty()
   {
@@ -1171,6 +1220,53 @@ void plan_buffer_line(block_t* block)
     HOST.write("Marlin Init.\n");
 #endif    
   }
+
+  void recompute_all_blocks() {
+    char block_index = block_buffer_tail;
+    block_t *b = NULL;
+
+    while(block_index != block_buffer_head) {
+      b = &block_buffer[block_index];
+      plan_buffer_line(b);
+      block_index = (block_index+1) & BLOCK_BUFFER_MASK;
+    }
+  }
+
+
+  void update()
+  {
+    if(needs_recompute)
+    {
+      block_t* b = plan_get_current_block();
+      if(b->busy)
+        return;
+#ifdef DEBUG_MOVE
+      HOST.write("! RECALCULATE ALL !\n");
+#endif      
+      AXESLOOP(ax)
+      {
+        position[ax]=b->endposition[ax];
+      }
+      plan_discard_current_block();
+      recompute_all_blocks();
+      needs_recompute = false;
+      planner_recalculate();
+      st_wake_up();
+    }
+    check_axes_activity();
+  }
+
+  void writePositionToHost(GCode& gc)
+  {
+    AXESLOOP(ax)
+    {
+      Host::Instance(gc.source).write(ax > Z ? 'A' - Z - 1 + ax : 'X' + ax);
+      Host::Instance(gc.source).write(':');
+      Host::Instance(gc.source).write((float)position[ax] / axis_steps_per_unit[ax],0,4);
+      Host::Instance(gc.source).write(' ');
+    }
+  }
+
 
 
 

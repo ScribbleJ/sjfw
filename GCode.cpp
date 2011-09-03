@@ -283,9 +283,7 @@ void GCode::do_m_code()
       Host::Instance(source).write(' ');
 #endif      
       Host::Instance(source).write("C: ");
-#ifndef USE_MARLIN      
-      MOTION.writePositionToHost(*this);
-#endif      
+      SETOBJ(writePositionToHost(*this));
       // TODO
       Host::Instance(source).endl();
       state = DONE;

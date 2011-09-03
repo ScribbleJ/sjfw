@@ -65,6 +65,7 @@ namespace Marlin
   void st_wake_up();
   bool add_buffer_line(GCode& gcode);
   void plan_buffer_line(block_t *block);
+  void update();
 
   bool isBufferFull();
   bool isBufferEmpty();
@@ -75,6 +76,8 @@ namespace Marlin
   Point& getCurrentPosition();
   // Sets current position; doesn't cause a move, just updates the current position variables.
   void setCurrentPosition(GCode &gcode);
+  // ...
+  void writePositionToHost(GCode& gc);
   // Interpret movement data as absolute
   void setAbsolute();
   // Interpret movement data as relative

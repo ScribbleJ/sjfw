@@ -70,8 +70,10 @@ void mainloop()
     BT.scan_input();
 #endif
 
+#ifdef USE_MARLIN
+    Marlin::update();
+#endif
   }
-
 
 }
 
