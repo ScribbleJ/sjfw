@@ -8,6 +8,9 @@
 #include <avr/interrupt.h>
 #include "Globals.h"
 #include "Eeprom.h"
+#ifdef USE_MARLIN
+#include "Marlin.h"
+#endif
 
 #ifdef HAS_LCD
 #include "LCDKeypad.h"
@@ -106,6 +109,10 @@ int main(void)
   HOST.write_P(PSTR("start\n"));
 #ifdef HAS_BT
   BT.write_P(PSTR("start\n"));
+#endif  
+
+#ifdef USE_MARLIN
+  Marlin::init();
 #endif  
 
   mainloop();

@@ -1,6 +1,14 @@
 #ifndef __MARLIN_H__
 #define __MARLIN_H__
 
+#define ADVANCE
+#define EXTRUDER_ADVANCE_K 0.02
+
+#define D_FILAMENT 3.0
+#define STEPS_MM_E 2000.0
+#define EXTRUTION_AREA (0.25 * D_FILAMENT * D_FILAMENT * 3.14159)
+#define STEPS_PER_CUBIC_MM_E (axis_steps_per_unit[E_AXIS]/ EXTRUTION_AREA)
+
 #define NUM_AXIS 4
 #define X_AXIS 0
 #define Y_AXIS 1
@@ -25,7 +33,7 @@ namespace Marlin
     volatile long accelerate_until;                    // The index of the step event on which to stop acceleration
     volatile long decelerate_after;                    // The index of the step event on which to start decelerating
     volatile long acceleration_rate;                   // The acceleration rate used for acceleration calculation
-    unsigned char direction_bits;             // The direction bit set for this block (refers to *_DIRECTION_BIT in config.h)
+    bool axisdirections[NUM_AXIS];             // The direction bit set for this block (refers to *_DIRECTION_BIT in config.h)
 
     long advance_rate;
     volatile long initial_advance;
@@ -49,7 +57,7 @@ namespace Marlin
     volatile long initial_rate;                                 // The jerk-adjusted step rate at start of block  
     volatile long final_rate;                                   // The minimal rate at exit
     long acceleration;                                 // acceleration mm/sec^2
-    volatile char busy;  // Why are we duplicating this per block?  Only the first one can be busy.
+    volatile char busy;  
 
 
   } block_t;
@@ -57,12 +65,14 @@ namespace Marlin
   void check_axes_activity();
   void init();
   void st_wake_up();
-  bool add_buffer_line(float x, float y, float z, float e, float feed_rate, bool relative = false);
+  bool add_buffer_line(GCode& gcode);
   void plan_buffer_line(block_t *block);
   void plan_set_position(float x, float y, float z, float e);
 
+  bool isBufferFull();
+  bool isBufferEmpty();
 
-  // Settings and external controls
+  // Settings and external controls from sjfw
 
   // Returns current position of all Axes
   Point& getCurrentPosition();

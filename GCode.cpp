@@ -18,6 +18,11 @@
 extern LCDKeypad LCDKEYPAD;
 #endif
 
+#ifdef USE_MARLIN
+#define SETOBJ(x) Marlin::x
+#else
+#define SETOBJ(x) MOTION.x
+#endif
 
 Point GCode::lastpos;
 float GCode::lastfeed;
@@ -29,12 +34,12 @@ Pin   GCode::fanpin = Pin();
 void GCode::prepare()
 {
 #ifdef USE_MARLIN
+  // Marlin might be able to prepare in advance of being asked to execute the codes with some help.
   state = PREPARED;
   return;
 #else
   // preparecalls only for reporting - not used.
   preparecalls++;
-
 
 
   if(state == PREPARED)
@@ -121,12 +126,20 @@ void GCode::wrapupmove()
 
 void GCode::do_g_code() 
 {
+#ifdef USE_MARLIN
+// Marlin's only method of synchronizing these sorts of commands is to wait 'till it's cleared out.
+  if(cps[G].getInt() != 1 && !Marlin::isBufferEmpty())
+    return;
+#endif
+
+
   switch(cps[G].getInt())
   {
     case 0:
     case 1: // Linear Move
 #ifdef USE_MARLIN
-      state = DONE;  // TODO: implement!
+      if(Marlin::add_buffer_line(*this))
+        state = DONE;
 #else
       MOTION.gcode_execute(*this);
 #endif      
@@ -143,27 +156,15 @@ void GCode::do_g_code()
       state = DONE;
       break;
     case 90: // Absolute positioning
-#ifndef USE_MARLIN    
-      MOTION.setAbsolute();
-#else
-      // TODO
-#endif
+      SETOBJ(setAbsolute());
       state = DONE;
       break;
     case 91: // Relative positioning
-#ifndef USE_MARLIN    
-      MOTION.setRelative();
-#else
-    // TODO
-#endif    
+      SETOBJ(setRelative());
       state = DONE;
       break;
     case 92: // Set position
-#ifndef USE_MARLIN    
-      MOTION.setCurrentPosition(*this);
-#else
-      // TODO
-#endif      
+      SETOBJ(setCurrentPosition(*this));
       state = DONE;
       break;
     default:
@@ -191,16 +192,18 @@ void GCode::write_temps_to_host(int port)
 
 void GCode::do_m_code()
 {
+#ifdef USE_MARLIN
+// Marlin's only method of synchronizing these sorts of commands is to wait 'till it's cleared out.
+  if(!Marlin::isBufferEmpty())
+    return;
+#endif
+
   switch(cps[M].getInt())
   {
     case 0: // Finish up and shut down.
     case 18: // 18 used by RepG.
     case 84: // "Stop Idle Hold" == shut down motors.
-#ifndef USE_MARLIN    
-      MOTION.disableAllMotors();
-#else
-      // TODO
-#endif      
+      SETOBJ(disableAllMotors());
       state = DONE;
       break;
     case 104: // Set Extruder Temperature (Fast)
@@ -317,11 +320,6 @@ void GCode::do_m_code()
         state = DONE;
       }
       break;
-#ifdef USE_MARLIN
-#define SETOBJ(x) Marlin::x
-#else
-#define SETOBJ(x) MOTION.x
-#endif
     case 200: // NOT STANDARD - set Steps Per Unit
       SETOBJ(setStepsPerUnit(*this));
       state = DONE;
