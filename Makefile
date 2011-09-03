@@ -5,7 +5,7 @@ USE_SD = 1
 USE_LCD = 1
 USE_KEYPAD = 1
 #USE_BT = 1
-USE_MARLIN = 1
+#USE_MARLIN = 1
 
 # EC for Gen3/4 only.  Others default to 100k Thermistors.
 #USE_EXTRUDERCONTROLLER = 1
