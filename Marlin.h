@@ -1,7 +1,7 @@
 #ifndef __MARLIN_H__
 #define __MARLIN_H__
 
-#define ADVANCE
+//#define ADVANCE
 #define EXTRUDER_ADVANCE_K 0.02
 
 #define D_FILAMENT 3.0
@@ -28,7 +28,7 @@ namespace Marlin
   // the source g-code and may never actually be reached if acceleration management is active.
   typedef struct {
     // Fields used by the bresenham algorithm for tracing the line
-    long steps_x, steps_y, steps_z, steps_e;  // Step count along each axis
+    long steps[NUM_AXIS];  // Step count along each axis
     long step_event_count;                    // The number of step events required to complete this block
     volatile long accelerate_until;                    // The index of the step event on which to stop acceleration
     volatile long decelerate_after;                    // The index of the step event on which to start decelerating
@@ -47,7 +47,7 @@ namespace Marlin
     float requestedfeed;
 
     // Fields used by the motion planner to manage acceleration
-    float speed_x, speed_y, speed_z, speed_e;          // Nominal mm/minute for each axis
+    float speed[NUM_AXIS];          // Nominal mm/minute for each axis
     float nominal_speed;                               // The nominal speed for this block in mm/min  
     float millimeters;                                 // The total travel of this block in mm
     float entry_speed;
@@ -58,8 +58,6 @@ namespace Marlin
     volatile long final_rate;                                   // The minimal rate at exit
     long acceleration;                                 // acceleration mm/sec^2
     volatile char busy;  
-
-
   } block_t;
 
   void check_axes_activity();
@@ -67,7 +65,6 @@ namespace Marlin
   void st_wake_up();
   bool add_buffer_line(GCode& gcode);
   void plan_buffer_line(block_t *block);
-  void plan_set_position(float x, float y, float z, float e);
 
   bool isBufferFull();
   bool isBufferEmpty();

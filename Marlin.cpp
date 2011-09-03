@@ -44,16 +44,11 @@ namespace Marlin
 
   //Stepper Movement Variables
 
-  char axis_codes[NUM_AXIS] = {
-    'X', 'Y', 'Z', 'E'};
-  long feedrate = 1500, last_feedrate;
-  long gcode_N, gcode_LastN;
+  long last_feedrate;
   unsigned long axis_steps_per_sqr_second[NUM_AXIS];
   float axis_steps_per_unit[NUM_AXIS];
   long max_feedrate[NUM_AXIS];
   long min_feedrate[NUM_AXIS];
-
-
 
   Pin STEP_PINS[NUM_AXIS];
   Pin DIR_PINS[NUM_AXIS];
@@ -74,9 +69,9 @@ namespace Marlin
   void dump_block(block_t *b)
   {
     // Fields used by the bresenham algorithm for tracing the line
-    HOST.labelnum("SX:", b->steps_x);
+    HOST.labelnum("SX:", b->steps[X_AXIS]);
     HOST.labelnum("SEC:", b->step_event_count);
-    HOST.labelnum("SPDX:", b->speed_x);
+    HOST.labelnum("SPDX:", b->speed[X_AXIS]);
     HOST.labelnum("NS:", b->nominal_speed);
     HOST.labelnum("NR:", b->nominal_rate);
     HOST.labelnum("MM:", b->millimeters);
@@ -223,11 +218,12 @@ namespace Marlin
   // "Junction jerk" in this context is the immediate change in speed at the junction of two blocks.
   // This method will calculate the junction jerk as the euclidean distance between the nominal 
   // velocities of the respective blocks.
+  // TODO: this makes no sense.
   inline float junction_jerk(block_t *before, block_t *after) {
     return(sqrt(
-      pow((before->speed_x-after->speed_x), 2)+
-      pow((before->speed_y-after->speed_y), 2)+
-      pow((before->speed_z-after->speed_z)*axis_steps_per_unit[Z_AXIS]/axis_steps_per_unit[X_AXIS], 2)));
+      pow((before->speed[X_AXIS]-after->speed[X_AXIS]), 2)+
+      pow((before->speed[Y_AXIS]-after->speed[Y_AXIS]), 2)+
+      pow((before->speed[Z_AXIS]-after->speed[Z_AXIS])*axis_steps_per_unit[Z_AXIS]/axis_steps_per_unit[X_AXIS], 2)));
   }
 
   // Return the safe speed which is max_jerk/2, e.g. the 
@@ -257,14 +253,14 @@ namespace Marlin
       exit_speed = safe_speed(current);
     }
 
-    float max_jerk = 0;
-    AXESLOOP(ax) { max_jerk = min(max_jerk, min_feedrate[ax]); }
-
     // Calculate the entry_factor for the current block. 
     if (previous) {
+      float max_jerk = 0;
+      AXESLOOP(ax) { max_jerk = min(max_jerk, min_feedrate[ax]); }
+
       // Reduce speed so that junction_jerk is within the maximum allowed
       float jerk = junction_jerk(previous, current);
-      if((previous->steps_x == 0) && (previous->steps_y == 0)) {
+      if((previous->steps[X_AXIS] == 0) && (previous->steps[Y_AXIS] == 0)) {
         entry_speed = safe_speed(current);
       }
       else if (jerk > max_jerk) {
@@ -426,10 +422,10 @@ namespace Marlin
       char block_index = block_buffer_tail;
       while(block_index != block_buffer_head) {
         block = &block_buffer[block_index];
-        if(block->steps_x != 0) x_active++;
-        if(block->steps_y != 0) y_active++;
-        if(block->steps_z != 0) z_active++;
-        if(block->steps_e != 0) e_active++;
+        if(block->steps[X_AXIS] != 0) x_active++;
+        if(block->steps[Y_AXIS] != 0) y_active++;
+        if(block->steps[Z_AXIS] != 0) z_active++;
+        if(block->steps[E_AXIS] != 0) e_active++;
         block_index = (block_index+1) & BLOCK_BUFFER_MASK;
       }
     }
@@ -439,7 +435,7 @@ namespace Marlin
     if((DISABLE[E_AXIS]) && (e_active == 0)) disable(E_AXIS);
   }
 
-  // Add a new linear movement to the buffer. steps_x, _y and _z is the absolute position in 
+  // Add a new linear movement to the buffer. steps[X_AXIS], _y and _z is the absolute position in 
   // mm. Microseconds specify how many microseconds the move should take to perform. To aid acceleration
   // calculation the caller must also provide the physical length of the line in millimeters.
   bool add_buffer_line(GCode& gcode) 
@@ -492,21 +488,15 @@ namespace Marlin
 void plan_buffer_line(block_t* block)
 {
 
-    // The target position of the tool in absolute steps
-    // Calculate target position in absolute steps
-    long target[4];
-    target[X_AXIS] = lround(block->requestedposition[X_AXIS]*axis_steps_per_unit[X_AXIS]);
-    target[Y_AXIS] = lround(block->requestedposition[Y_AXIS]*axis_steps_per_unit[Y_AXIS]);
-    target[Z_AXIS] = lround(block->requestedposition[Z_AXIS]*axis_steps_per_unit[Z_AXIS]);
-    target[E_AXIS] = lround(block->requestedposition[E_AXIS]*axis_steps_per_unit[E_AXIS]);
-    
-   
-    // Number of steps for each axis
-    block->steps_x = labs(target[X_AXIS]-position[X_AXIS]);
-    block->steps_y = labs(target[Y_AXIS]-position[Y_AXIS]);
-    block->steps_z = labs(target[Z_AXIS]-position[Z_AXIS]);
-    block->steps_e = labs(target[E_AXIS]-position[E_AXIS]);
-    block->step_event_count = max(block->steps_x, max(block->steps_y, max(block->steps_z, block->steps_e)));
+    long target[NUM_AXIS];
+    AXESLOOP(ax)
+    {
+      // Calculate target position in absolute steps
+      target[ax] = lround(block->requestedposition[ax]*axis_steps_per_unit[ax]);
+      // Number of steps for each axis
+      block->steps[ax] = labs(target[ax]-position[ax]);
+    }
+    block->step_event_count = max(block->steps[X_AXIS], max(block->steps[Y_AXIS], max(block->steps[Z_AXIS], block->steps[E_AXIS])));
 
     // Bail if this is a zero-length block
     if (block->step_event_count == 0) { 
@@ -517,50 +507,44 @@ void plan_buffer_line(block_t* block)
     HOST.write("Accepted Marlin move\n");
 #endif    
 
-    float delta_x_mm = (target[X_AXIS]-position[X_AXIS])/axis_steps_per_unit[X_AXIS];
-    float delta_y_mm = (target[Y_AXIS]-position[Y_AXIS])/axis_steps_per_unit[Y_AXIS];
-    float delta_z_mm = (target[Z_AXIS]-position[Z_AXIS])/axis_steps_per_unit[Z_AXIS];
-    float delta_e_mm = (target[E_AXIS]-position[E_AXIS])/axis_steps_per_unit[E_AXIS];
-    block->millimeters = sqrt(square(delta_x_mm) + square(delta_y_mm) + square(delta_z_mm) + square(delta_e_mm));
+    float delta_mm[NUM_AXIS];
+    AXESLOOP(ax)
+    {
+      delta_mm[ax] = (target[ax]-position[ax])/axis_steps_per_unit[ax];
+      block->millimeters+=square(delta_mm[ax]);
+    }
+    block->millimeters = sqrt(block->millimeters);
 
     float microseconds = (block->millimeters/block->requestedfeed)*1000000.0;
     
     // Calculate speed in mm/minute for each axis
     float multiplier = 60.0*1000000.0/microseconds;
-    block->speed_x = delta_x_mm * multiplier;
-    block->speed_y = delta_y_mm * multiplier;
-    block->speed_z = delta_z_mm * multiplier; 
-    block->speed_e = delta_e_mm * multiplier; 
+    AXESLOOP(ax)
+      block->speed[ax] = delta_mm[ax] * multiplier;
+
 #ifdef DEBUG_MOVE
-    HOST.labelnum("speedx:", block->speed_x);
+    HOST.labelnum("speedx:", block->speed[X_AXIS]);
     HOST.labelnum("micros:", microseconds);
     HOST.labelnum("mult:", multiplier);
 #endif    
 
-
     // Limit speed per axis
     float speed_factor = 1;
     float tmp_speed_factor;
-    if(abs(block->speed_x) > max_feedrate[X_AXIS]) {
-      speed_factor = (float)max_feedrate[X_AXIS] / (float)abs(block->speed_x);
-    }
-    if(abs(block->speed_y) > max_feedrate[Y_AXIS]){
-      tmp_speed_factor = max_feedrate[Y_AXIS] / (float)abs(block->speed_y);
-      if(speed_factor > tmp_speed_factor) speed_factor = tmp_speed_factor;
-    }
-    if(abs(block->speed_z) > max_feedrate[Z_AXIS]){
-      tmp_speed_factor = max_feedrate[Z_AXIS] / (float)abs(block->speed_z);
-      if(speed_factor > tmp_speed_factor) speed_factor = tmp_speed_factor;
-    }
-    if(abs(block->speed_e) > max_feedrate[E_AXIS]){
-      tmp_speed_factor = max_feedrate[E_AXIS] / (float)abs(block->speed_e);
-      if(speed_factor > tmp_speed_factor) speed_factor = tmp_speed_factor;
+
+    AXESLOOP(ax)
+    {
+      if(abs(block->speed[ax]) > max_feedrate[ax])
+        tmp_speed_factor = max_feedrate[ax] / (float)abs(block->speed[ax]);
+
+      if(speed_factor > tmp_speed_factor) 
+        speed_factor = tmp_speed_factor;
     }
     multiplier = multiplier * speed_factor;
-    block->speed_z = delta_z_mm * multiplier; 
-    block->speed_x = delta_x_mm * multiplier;
-    block->speed_y = delta_y_mm * multiplier;
-    block->speed_e = delta_e_mm * multiplier; 
+
+    AXESLOOP(ax)
+      block->speed[ax] = delta_mm[ax] * multiplier; 
+
     block->nominal_speed = block->millimeters * multiplier;
     block->nominal_rate = ceil(block->step_event_count * multiplier / 60);  
 
@@ -570,7 +554,7 @@ void plan_buffer_line(block_t* block)
 #ifdef DEBUG_MOVE
     HOST.labelnum("spdfact:", speed_factor);
     HOST.labelnum("mult:", multiplier);
-    HOST.labelnum("speedx:", block->speed_x);
+    HOST.labelnum("speedx:", block->speed[X_AXIS]);
 #endif    
 
 
@@ -578,14 +562,9 @@ void plan_buffer_line(block_t* block)
     float travel_per_step = block->millimeters/block->step_event_count;
     block->acceleration = axis_steps_per_sqr_second[X_AXIS];
     // Limit acceleration per axis
-    if((block->acceleration * block->steps_x / block->step_event_count) > axis_steps_per_sqr_second[X_AXIS])
-      block->acceleration = axis_steps_per_sqr_second[X_AXIS];
-    if((block->acceleration * block->steps_y / block->step_event_count) > axis_steps_per_sqr_second[Y_AXIS])
-      block->acceleration = axis_steps_per_sqr_second[Y_AXIS];
-    if((block->acceleration * block->steps_e / block->step_event_count) > axis_steps_per_sqr_second[E_AXIS])
-      block->acceleration = axis_steps_per_sqr_second[E_AXIS];
-    if((block->acceleration * block->steps_z / block->step_event_count) > axis_steps_per_sqr_second[Z_AXIS])
-      block->acceleration = axis_steps_per_sqr_second[Z_AXIS];
+    AXESLOOP(ax)
+      if((block->acceleration * block->steps[ax] / block->step_event_count) > axis_steps_per_sqr_second[ax])
+      block->acceleration = axis_steps_per_sqr_second[ax];
 
 #ifdef DEBUG_MOVE
   HOST.labelnum("tps:", travel_per_step);
@@ -594,14 +573,14 @@ void plan_buffer_line(block_t* block)
 
   #ifdef ADVANCE
     // Calculate advance rate
-    if((block->steps_e == 0) || (block->steps_x == 0 && block->steps_y == 0 && block->steps_z == 0)) {
+    if((block->steps[E_AXIS] == 0) || (block->steps[X_AXIS] == 0 && block->steps[Y_AXIS] == 0 && block->steps[Z_AXIS] == 0)) {
       block->advance_rate = 0;
       block->advance = 0;
     }
     else {
       long acc_dist = estimate_acceleration_distance(0, block->nominal_rate, block->acceleration);
       float advance = (STEPS_PER_CUBIC_MM_E * EXTRUDER_ADVANCE_K) * 
-        (block->speed_e * block->speed_e * EXTRUTION_AREA * EXTRUTION_AREA / 3600.0)*65536;
+        (block->speed[E_AXIS] * block->speed[E_AXIS] * EXTRUTION_AREA * EXTRUTION_AREA / 3600.0)*65536;
       block->advance = advance;
       if(acc_dist == 0) {
         block->advance_rate = 0;
@@ -628,10 +607,8 @@ void plan_buffer_line(block_t* block)
     }
 
     //enable active axes
-    if(block->steps_x != 0) enable(X_AXIS);
-    if(block->steps_y != 0) enable(Y_AXIS);
-    if(block->steps_z != 0) enable(Z_AXIS);
-    if(block->steps_e != 0) enable(E_AXIS);
+    AXESLOOP(ax)
+      if(block->steps[ax] != 0) enable(ax);
 
     // Update position 
     memcpy(position, target, sizeof(target)); // position[] = target[]
@@ -719,10 +696,7 @@ void plan_buffer_line(block_t* block)
   static block_t *current_block;  // A pointer to the block currently being traced
 
   // Variables used by The Stepper Driver Interrupt
-  static long counter_x,       // Counter variables for the bresenham line tracer
-              counter_y, 
-              counter_z,       
-              counter_e;
+  static long counter[NUM_AXIS];       // Counter variables for the bresenham line tracer
   static unsigned long step_events_completed; // The number of step events executed in the current block
   static long advance_rate, advance, final_advance = 0;
   static short old_advance = 0;
@@ -811,7 +785,7 @@ void plan_buffer_line(block_t* block)
     } // The busy-flag is used to avoid reentering this interrupt
 
     busy = true;
-    sei(); // Re enable interrupts (normally disabled while inside an interrupt handler)
+    //sei(); // Re enable interrupts (normally disabled while inside an interrupt handler)
 
     // If there is no current block, attempt to pop one from the buffer
     if (current_block == NULL) {
@@ -823,10 +797,10 @@ void plan_buffer_line(block_t* block)
 #endif        
         current_block->busy = true;
         trapezoid_generator_reset();
-        counter_x = -(current_block->step_event_count >> 1);
-        counter_y = counter_x;
-        counter_z = counter_x;
-        counter_e = counter_x;
+        counter[X_AXIS] = -(current_block->step_event_count >> 1);
+        counter[Y_AXIS] = counter[X_AXIS];
+        counter[Z_AXIS] = counter[X_AXIS];
+        counter[E_AXIS] = counter[X_AXIS];
         step_events_completed = 0;
         e_steps = 0;
       } 
@@ -835,135 +809,119 @@ void plan_buffer_line(block_t* block)
         HOST.write("Ran out queue\n");
 #endif        
         DISABLE_STEPPER_DRIVER_INTERRUPT();
+        busy = false;
+        return;
       }    
     } 
 
-    if (current_block != NULL) {
-      // Set directions TO DO This should be done once during init of trapezoid. Endstops -> interrupt
-  #ifdef ADVANCE
-      // Calculate E early.
-      counter_e += current_block->steps_e;
-      if (counter_e > 0) {
-        counter_e -= current_block->step_event_count;
-        if (!current_block->axisdirections[E_AXIS]) { // - direction
-          ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-            e_steps--;
-          }
-        }
-        else {
-          ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-            e_steps++;
-          }
-        }
-      }    
-      // Do E steps + advance steps
-      ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-        e_steps += ((advance >> 16) - old_advance);
-      }
-      old_advance = advance >> 16;  
-  #endif //ADVANCE
-
-      // Set direction en check limit switches
+    // Set directions TO DO This should be done once during init of trapezoid. Endstops -> interrupt
 #ifdef ADVANCE
-      for(int ax=0;ax<NUM_AXIS-1;ax++)
-      {
+    // Calculate E early.
+    counter[E_AXIS] += current_block->steps[E_AXIS];
+    if (counter[E_AXIS] > 0) {
+      counter[E_AXIS] -= current_block->step_event_count;
+      if (!current_block->axisdirections[E_AXIS]) { // - direction
+        ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+          e_steps--;
+        }
+      }
+      else {
+        ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+          e_steps++;
+        }
+      }
+    }    
+    // Do E steps + advance steps
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+      e_steps += ((advance >> 16) - old_advance);
+    }
+    old_advance = advance >> 16;  
+#endif //ADVANCE
+
+    // Set direction en check limit switches
+#ifdef ADVANCE
+    for(int ax=0;ax<NUM_AXIS-1;ax++)
 #else
-      for(int ax=0;ax<NUM_AXIS;ax++)
-      {
+    for(int ax=0;ax<NUM_AXIS;ax++)
 #endif
-        if (!current_block->axisdirections[ax]) 
-        {   // -direction
-          DIR_PINS[ax].setValue(INVERT_DIRS[ax]);
-          if(!MIN_PINS[ax].isNull() && MIN_PINS[ax].getValue() != ENDSTOP_INVERT)
-            step_events_completed = current_block->step_event_count;
-        }
-        else // +direction
-        {
-          DIR_PINS[ax].setValue(!INVERT_DIRS[ax]);
-          if(!MAX_PINS[ax].isNull() && MAX_PINS[ax].getValue() != ENDSTOP_INVERT)
-            step_events_completed = current_block->step_event_count;
-        }
+    {
+      if (!current_block->axisdirections[ax]) 
+      {   // -direction
+        DIR_PINS[ax].setValue(INVERT_DIRS[ax]);
+        if(!MIN_PINS[ax].isNull() && MIN_PINS[ax].getValue() != ENDSTOP_INVERT)
+          step_events_completed = current_block->step_event_count;
       }
+      else // +direction
+      {
+        DIR_PINS[ax].setValue(!INVERT_DIRS[ax]);
+        if(!MAX_PINS[ax].isNull() && MAX_PINS[ax].getValue() != ENDSTOP_INVERT)
+          step_events_completed = current_block->step_event_count;
+      }
+    }
 
+#ifdef ADVANCE
+    for(int ax=0;ax<NUM_AXIS-1;ax++)
+#else
+    for(int ax=0;ax<NUM_AXIS;ax++)
+#endif
+    {
       // Do stepping
-      counter_x += current_block->steps_x;
-      if (counter_x > 0) {
-        STEP_PINS[X_AXIS].setValue(true);
-        counter_x -= current_block->step_event_count;
-        STEP_PINS[X_AXIS].setValue(false);
+      counter[ax] += current_block->steps[ax];
+      if (counter[ax] > 0) {
+        STEP_PINS[ax].setValue(true);
+        counter[ax] -= current_block->step_event_count;
+        STEP_PINS[ax].setValue(false);
       }
+    }
 
-      counter_y += current_block->steps_y;
-      if (counter_y > 0) {
-        STEP_PINS[Y_AXIS].setValue(true);
-        counter_y -= current_block->step_event_count;
-        STEP_PINS[Y_AXIS].setValue(false);
-      }
+    // Calculare new timer value
+    unsigned short timer;
+    unsigned short step_rate;
+    if (step_events_completed < accelerate_until) {
+      MultiU24X24toH16(acc_step_rate, acceleration_time, acceleration_rate);
+      acc_step_rate += initial_rate;
+      
+      // upper limit
+      if(acc_step_rate > nominal_rate)
+        acc_step_rate = nominal_rate;
 
-      counter_z += current_block->steps_z;
-      if (counter_z > 0) {
-        STEP_PINS[Z_AXIS].setValue(true);
-        counter_z -= current_block->step_event_count;
-        STEP_PINS[Z_AXIS].setValue(false);
-      }
-
-  #ifndef ADVANCE
-      counter_e += current_block->steps_e;
-      if (counter_e > 0) {
-        STEP_PINS[E_AXIS].setValue(true);
-        counter_e -= current_block->step_event_count;
-        STEP_PINS[E_AXIS].setValue(false);
-      }
-  #endif //!ADVANCE
-
-      // Calculare new timer value
-      unsigned short timer;
-      unsigned short step_rate;
-      if (step_events_completed < accelerate_until) {
-        MultiU24X24toH16(acc_step_rate, acceleration_time, acceleration_rate);
-        acc_step_rate += initial_rate;
-        
-        // upper limit
-        if(acc_step_rate > nominal_rate)
-          acc_step_rate = nominal_rate;
-
-        // step_rate to timer interval
-        timer = calc_timer(acc_step_rate);
-        advance += advance_rate;
-        acceleration_time += timer;
-        OCR1A = timer;
-      } 
-      else if (step_events_completed >= decelerate_after) {   
-        MultiU24X24toH16(step_rate, deceleration_time, acceleration_rate);
-        
-        if(step_rate > acc_step_rate) { // Check step_rate stays positive
-          step_rate = final_rate;
-        }
-        else {
-          step_rate = acc_step_rate - step_rate; // Decelerate from aceleration end point.
-        }
-
-        // lower limit
-        if(step_rate < final_rate)
-          step_rate = final_rate;
-
-        // step_rate to timer interval
-        timer = calc_timer(step_rate);
-  #ifdef ADVANCE
-        advance -= advance_rate;
-        if(advance < final_advance)
-          advance = final_advance;
-  #endif //ADVANCE
-        deceleration_time += timer;
-        OCR1A = timer;
-      }       
-      // If current block is finished, reset pointer 
-      step_events_completed += 1;  
-      if (step_events_completed >= current_block->step_event_count) {
-        current_block = NULL;
-        plan_discard_current_block();
-      }   
+      // step_rate to timer interval
+      timer = calc_timer(acc_step_rate);
+      advance += advance_rate;
+      acceleration_time += timer;
+      OCR1A = timer;
     } 
+    else if (step_events_completed >= decelerate_after) {   
+      MultiU24X24toH16(step_rate, deceleration_time, acceleration_rate);
+      
+      if(step_rate > acc_step_rate) { // Check step_rate stays positive
+        step_rate = final_rate;
+      }
+      else {
+        step_rate = acc_step_rate - step_rate; // Decelerate from aceleration end point.
+      }
+
+      // lower limit
+      if(step_rate < final_rate)
+        step_rate = final_rate;
+
+      // step_rate to timer interval
+      timer = calc_timer(step_rate);
+#ifdef ADVANCE
+      advance -= advance_rate;
+      if(advance < final_advance)
+        advance = final_advance;
+#endif //ADVANCE
+      deceleration_time += timer;
+      OCR1A = timer;
+    }       
+    // If current block is finished, reset pointer 
+    step_events_completed += 1;  
+    if (step_events_completed >= current_block->step_event_count) {
+      current_block = NULL;
+      plan_discard_current_block();
+    }   
+
     busy=false;
   }
 
