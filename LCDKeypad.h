@@ -56,6 +56,8 @@ public:
   void reinit()
   {
     LCD.reinit();
+    LCD.clear();
+    display_TEMP();
   }
 
   // This needs to be called regularly e.g. from the mainloop.
