@@ -750,8 +750,8 @@ void Motion::gcode_execute(GCode& gcode)
   gcode.state = GCode::ACTIVE;
   current_gcode = &gcode;
 
-  enableInterrupt();
   setInterruptCycles(gcode.currentinterval);
+  enableInterrupt();
 }
 
 bool Motion::axesAreMoving() 
@@ -781,7 +781,6 @@ void Motion::handleInterrupt()
   if(busy)
     return;
 
-
   // interruptOverflow for step intervals > 16bit
   if(interruptOverflow > 0)
   {
@@ -795,11 +794,10 @@ void Motion::handleInterrupt()
     current_gcode->state = GCode::DONE;
     return;
   }
-
   current_gcode->movesteps--;
 
   // Bresenham-style axis alignment algorithm
-  for(int ax=0;ax<NUM_AXES;ax++)
+  for(ax=0;ax<NUM_AXES;ax++)
   {
     if(ax == current_gcode->leading_axis)
     {
@@ -815,13 +813,17 @@ void Motion::handleInterrupt()
     }
   }
 
+  current_gcode->accel_timer += current_gcode->currentinterval;
 #ifdef INTERRUPT_STEPS
-  busy = true;
-  sei();
+  if(current_gcode->accel_timer > ACCEL_INC_TIME)
+  {
+    busy = true;
+    disableInterrupt();
+    sei();
+  }
 #endif  
 
   // Handle acceleration and deceleration
-  current_gcode->accel_timer += current_gcode->currentinterval;
   if(current_gcode->accel_timer > ACCEL_INC_TIME)
   {
     current_gcode->accel_timer -= ACCEL_INC_TIME;
@@ -868,8 +870,10 @@ void Motion::handleInterrupt()
     disableInterrupt();
     current_gcode->state = GCode::DONE;
   }
-
 #ifdef INTERRUPT_STEPS
+  else
+    enableInterrupt();
+
   busy = false;
 #endif  
 }
@@ -882,38 +886,57 @@ void Motion::setupInterrupt()
   //TCCR1A = 0;
   //TCCR1B = _BV(WGM12) | _BV(CS10);
   // "Fast PWM", top = OCR1A
-  TCCR1A = _BV(WGM11) | _BV(WGM10);
-  TCCR1B = _BV(WGM13) | _BV(WGM12) | _BV(CS10);
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+  {
+    TCCR1A = _BV(WGM11) | _BV(WGM10);
+    TCCR1B = _BV(WGM13) | _BV(WGM12) | _BV(CS10);
+    // Clear flag
+    TIFR1 &= ~(_BV(OCF1A));
+    // Enable timer
+    PRR0 &= ~(_BV(PRTIM1));
+    // Outcompare Compare match A interrupt
+    TIMSK1 &= ~(_BV(OCIE1A));
+    // Clear flag
+    TIFR1 &= ~(_BV(OCF1A));
+  }
+}
+
+void Motion::resetTimer()
+{
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+  {
+    // unSET flag
+    TIFR1 &= ~(_BV(OCF1A));
+    // Reset Timer
+    TCNT1=0;
+  }
 }
 
 
 void Motion::enableInterrupt() 
 {
-   // Enable timer
-  PRR0 &= ~(_BV(PRTIM1));
-  // Outcompare Compare match A interrupt
-  TIMSK1 |= _BV(OCIE1A);
-
+    // Outcompare Compare match A interrupt
+    TIMSK1 |= _BV(OCIE1A);
 }
 void Motion::disableInterrupt() 
 {
-  // Outcompare Compare match A interrupt
-  TIMSK1 &= ~(_BV(OCIE1A));
-  // Disable timer...
-  PRR0 |= _BV(PRTIM1);
-
+    // Outcompare Compare match A interrupt
+    TIMSK1 &= ~(_BV(OCIE1A));
 }
 void Motion::setInterruptCycles(unsigned long cycles) 
 {
-  if(cycles > 60000)
+  //ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
   {
-    OCR1A = 60000;
-    interruptOverflow = cycles / 60000;
-  }
-  else
-    OCR1A = cycles;
+    if(cycles > 60000)
+    {
+      OCR1A = 60000;
+      interruptOverflow = cycles / 60000;
+    }
+    else
+      OCR1A = cycles;
 
-  //TCNT1=0;
+    //TCNT1=0;
+  }
 }
 
 

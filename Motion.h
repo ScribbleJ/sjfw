@@ -115,7 +115,9 @@ private:
   void setupInterrupt(); 
   void enableInterrupt(); 
   void disableInterrupt(); 
+  void resetTimer();
   void setInterruptCycles(unsigned long cycles); 
+  int ax; // used to avoid allocing loop counter in interrupt.
 
 };
 

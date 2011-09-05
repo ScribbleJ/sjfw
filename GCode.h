@@ -169,6 +169,7 @@ private:
 public:
   // TODO: this should be ELSEWHERE.
   static Pin fanpin;
+  static bool DONTRUNEXTRUDER;
 
   // all good
   float feed;

@@ -388,12 +388,12 @@ private:
     // is at startup, so no worries, and handling it in any other
     // fashion would be painful.
 
-    // Hitachi docs say to set 8-bit mode in the first three calls here, but 
-    // this works more reliably.
+    // The timing on this never works right.  Maybe I need to go find different
+    // source docs.
     wait(20);
-    write4init(0b00110000); 
+    write4init(0b00100000); 
     wait(20);
-    write4init(0b00110000); 
+    write4init(0b00100000); 
     wait(20);
     write4init(0b00100000); 
     wait(20);

@@ -27,12 +27,17 @@ extern LCDKeypad LCDKEYPAD;
 Point GCode::lastpos;
 float GCode::lastfeed;
 Pin   GCode::fanpin = Pin();
+bool  GCode::DONTRUNEXTRUDER=false;
 
 // Stuff to do if it's a G move code, otherwise not I guess.
 // This function MAY get called repeatedly before the execute() function.
 // It WILL get called at least once.
 void GCode::prepare()
 {
+  if(DONTRUNEXTRUDER)
+  {
+    cps[E].unset();
+  }
 #ifdef USE_MARLIN
   // Marlin might be able to prepare in advance of being asked to execute the codes with some help.
   state = PREPARED;
@@ -123,7 +128,7 @@ void GCode::wrapupmove()
 }
 
 
-
+#define SKIPEXTRUDE if(DONTRUNEXTRUDER) { state = DONE; return; }
 void GCode::do_g_code() 
 {
 #ifdef USE_MARLIN
@@ -207,6 +212,7 @@ void GCode::do_m_code()
       state = DONE;
       break;
     case 104: // Set Extruder Temperature (Fast)
+      SKIPEXTRUDE;
       if(TEMPERATURE.setHotend(cps[S].getInt()))
       {
 #ifndef REPG_COMPAT        
@@ -251,6 +257,7 @@ void GCode::do_m_code()
       break;
 #endif
     case 109: // Set Extruder Temperature
+      SKIPEXTRUDE;
       if(state != ACTIVE && TEMPERATURE.setHotend(cps[S].getInt()))
         state = ACTIVE;
 
@@ -296,6 +303,7 @@ void GCode::do_m_code()
       state = DONE;
       break;
     case 116: // Wait on temperatures
+      SKIPEXTRUDE;
       if(TEMPERATURE.getHotend() >= TEMPERATURE.getHotendST() && TEMPERATURE.getPlatform() >= TEMPERATURE.getPlatformST())
         state = DONE;
 
@@ -310,6 +318,7 @@ void GCode::do_m_code()
       }
       break;
     case 140: // Bed Temperature (Fast) 
+      SKIPEXTRUDE;
       if(TEMPERATURE.setPlatform(cps[S].getInt()))
       {
 #ifndef REPG_COMPAT        
@@ -434,6 +443,10 @@ void GCode::do_m_code()
         LCDKEYPAD.setColPin(cps[S].getInt(), cps[P].getInt());
       state = DONE;
       break;
+    case 256: // NOT STANDARD - reinit LCD.  This is a temporary 'fix' for the init timing errors
+      LCDKEYPAD.reinit();
+      state = DONE;
+      break;
 #endif
     case 300: // NOT STANDARD - set axis STEP pin
       SETOBJ(setStepPins(*this));
@@ -476,6 +489,13 @@ void GCode::do_m_code()
         GCODES.enableOptimize();
       else
         GCODES.disableOptimize();
+      state = DONE;
+      break;
+    case 351: // NOT STANDARD - disable extruder commands (test print option)
+      if(!cps[P].isUnused() && cps[P].getInt() == 1)
+        DONTRUNEXTRUDER = true;
+      else
+        DONTRUNEXTRUDER = false;
       state = DONE;
       break;
     // case 400,402 handled by GcodeQueue immediately, not queued.

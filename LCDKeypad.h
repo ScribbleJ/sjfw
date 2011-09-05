@@ -52,6 +52,12 @@ public:
     lcd_y = LCD.getRows();
     switchmode_TEMP();
   }
+
+  void reinit()
+  {
+    LCD.reinit();
+  }
+
   // This needs to be called regularly e.g. from the mainloop.
   void handleUpdates()
   {
