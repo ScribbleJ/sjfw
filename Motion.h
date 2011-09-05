@@ -75,6 +75,7 @@ public:
   void reportConfigStatus(Host& h);
   // Motors automatically enabled when used
   void disableAllMotors();
+  void disableAxis(int axis);
   void wrapup(GCode& gcode) { checkdisable(gcode); }
   void checkdisable(GCode& gcode);
 

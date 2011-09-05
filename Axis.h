@@ -184,12 +184,12 @@ class Axis
   {
     if(supposed_position != position)
       return false;
+    if(steps != 0) enable();
     direction = dir;
     steps_to_take = steps;
     steps_remaining = steps;
     if(direction) dir_pin.setValue(!dir_inverted);
     else dir_pin.setValue(dir_inverted);
-    if(steps != 0) enable();
     return true;
   }  
 

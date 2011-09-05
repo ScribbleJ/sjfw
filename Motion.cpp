@@ -169,15 +169,12 @@ void Motion::disableAllMotors()
 
 void Motion::checkdisable(GCode& gcode)
 {
-  static uint8_t disable[NUM_AXES] = { 0 };
-  for(int ax=0;ax < NUM_AXES;ax++)
-  {
-    if(gcode[ax].isUnused())
-      disable[ax]++;
+  // This was STUPID
+}
 
-    if(disable[ax] > 2)
-      AXES[ax].disableIfConfigured();
-  }
+void Motion::disableAxis(int axis)
+{
+  AXES[axis].disableIfConfigured();
 }
 
 
@@ -788,7 +785,6 @@ void Motion::handleInterrupt()
   // interruptOverflow for step intervals > 16bit
   if(interruptOverflow > 0)
   {
-    setInterruptCycles(60000);
     interruptOverflow--;
     return;
   }
@@ -799,11 +795,6 @@ void Motion::handleInterrupt()
     current_gcode->state = GCode::DONE;
     return;
   }
-
-#ifdef INTERRUPT_STEPS
-  busy = true;
-  sei();
-#endif  
 
   current_gcode->movesteps--;
 
@@ -823,6 +814,11 @@ void Motion::handleInterrupt()
       errors[ax] = errors[ax] + deltas[current_gcode->leading_axis];
     }
   }
+
+#ifdef INTERRUPT_STEPS
+  busy = true;
+  sei();
+#endif  
 
   // Handle acceleration and deceleration
   current_gcode->accel_timer += current_gcode->currentinterval;

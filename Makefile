@@ -27,7 +27,7 @@ AVR_GCC_PATH = $(AVR_TOOLS_PATH)
 
 #Reasonable settings for Atmega644p
 #UPLOAD_RATE = 38400
-#AVRDUDE_PROGRAMMER = avrisp2
+#AVRDUDE_PROGRAMMER = stk500v1
 #PORT = /dev/ttyUSB0
 #MCU = atmega644p
 
@@ -100,7 +100,7 @@ FORMAT = ihex
 CXXBENICE = -fno-default-inline 
 CXXBEMEAN = 
 CXXDEFS = -DF_CPU=$(F_CPU) $(EXTRA_DEFINES)
-CXXEXTRA = -fno-threadsafe-statics -fwrapv -fno-exceptions -ffunction-sections -fdata-sections -Wall 
+CXXEXTRA = -fno-threadsafe-statics -fwrapv -fno-exceptions -ffunction-sections -fdata-sections -Wall -funroll-loops
 CXXFLAGS = $(CXXDEFS) $(CXXINCS) -O$(OPT) $(CXXEXTRA) $(CXXBENICE)
 LDFLAGS = -lm
 

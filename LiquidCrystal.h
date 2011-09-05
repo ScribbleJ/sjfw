@@ -78,8 +78,8 @@ public:
     for (int i = 0; i < 8; i++) 
 #endif
     {
-      _data_pins[i].setDirection(true);
       _data_pins[i].setValue(false);
+      _data_pins[i].setDirection(true);
     }
 
     // Set bitmode, multiline mode - follows hitachi docs
@@ -391,12 +391,12 @@ private:
     // Hitachi docs say to set 8-bit mode in the first three calls here, but 
     // this works more reliably.
     wait(20);
+    write4init(0b00110000); 
+    wait(20);
+    write4init(0b00110000); 
+    wait(20);
     write4init(0b00100000); 
-    wait(10);
-    write4init(0b00100000); 
-    wait(5);
-    write4init(0b00100000); 
-    wait(5);
+    wait(20);
     write4init(0b00100000); 
     initialized = true;
   }

@@ -236,7 +236,7 @@ namespace Marlin
   float safe_speed(block_t *block) {
     float safe_speed;
     float max_jerk = 99999999;
-    AXESLOOP(ax) { max_jerk = min(max_jerk, min_feedrate[ax]); }
+    AXESLOOP(ax) { if(block->steps[ax] != 0) max_jerk = min(max_jerk, min_feedrate[ax]); }
     safe_speed = max_jerk/2;  
     if (safe_speed > block->nominal_speed) safe_speed = block->nominal_speed;
     return safe_speed;  
@@ -260,8 +260,8 @@ namespace Marlin
 
     // Calculate the entry_factor for the current block. 
     if (previous) {
-      float max_jerk = 0;
-      AXESLOOP(ax) { max_jerk = min(max_jerk, min_feedrate[ax]); }
+      float max_jerk = 9999999;
+      AXESLOOP(ax) { if(current->steps[ax] != 0 || previous->steps[ax] != 0) max_jerk = min(max_jerk, min_feedrate[ax]); }
 
       // Reduce speed so that junction_jerk is within the maximum allowed
       float jerk = junction_jerk(previous, current);

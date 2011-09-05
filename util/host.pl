@@ -57,8 +57,9 @@ while(1)
       $bufsize++;
     }
   }
-  elsif($bufsize < $bufmax and scalar @ready and $started and defined(my $line=<STDIN>))
+  elsif($bufsize < $bufmax and scalar @ready and $started)
   {
+    my $line=<STDIN>;
     chomp $line;
     $line =~ s/\(.*$//o;
     $line =~ s/\;.*$//o;

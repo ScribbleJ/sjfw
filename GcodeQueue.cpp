@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <avr/pgmspace.h>
+#include "Motion.h"
 
 // REMOVEME
 #include "Time.h"
@@ -16,16 +17,29 @@
 void GcodeQueue::handlenext()
 {
   static unsigned int loops = 0;
-  // static unsigned long last = millis();
+#ifndef USE_MARLIN  
+  static unsigned long last = millis();
+  unsigned long now = millis();
+  // Check once a second to disable motors.
+  if(now - last > 1000)
+  {
+    last = now;
+    bool axesseen[NUM_AXES];
+    for(int x=0;x<codes.getCount();x++)
+    {
+      for(int ax = 0; ax<NUM_AXES; ax++)
+      {
+        if(codes.peek(x).axismovesteps[ax] != 0)
+          axesseen[ax] = true;
+      }
+    }
+    for(int ax = 0; ax<NUM_AXES; ax++)
+      if(!axesseen[ax]) MOTION.disableAxis(ax);
+  }
+#endif  
+
   if(codes.getCount() == 0)
   {
-/*  unsigned long now = millis();
-    if(now - last > 1000)
-    {
-      last = now;
-      HOST.write("NOTHING IN QUEUE.\n");
-    }
-*/    
     return;
   }
 
