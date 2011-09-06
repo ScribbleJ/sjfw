@@ -387,9 +387,15 @@ private:
     LCD.home();
     int t=0;
     if(lcd_x>16)
-      LCD.write_P(PSTR("Hotend: "));
+    {
+      LCD.write_P(PSTR("Hotend:    /   "));
+      LCD.setCursor(8,0);
+    }
     else
-      LCD.write_P(PSTR("H:"));
+    {
+      LCD.write_P(PSTR("H:   /   "));
+      LCD.setCursor(2,0);
+    }
     t = TEMPERATURE.getHotend();
     if(t == 1024)
       LCD.write_P(PSTR("MISSING!"));
@@ -402,9 +408,16 @@ private:
     }
     LCD.setCursor(0,1);
     if(lcd_x>16)
-      LCD.write_P(PSTR("Bed   : "));
+    {
+      LCD.write_P(PSTR("Bed   :    /   "));
+      LCD.setCursor(8,1);
+    }
     else
-      LCD.write_P(PSTR("B:"));
+    {
+      LCD.write_P(PSTR("B:   /   "));
+      LCD.setCursor(2,1);
+    }
+
     t = TEMPERATURE.getPlatform();
     if(t == 1024)
       LCD.write_P(PSTR("MISSING!"));
