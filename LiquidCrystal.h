@@ -84,22 +84,19 @@ public:
 
     // Set bitmode, multiline mode - follows hitachi docs
     initialize();
-/*    
+
 #ifdef USE4BITMODE
     setFunction(false, (_numlines > 1) ? true : false, false);
 #else    
     setFunction(true, (_numlines > 1) ? true : false, false);
 #endif    
 
-*/
     // display off, cursor and blink off
-    setDisplayControls(false, false, false);
+    setDisplayControls(true, false, false);
     // clear
     clear();
     // No scrolling, shift right
     setEntryMode(false, false);
-    // turn display on, cursor off
-    setDisplayControls(true, false, false);
     // clear
     clear();
   }
@@ -386,6 +383,8 @@ private:
     _rw_pin.setValue(false);
     _rs_pin.setDirection(true);
     _rs_pin.setValue(false);
+    _enable_pin.setDirection(true);
+    _enable_pin.setValue(false);
 
     // Normally I wouldn't allow delays in the code at all, but this
     // is at startup, so no worries, and handling it in any other
@@ -393,33 +392,35 @@ private:
 
     // The timing on this never works right.  Maybe I need to go find different
     // source docs.
-    wait(1000);
-    write4init(0b00110000); 
-    wait(500);
-    write4init(0b00110000); 
     wait(100);
-    write4init(0b00110000); 
-    wait(100);
-    write4init(0b00100000); 
-    wait(100);
+    write4init(0x3);
+    wait(10);
+    write4init(0x3); 
+    wait(10);
+    write4init(0x3); 
+    wait(10);
+    write4init(0x2); 
+    wait(10);
 
+    /*
     // function set
-    write4init(0b00100000); 
-    wait(100);
-    write4init(0b10000000); 
-    wait(100);
+    write4init(0b0010); 
+    wait(10);
+    write4init(0b1000); 
+    wait(10);
+
 
     // display off
-    write4init(0b00000000); 
-    wait(100);
-    write4init(0b10000000); 
-    wait(100);
+    write4init(0b0000); 
+    wait(10);
+    write4init(0b1000); 
+    wait(10);
 
     // display on
-    write4init(0b00000000); 
-    wait(100);
-    write4init(0b11110000); 
-    wait(100);
+    write4init(0b0000); 
+    wait(10);
+    write4init(0b1111); 
+    wait(10);
 
     // entry mode
     write4init(0b00000000); 
@@ -437,7 +438,9 @@ private:
     write4init(0b00000000); 
     wait(100);
     write4init(0b00100000); 
-    wait(1000);
+    wait(100);
+    */
+
 
     initialized = true;
   }

@@ -131,26 +131,26 @@ void Host::scan_input()
 /*** INTERRUPT HANDLERS ***/
 ISR(USART0_RX_vect)
 {
-  HOST.rx_interrupt_handler(0);
+  HOST.rx_interrupt_handler0();
 }
 
 ISR(USART0_UDRE_vect)
 {
-  HOST.udre_interrupt_handler(0);
+  HOST.udre_interrupt_handler0();
 }
 
 #ifdef HIGHPORTS
 ISR(USART2_RX_vect)
 {
 #ifdef HAS_BT
-  BT.rx_interrupt_handler(2);
+  BT.rx_interrupt_handler2();
 #endif  
 }
 
 ISR(USART2_UDRE_vect)
 {
 #ifdef HAS_BT
-  BT.udre_interrupt_handler(2);
+  BT.udre_interrupt_handler2();
 #endif
 }
 #endif

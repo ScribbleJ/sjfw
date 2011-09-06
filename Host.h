@@ -170,44 +170,44 @@ class Host
 
     void scan_input();
 
-    void rx_interrupt_handler(int p)
+    void rx_interrupt_handler0()
     {
-      uint8_t c;
-#ifdef HIGHPORTS      
-      if(p == 2)
-      {
-        c = UDR2;
-        //i0().write(c);
-      }
-      else
-#endif      
-      {
-        c = UDR0;
-      }
+      uint8_t c = UDR0;
       rxring.push(c);
       if(c <= 32)
         input_ready++;
     }
 
-    void udre_interrupt_handler(int p)
-    {
 #ifdef HIGHPORTS      
-      if(p == 2)
-      {
-        if(txring.getCount() > 0)
-          UDR2 = txring.pop();
-        else
-          UCSR2B &= ~MASK(UDRIE2);
-      }
-      else
-#endif        
-      {
-        if(txring.getCount() > 0)
-          UDR0 = txring.pop();
-        else
-          UCSR0B &= ~MASK(UDRIE0);
-      }
+    void rx_interrupt_handler2()
+    {
+      uint8_t c = UDR2;
+      rxring.push(c);
+      if(c <= 32)
+        input_ready++;
     }
+#endif    
+
+
+
+    void udre_interrupt_handler0()
+    {
+      if(txring.getCount() > 0)
+        UDR0 = txring.pop();
+      else
+        UCSR0B &= ~MASK(UDRIE0);
+    }
+
+#ifdef HIGHPORTS      
+    void udre_interrupt_handler2()
+    {
+      if(txring.getCount() > 0)
+        UDR2 = txring.pop();
+      else
+        UCSR2B &= ~MASK(UDRIE2);
+    }
+#endif    
+
 
   private:
     uint8_t rxbuf[HOST_RECV_BUFSIZE];
