@@ -13,6 +13,9 @@
 #define max(x,y) (x > y ? x : y)
 #define min(x,y) (x < y ? x : y)
 
+// Testing shows this is probably better put nearer 1000.
+#define MIN_INTERVAL 500
+
 Point& Motion::getCurrentPosition()
 {
   static Point p;
@@ -425,6 +428,8 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
   if(gcode.optimized)
     return;
 
+  gcode.optimized = true;
+
   if(gcode[G].isUnused() || nextg[G].isUnused())
     return;
 
@@ -437,7 +442,6 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
   if(nextg.movesteps == 0)
     return;
 
-  gcode.optimized = true;
   //HOST.write("Optimize\n");
 
   // Compute the maximum speed we can be going at the end o the move in order
@@ -747,6 +751,14 @@ void Motion::gcode_execute(GCode& gcode)
     // get optimized ourselves.
     handle_unopt(gcode);
   }
+
+  // TODO: this catches a rounding error in the lookahead code.
+  if(gcode.currentinterval > 120000)
+  {
+    //HOST.write(gcode.linenum);
+    //HOST.labelnum("WTF: ", gcode.currentinterval);
+    gcode.currentinterval = MIN_INTERVAL;
+  }
 #endif
 
 
@@ -794,10 +806,13 @@ void Motion::handleInterrupt()
   disableInterrupt();
   sei();
 #endif  
+
   // interruptOverflow for step intervals > 16bit
   if(interruptOverflow > 0)
   {
     interruptOverflow--;
+    enableInterrupt();
+    busy=false;
     return;
   }
 
@@ -805,6 +820,7 @@ void Motion::handleInterrupt()
   {
     disableInterrupt();
     current_gcode->state = GCode::DONE;
+    busy=false;
     return;
   }
 
@@ -933,13 +949,14 @@ void Motion::resetTimer()
 
 void Motion::enableInterrupt() 
 {
-    // Outcompare Compare match A interrupt
-    TIMSK1 |= _BV(OCIE1A);
+  // Outcompare Compare match A interrupt
+  TIMSK1 |= _BV(OCIE1A);
 }
+
 void Motion::disableInterrupt() 
 {
-    // Outcompare Compare match A interrupt
-    TIMSK1 &= ~(_BV(OCIE1A));
+  // Outcompare Compare match A interrupt
+  TIMSK1 &= ~(_BV(OCIE1A));
 }
 
 void Motion::setInterruptCycles(unsigned long cycles) 
@@ -951,8 +968,8 @@ void Motion::setInterruptCycles(unsigned long cycles)
       OCR1A = 60000;
       interruptOverflow = cycles / 60000;
     }
-    else if(cycles < 500)
-      OCR1A = 500;
+    else if(cycles < MIN_INTERVAL)
+      OCR1A = MIN_INTERVAL;
     else
       OCR1A = cycles;
   }
