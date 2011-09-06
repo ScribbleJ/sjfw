@@ -265,7 +265,7 @@ void Motion::getActualEndpos(GCode& gcode)
 }
 
 
-#define ACCEL_INC_TIME F_CPU/1000
+#define ACCEL_INC_TIME F_CPU/100
 void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
 {
   if(gcode.state >= GCode::PREPARED)
@@ -420,6 +420,7 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
 
 void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
 {
+#ifdef LOOKAHEAD
   // I need to think about this a lot more.
   if(gcode.optimized)
     return;
@@ -646,11 +647,12 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
 
   gcode.currentinterval = AXES[gcode.leading_axis].int_interval_from_feedrate(gcode.startfeed);
   gcode.currentfeed = gcode.startfeed;
-
+#endif
 }
 
 void Motion::handle_unopt(GCode &gcode)
 {
+#ifdef LOOKAHEAD
   if(gcode[G].isUnused() || gcode[G].getInt() != 1)
     return;
 
@@ -696,6 +698,7 @@ void Motion::handle_unopt(GCode &gcode)
 #ifdef DEBUG_MOVE
   HOST.labelnum("unopt ", gcode.endfeed);
 #endif
+#endif
 }
 
 void Motion::gcode_execute(GCode& gcode)
@@ -737,12 +740,16 @@ void Motion::gcode_execute(GCode& gcode)
 #endif
   }
 
+#ifdef LOOKAHEAD
   if(!gcode.optimized && GCODES.shouldOptimize())
   {
     // It's possible we had our start parameters optimized by the previous code but didn't
     // get optimized ourselves.
     handle_unopt(gcode);
   }
+#endif
+
+
 #ifdef DEBUG_MOVE
   gcode.dump_movedata();
 #endif

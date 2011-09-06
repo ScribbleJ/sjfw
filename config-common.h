@@ -18,7 +18,7 @@
 #endif
 
 // Each source eats anough ram for 1 addtl gcode
-#if (defined HAS_BT) || defined(HAS_LCD)
+#if (defined HAS_BT) || defined(HAS_KEYPAD)
 #define GCODE_SOURCES 5
 #define HOST_SOURCE 0
 #define SD_SOURCE   1

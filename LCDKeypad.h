@@ -80,7 +80,10 @@ public:
       last_lcdrefresh = now;
       update_TEMPGRAPH();
       update_TEMP();
+      
+#ifdef HAS_KEYPAD
       update_MOTORS();
+#endif      
     }
 
   }
@@ -89,6 +92,7 @@ public:
   void setRW(int pin) { LCD.setRW(pin); }
   void setE(int pin) { LCD.setE(pin); }
   void setD(int n, int pin) { LCD.setD(n, pin); }
+#ifdef HAS_KEYPAD  
   void setRowPin(int n, int pin) { KEYPAD.setRowPin(n, pin); }
   void setColPin(int n, int pin) { KEYPAD.setColPin(n, pin); }
 
@@ -115,6 +119,10 @@ public:
         break;
     }
   }
+#else
+  void setRowPin(int n, int pin) { ; }
+  void setColPin(int n, int pin) { ; }
+#endif  
 
 private:
   unsigned long last_lcdrefresh;
@@ -135,6 +143,7 @@ private:
 
 
   
+#ifdef HAS_KEYPAD  
   void inputswitch(char key)
   {
     bool handled = false;
@@ -178,6 +187,106 @@ private:
       default:
         ;
     }
+  }
+
+  bool keyhandler_SDSELECT(char key) 
+  { 
+#ifdef HAS_SD    
+    if(sdcard::isReading())
+      return false;
+
+    switch(key)
+    {
+      case '6':
+        sdcard::getNextfile();
+        switchmode_SDSELECT();
+        return true;
+      case '#':
+        sdcard::printcurrent();
+        switchmode_SDSELECT();
+        return true;
+      default:
+        return false;
+    }
+#endif
+    return false;
+  }
+
+
+  bool keyhandler_MENU(char key) { return false; }
+
+  bool keyhandler_MOTORS(char key) 
+  { 
+    bool handled = false;
+    switch(key)
+    {
+      case '1':
+        motordistance += *motordistance_roc;
+        return true;
+      case '7':
+        motordistance -= *motordistance_roc;
+        if(motordistance < 0)
+          motordistance = 0;
+        return true;
+      case '*':
+        extrude = !extrude;
+        return true;
+      case '#':
+        motordistance_roc++;
+        if(*motordistance_roc == 0.0f)
+        {
+          motordistance_roc = ROC_START;
+        }
+        return true;
+      case '5':
+      case '2':
+      case '8':
+      case '4':
+      case '6':
+      case '3':
+      case '9':
+        if(GCODES.isFull())
+          return true;
+        handled = true;
+    }
+    if(!handled)
+      return false;
+
+    GCode t;
+    Point& p = GCode::getLastpos();
+    switch(key)
+    {
+      case '5':
+        t[M].setInt(84);
+        GCODES.enqueue(t);
+        return true;
+      case '2':
+        t[G].setInt(1);
+        t[Y].setFloat(p[Y] - motordistance);
+        break;
+      case '8':
+        t[G].setInt(1);
+        t[Y].setFloat(p[Y] + motordistance);
+        break;
+      case '4':
+        t[G].setInt(1);
+        t[X].setFloat(p[X] - motordistance);
+        break;
+      case '6':
+        t[G].setInt(1);
+        t[X].setFloat(p[X] + motordistance);
+        break;
+      case '3':
+        t[G].setInt(1);
+        t[Z].setFloat(p[Z] + motordistance);
+        break;
+      case '9':
+        t[G].setInt(1);
+        t[Z].setFloat(p[Z] - motordistance);
+        break;
+    }
+    GCODES.enqueue(t);
+    return true;
   }
 
   bool keyhandler_TEMP(char key)
@@ -239,6 +348,7 @@ private:
       now = 0;
     TEMPERATURE.setPlatform(now);
   }
+#endif  
 
 
   void update_TEMPGRAPH()
@@ -334,80 +444,7 @@ private:
     display_TEMP();
   }
 
-  bool keyhandler_MOTORS(char key) 
-  { 
-    bool handled = false;
-    switch(key)
-    {
-      case '1':
-        motordistance += *motordistance_roc;
-        return true;
-      case '7':
-        motordistance -= *motordistance_roc;
-        if(motordistance < 0)
-          motordistance = 0;
-        return true;
-      case '*':
-        extrude = !extrude;
-        return true;
-      case '#':
-        motordistance_roc++;
-        if(*motordistance_roc == 0.0f)
-        {
-          motordistance_roc = ROC_START;
-        }
-        return true;
-      case '5':
-      case '2':
-      case '8':
-      case '4':
-      case '6':
-      case '3':
-      case '9':
-        if(GCODES.isFull())
-          return true;
-        handled = true;
-    }
-    if(!handled)
-      return false;
-
-    GCode t;
-    Point& p = GCode::getLastpos();
-    switch(key)
-    {
-      case '5':
-        t[M].setInt(84);
-        GCODES.enqueue(t);
-        return true;
-      case '2':
-        t[G].setInt(1);
-        t[Y].setFloat(p[Y] - motordistance);
-        break;
-      case '8':
-        t[G].setInt(1);
-        t[Y].setFloat(p[Y] + motordistance);
-        break;
-      case '4':
-        t[G].setInt(1);
-        t[X].setFloat(p[X] - motordistance);
-        break;
-      case '6':
-        t[G].setInt(1);
-        t[X].setFloat(p[X] + motordistance);
-        break;
-      case '3':
-        t[G].setInt(1);
-        t[Z].setFloat(p[Z] + motordistance);
-        break;
-      case '9':
-        t[G].setInt(1);
-        t[Z].setFloat(p[Z] - motordistance);
-        break;
-    }
-    GCODES.enqueue(t);
-    return true;
-  }
-
+#ifdef HAS_KEYPAD
   void switchmode_MOTORS()
   {
     currentmode = MOTORS;
@@ -466,7 +503,6 @@ private:
 
   }
 
-  bool keyhandler_MENU(char key) { return false; }
   void switchmode_MENU()
   {
     currentmode = MENU;
@@ -475,29 +511,6 @@ private:
     LCD.write_P(PSTR("MAIN MENU"));
   }
 
-
-  bool keyhandler_SDSELECT(char key) 
-  { 
-#ifdef HAS_SD    
-    if(sdcard::isReading())
-      return false;
-
-    switch(key)
-    {
-      case '6':
-        sdcard::getNextfile();
-        switchmode_SDSELECT();
-        return true;
-      case '#':
-        sdcard::printcurrent();
-        switchmode_SDSELECT();
-        return true;
-      default:
-        return false;
-    }
-#endif
-    return false;
-  }
     
   void switchmode_SDSELECT()
   {
@@ -531,6 +544,7 @@ private:
 #endif    
     tagline();
   }
+#endif  
 
   void tagline()
   {

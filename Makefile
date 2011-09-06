@@ -6,6 +6,7 @@ USE_LCD = 1
 USE_KEYPAD = 1
 #USE_BT = 1
 #USE_MARLIN = 1
+INCLUDE_SJFW_LOOKAHEAD = 1
 
 # EC for Gen3/4 only.  Others default to 100k Thermistors.
 #USE_EXTRUDERCONTROLLER = 1
@@ -67,7 +68,7 @@ endif
 ifeq ($(MCU),atmega644p)
   OPT = s
 else
-  OPT = 0
+  OPT = s
 endif
 ifeq ($(USE_BT),1)
   BT_FILES = 
@@ -80,13 +81,18 @@ else
   MOTION_FILES = Motion.cpp Axis.cpp
   MOTION_DEFINES =
 endif
+ifeq ($(INCLUDE_SJFW_LOOKAHEAD),1)
+  LOOK_FILES = 
+  LOOK_DEFINES = -DLOOKAHEAD
+endif
 
 
 
   
 
-EXTRA_FILES = $(MOTION_FILES) $(LCD_FILES) $(SD_FILES) $(BOARD_FILES) $(KEYPAD_FILES) $(BT_FILES)
-EXTRA_DEFINES = $(MOTION_DEFINES) $(LCD_DEFINES) $(SD_DEFINES) $(BOARD_DEFINES) $(KEYPAD_DEFINES) $(BT_DEFINES) -DSJFW_VERSION='"$(SJFW_VERSION)"'
+EXTRA_FILES = $(MOTION_FILES) $(LCD_FILES) $(SD_FILES) $(BOARD_FILES) $(KEYPAD_FILES) $(BT_FILES) $(LOOK_FILES)
+EXTRA_DEFINES = $(MOTION_DEFINES) $(LCD_DEFINES) $(SD_DEFINES) $(BOARD_DEFINES) $(KEYPAD_DEFINES) $(BT_DEFINES) -DSJFW_VERSION='"$(SJFW_VERSION)"' $(LOOK_DEFINES)
+
 
 
 F_CPU = 16000000
@@ -101,7 +107,13 @@ CXXBENICE = -fno-default-inline
 CXXBEMEAN = 
 CXXDEFS = -DF_CPU=$(F_CPU) $(EXTRA_DEFINES)
 CXXEXTRA = -fno-threadsafe-statics -fwrapv -fno-exceptions -ffunction-sections -fdata-sections -Wall -funroll-loops
+#work around current bug in compiler triggered by Marlin engine by disabling optimization.
+ifeq ($(USE_MARLIN),1)
+CXXFLAGS = $(CXXDEFS) $(CXXINCS) -O0 $(CXXEXTRA) $(CXXBENICE)
+else
 CXXFLAGS = $(CXXDEFS) $(CXXINCS) -O$(OPT) $(CXXEXTRA) $(CXXBENICE)
+endif
+
 LDFLAGS = -lm
 
 # Programming support using avrdude. Settings and variables.

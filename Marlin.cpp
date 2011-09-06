@@ -770,7 +770,7 @@ void plan_buffer_line(block_t* block)
       timer = (unsigned short)pgm_read_word_near(table_address);
       timer -= (((unsigned short)pgm_read_word_near(table_address+2) * (unsigned char)(step_rate & 0x0007))>>3);
     }
-    if(timer < 100) timer = 100;
+    if(timer < 250) timer = 250;
     return timer;
   }
 
@@ -795,6 +795,8 @@ void plan_buffer_line(block_t* block)
 
 
 int ax;
+int foo;
+#define ALOOPISR() for(foo=0;foo<NUM_AXIS;foo++) 
 
   // "The Stepper Driver Interrupt" - This timer interrupt is the workhorse.  
   // It pops blocks from the block_buffer and executes them by pulsing the stepper pins appropriately. 
@@ -873,7 +875,7 @@ int ax;
           float sr = (float)current_block->step_event_count / (float)current_block->steps[ax];
           current_block->endposition[ax] += (float)(current_block->step_event_count - step_events_completed) * sr;
           current_block->steps[ax] = 0;
-          AXESLOOP(foo) if(current_block->steps[foo]) continue;
+          ALOOPISR() if(current_block->steps[foo]) continue;
           DISABLE_STEPPER_DRIVER_INTERRUPT();
           current_block->busy = false;
           current_block = NULL;
@@ -891,7 +893,7 @@ int ax;
           float sr = (float)current_block->step_event_count / (float)current_block->steps[ax];
           current_block->endposition[ax] -= (float)(current_block->step_event_count - step_events_completed) * sr;
           current_block->steps[ax] = 0;
-          AXESLOOP(foo) if(current_block->steps[foo]) continue;
+          ALOOPISR() if(current_block->steps[foo]) continue;
           DISABLE_STEPPER_DRIVER_INTERRUPT();
           current_block->busy = false;
           current_block = NULL;
