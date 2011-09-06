@@ -5,7 +5,7 @@ use IO::Select;
 
 local $|=1;
 
-my $use_sjfwcrc = 1;
+my $use_sjfwcrc = 0;
 
 
 

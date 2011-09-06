@@ -35,7 +35,7 @@
 // How often to update the temperature display on the LCD.
 #define LCD_REFRESH_MILLIS 2000
 // Size of LCD command queue.. should be minimum of LCD_X*LCD_Y + 100
-#define LCD_BUFFER_SIZE 250
+#define LCD_BUFFER_SIZE 200
 
 
 

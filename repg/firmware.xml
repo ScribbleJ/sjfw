@@ -2,7 +2,7 @@
   <!--
      SJFW http://reprap.org/wiki/Sjfw
     -->
-  <board name="Mega1280 Gen4 or Thing-O-Matic" icon="icon-mb24.png">
+  <board name="Mega1280" icon="icon-mb24.png">
     <version major="1" minor="0"/>
     <programmer class="replicatorg.uploader.AvrdudeUploader">
       <protocol>stk500v1</protocol>
@@ -12,22 +12,35 @@
     </programmer>
     <firmware
        major="1"
-       minor="5"
-       relpath="firmware/1280-w-ec-v1.5.hex"
-       name="v1.5"
-       description="sjfw v1.5 for ThingOMatic/Gen4."
+       minor="6"
+       relpath="firmware/1280-w-100k-v1.6.hex"
+       name="Thermistor on Motherboard 1.6"
+       description="sjfw v1.6 for single-board Repraps."
        />
     <firmware
        major="1"
        minor="6"
        relpath="firmware/1280-w-ec-v1.6.hex"
-       name="v1.6"
+       name="Temperature on EC 1.6"
        description="sjfw v1.6 for ThingOMatic/Gen4."
        />
-
+    <firmware
+       major="1"
+       minor="7"
+       relpath="firmware/1280-w-100k-v1.7.hex"
+       name="Thermistor on Motherboard 1.7"
+       description="sjfw v1.7 for single-board Repraps."
+       />
+    <firmware
+       major="1"
+       minor="7"
+       relpath="firmware/1280-w-ec-v1.7.hex"
+       name="Temperature on EC 1.7"
+       description="sjfw v1.7 for ThingOMatic/Gen4."
+       />
   </board>
 
-  <board name="Mega2560 Gen4 or Thing-O-Matic " icon="icon-mb24.png">
+  <board name="Mega2560" icon="icon-mb24.png">
     <version major="1" minor="0"/>
     <programmer class="replicatorg.uploader.AvrdudeUploader">
       <protocol>stk500v2</protocol>
@@ -37,69 +50,32 @@
     </programmer>
     <firmware
        major="1"
-       minor="5"
-       relpath="firmware/2560-w-ec-v1.5.hex"
-       name="v1.5"
-       description="sjfw v1.5 for ThingOMatic/Gen4."
+       minor="6"
+       relpath="firmware/2560-w-100k-v1.6.hex"
+       name="Thermistor on Motherboard 1.6"
+       description="sjfw v1.6 for single-board Repraps."
        />
     <firmware
        major="1"
        minor="6"
        relpath="firmware/2560-w-ec-v1.6.hex"
-       name="v1.6"
+       name="Temperature on EC 1.6"
        description="sjfw v1.6 for ThingOMatic/Gen4."
        />
-
-  </board>
-
-  <board name="Mega1280 with 100k therm (RAMPS) " icon="icon-mb24.png">
-    <version major="1" minor="0"/>
-    <programmer class="replicatorg.uploader.AvrdudeUploader">
-      <protocol>stk500v1</protocol>
-      <speed>57600</speed>
-      <arch>m1280</arch>
-      <manualreset>true</manualreset>
-    </programmer>
     <firmware
        major="1"
-       minor="5"
-       relpath="firmware/1280-w-100k-v1.5.hex"
-       name="v1.5"
-       description="sjfw v1.5 for 100k."
+       minor="7"
+       relpath="firmware/2560-w-100k-v1.7.hex"
+       name="Thermistor on Motherboard 1.7"
+       description="sjfw v1.7 for single-board Repraps."
        />
     <firmware
        major="1"
-       minor="6"
-       relpath="firmware/1280-w-100k-v1.6.hex"
-       name="v1.6"
-       description="sjfw v1.6 for 100k."
+       minor="7"
+       relpath="firmware/2560-w-ec-v1.7.hex"
+       name="Temperature on EC 1.7"
+       description="sjfw v1.7 for ThingOMatic/Gen4."
        />
-
-  </board>
-
-  <board name="Mega2560 with 100k therm (RAMPS) " icon="icon-mb24.png">
-    <version major="1" minor="0"/>
-    <programmer class="replicatorg.uploader.AvrdudeUploader">
-      <protocol>stk500v2</protocol>
-      <speed>115200</speed>
-      <arch>m2560</arch>
-      <manualreset>true</manualreset>
-    </programmer>
-    <firmware
-       major="1"
-       minor="5"
-       relpath="firmware/2560-w-100k-v1.5.hex"
-       name="v1.5"
-       description="sjfw v1.5 for 100k"
-       />
-    <firmware
-       major="1"
-       minor="6"
-       relpath="firmware/2560-w-100k-v1.6.hex"
-       name="v1.6"
-       description="sjfw v1.6 for 100k"
-       />
-
   </board>
 
   <board name="Mega644p " icon="icon-mb24.png">
@@ -112,17 +88,17 @@
     </programmer>
     <firmware
        major="1"
-       minor="5"
-       relpath="firmware/644p-w-ec-v1.5.hex"
-       name="Exctruder Controller v1.5"
-       description="sjfw v1.5 for Gen3"
+       minor="7"
+       relpath="firmware/644p-w-ec-v1.7.hex"
+       name="Temperature on EC 1.7"
+       description="sjfw v1.7 for Gen3"
        />
     <firmware
        major="1"
-       minor="6"
-       relpath="firmware/644p-w-100k-v1.6.hex"
-       name="100k Thermistor v1.6"
-       description="sjfw v1.6 for 644p"
+       minor="7"
+       relpath="firmware/644p-w-100k-v1.7.hex"
+       name="Thermistor on Motherboard 1.7"
+       description="sjfw v1.7 for single-board Repraps"
        />
 
   </board>
