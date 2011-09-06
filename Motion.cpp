@@ -781,6 +781,12 @@ void Motion::handleInterrupt()
   if(busy)
     return;
 
+#ifdef INTERRUPT_STEPS
+  busy = true;
+  //resetTimer();
+  disableInterrupt();
+  sei();
+#endif  
   // interruptOverflow for step intervals > 16bit
   if(interruptOverflow > 0)
   {
@@ -794,6 +800,7 @@ void Motion::handleInterrupt()
     current_gcode->state = GCode::DONE;
     return;
   }
+
   current_gcode->movesteps--;
 
   // Bresenham-style axis alignment algorithm
@@ -814,6 +821,7 @@ void Motion::handleInterrupt()
   }
 
   current_gcode->accel_timer += current_gcode->currentinterval;
+/*  
 #ifdef INTERRUPT_STEPS
   if(current_gcode->accel_timer > ACCEL_INC_TIME)
   {
@@ -822,6 +830,7 @@ void Motion::handleInterrupt()
     sei();
   }
 #endif  
+*/
 
   // Handle acceleration and deceleration
   if(current_gcode->accel_timer > ACCEL_INC_TIME)
@@ -905,6 +914,8 @@ void Motion::resetTimer()
 {
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
   {
+    // Disabel timer
+    PRR0 |= _BV(PRTIM1);
     // unSET flag
     TIFR1 &= ~(_BV(OCF1A));
     // Reset Timer
@@ -923,19 +934,20 @@ void Motion::disableInterrupt()
     // Outcompare Compare match A interrupt
     TIMSK1 &= ~(_BV(OCIE1A));
 }
+
 void Motion::setInterruptCycles(unsigned long cycles) 
 {
-  //ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
   {
     if(cycles > 60000)
     {
       OCR1A = 60000;
       interruptOverflow = cycles / 60000;
     }
+    else if(cycles < 500)
+      OCR1A = 500;
     else
       OCR1A = cycles;
-
-    //TCNT1=0;
   }
 }
 

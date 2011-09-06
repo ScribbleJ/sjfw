@@ -102,7 +102,11 @@ while(1)
   elsif($bufsize < $bufmax and scalar @ready and $started > 1)
   {
     my $line=<STDIN>;
-    die("all done.") if($line eq undef);
+    if($line eq undef)
+    {
+      sleep(30); # temporary hack
+      die("All done.\n");
+    }
     chomp $line;
     $line =~ s/\(.*$//o;
     $line =~ s/\;.*$//o;

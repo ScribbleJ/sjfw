@@ -395,47 +395,47 @@ private:
     // source docs.
     wait(1000);
     write4init(0b00110000); 
-    wait(50);
+    wait(500);
     write4init(0b00110000); 
-    wait(10);
+    wait(100);
     write4init(0b00110000); 
-    wait(10);
+    wait(100);
     write4init(0b00100000); 
-    wait(10);
+    wait(100);
 
     // function set
     write4init(0b00100000); 
-    wait(10);
+    wait(100);
     write4init(0b10000000); 
-    wait(10);
+    wait(100);
 
     // display off
     write4init(0b00000000); 
-    wait(10);
+    wait(100);
     write4init(0b10000000); 
-    wait(10);
+    wait(100);
 
     // display on
     write4init(0b00000000); 
-    wait(10);
+    wait(100);
     write4init(0b11110000); 
-    wait(10);
+    wait(100);
 
     // entry mode
     write4init(0b00000000); 
-    wait(10);
+    wait(100);
     write4init(0b01100000); 
-    wait(10);
+    wait(100);
 
     // clear
     write4init(0b00000000); 
-    wait(10);
+    wait(100);
     write4init(0b00010000); 
     wait(100);
 
     // home
     write4init(0b00000000); 
-    wait(10);
+    wait(100);
     write4init(0b00100000); 
     wait(1000);
 
