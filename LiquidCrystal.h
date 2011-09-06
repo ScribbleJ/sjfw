@@ -84,21 +84,24 @@ public:
 
     // Set bitmode, multiline mode - follows hitachi docs
     initialize();
+/*    
 #ifdef USE4BITMODE
     setFunction(false, (_numlines > 1) ? true : false, false);
 #else    
     setFunction(true, (_numlines > 1) ? true : false, false);
 #endif    
+
+*/
     // display off, cursor and blink off
     setDisplayControls(false, false, false);
     // clear
     clear();
     // No scrolling, shift right
     setEntryMode(false, false);
-    // turn display on
+    // turn display on, cursor off
     setDisplayControls(true, false, false);
-    // Set start write address
-    writeDDRAM(0);
+    // clear
+    clear();
   }
    
   // Clears the screen AND resets cursor to "home"
@@ -390,14 +393,52 @@ private:
 
     // The timing on this never works right.  Maybe I need to go find different
     // source docs.
-    wait(20);
+    wait(1000);
+    write4init(0b00110000); 
+    wait(50);
+    write4init(0b00110000); 
+    wait(10);
+    write4init(0b00110000); 
+    wait(10);
     write4init(0b00100000); 
-    wait(20);
+    wait(10);
+
+    // function set
     write4init(0b00100000); 
-    wait(20);
+    wait(10);
+    write4init(0b10000000); 
+    wait(10);
+
+    // display off
+    write4init(0b00000000); 
+    wait(10);
+    write4init(0b10000000); 
+    wait(10);
+
+    // display on
+    write4init(0b00000000); 
+    wait(10);
+    write4init(0b11110000); 
+    wait(10);
+
+    // entry mode
+    write4init(0b00000000); 
+    wait(10);
+    write4init(0b01100000); 
+    wait(10);
+
+    // clear
+    write4init(0b00000000); 
+    wait(10);
+    write4init(0b00010000); 
+    wait(100);
+
+    // home
+    write4init(0b00000000); 
+    wait(10);
     write4init(0b00100000); 
-    wait(20);
-    write4init(0b00100000); 
+    wait(1000);
+
     initialized = true;
   }
 

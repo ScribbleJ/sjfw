@@ -123,9 +123,8 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
         bytes[x] = 0;
         crcpos=x+1;
         crc_state[source] = CRCCOMPLETE;
-#ifdef  ADV_CHECKSUMS
-        crc[source] += chars_in_line[source] + x;
-#endif        
+        if(ADVANCED_CRC[source])
+          crc[source] += chars_in_line[source] + x + 128;
         break;
       }
 

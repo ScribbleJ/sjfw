@@ -299,6 +299,7 @@ void GCode::do_m_code()
       Host::Instance(source).labelnum("prog ", linenum, false);
       Host::Instance(source).write_P(PSTR(" VERSION:" SJFW_VERSION " FREE_RAM:"));
       Host::Instance(source).write(getFreeRam(),10);
+      Host::Instance(source).write_P(PSTR(" FEATURES:0/crc-v2"));
       Host::Instance(source).endl();
       state = DONE;
       break;
@@ -317,6 +318,14 @@ void GCode::do_m_code()
 #endif        
       }
       break;
+    case 118: // Choose optional features TODO: implement properly when we have > 1 option
+      if(!cps[P].isUnused())
+      {
+        if(cps[P].getInt() == 1)
+          GCODES.enableADVANCED_CRC(source);
+        else
+          GCODES.disableADVANCED_CRC(source);
+      }
     case 140: // Bed Temperature (Fast) 
       SKIPEXTRUDE;
       if(TEMPERATURE.setPlatform(cps[S].getInt()))

@@ -793,6 +793,9 @@ void plan_buffer_line(block_t* block)
     OCR1A = acceleration_time;
   }
 
+
+int ax;
+
   // "The Stepper Driver Interrupt" - This timer interrupt is the workhorse.  
   // It pops blocks from the block_buffer and executes them by pulsing the stepper pins appropriately. 
   ISR(TIMER1_COMPA_vect)
@@ -857,9 +860,9 @@ void plan_buffer_line(block_t* block)
 
     // Set direction en check limit switches
 #ifdef ADVANCE
-    for(int ax=0;ax<NUM_AXIS-1;ax++)
+    for(ax=0;ax<NUM_AXIS-1;ax++)
 #else
-    for(int ax=0;ax<NUM_AXIS;ax++)
+    for(ax=0;ax<NUM_AXIS;ax++)
 #endif
     {
       if (!current_block->axisdirections[ax]) 
@@ -901,9 +904,9 @@ void plan_buffer_line(block_t* block)
     }
 
 #ifdef ADVANCE
-    for(int ax=0;ax<NUM_AXIS-1;ax++)
+    for(ax=0;ax<NUM_AXIS-1;ax++)
 #else
-    for(int ax=0;ax<NUM_AXIS;ax++)
+    for(ax=0;ax<NUM_AXIS;ax++)
 #endif
     {
       // Do stepping

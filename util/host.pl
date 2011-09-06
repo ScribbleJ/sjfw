@@ -5,6 +5,10 @@ use IO::Select;
 
 local $|=1;
 
+my $use_sjfwcrc = 1;
+
+
+
 my $SJFW_CRC = 0;
 
 my $port = $ARGV[0] || die(usage());
@@ -38,6 +42,27 @@ my $started = $ARGV[2] || 0;
 my $instr='';
 my $inready =0;
 
+sub addcrc($$)
+{
+  my $l = shift;
+  my $n = shift;
+
+  $l = "N$n $l";
+  my $ck = 0;
+  foreach my $c (split('', $l))
+  {
+    $ck ^= ord($c);
+  }
+  if($SJFW_CRC)
+  {
+    $ck += length($l) + 128;
+  }
+  $l .= "*".$ck."\n";
+}
+
+
+
+
 while(1)
 {
   my @ready = $s->can_read(0);
@@ -51,34 +76,43 @@ while(1)
     }
     else
     {
-      print "REPEAT: " . $linehist[$resend-1][1];
-      print PH $linehist[$resend-1][1];
+      my ($rn, $rl) = ($linehist[$resend-1][0], $linehist[$resend-1][1]);
+      $rl = addcrc($rl, $rn);
+      print "REPEAT: " . $rl;
+      print PH $rl;
       $resend++;
       $bufsize++;
     }
   }
-  elsif($bufsize < $bufmax and scalar @ready and $started)
+  elsif($started == 1)
+  {
+    $started = 2;
+    if($use_sjfwcrc == 1)
+    {
+      my $line = "M118 P1"; 
+      push @linehist, [$linenum, $line];
+      $line = addcrc($line, $linenum);
+      print PH $line;
+      print '> ' . $line;
+      $bufsize++;
+      $linenum++;
+      $SJFW_CRC = 1;
+    }
+  }
+  elsif($bufsize < $bufmax and scalar @ready and $started > 1)
   {
     my $line=<STDIN>;
+    die("all done.") if($line eq undef);
     chomp $line;
     $line =~ s/\(.*$//o;
     $line =~ s/\;.*$//o;
 
-    $line = "N$linenum $line";
-    my $ck = 0;
-    foreach my $c (split('', $line))
-    {
-      $ck ^= ord($c);
-    }
-    if($SJFW_CRC)
-    {
-      $ck += length($line);
-    }
-    $line .= "*".$ck."\n";
+    push @linehist, [$linenum, $line];
+
+    $line = addcrc($line, $linenum);
 
     print PH $line;
     print '> ' . $line;
-    push @linehist, [$linenum, $line];
 
     $bufsize++;
     $linenum++;
@@ -120,7 +154,11 @@ while(1)
     }
     elsif($line =~ m/start/)
     {
-      sleep(5) if(!$started++)
+      if(!$started)
+      {
+        sleep(5);
+        $started=1;
+      }
     }
   }
 }

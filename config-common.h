@@ -41,7 +41,7 @@
 
 #define HOST_BAUD 57600
 // if defined, INTERRUPT_STEPS allows the comm ISRs to interrupt the movement ISR.
-//#define INTERRUPT_STEPS
+#define INTERRUPT_STEPS
 //#define COMMS_ERR2
 //#define DEBUG_MOVE
 

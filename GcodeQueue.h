@@ -32,6 +32,7 @@ private:
       line_number[x] = -1;
       chars_in_line[x] = 0;
       needserror[x] = false;
+      ADVANCED_CRC[x] = false;
     }
     optimize_gcode = false;
   }
@@ -57,6 +58,8 @@ public:
   void enableOptimize() { optimize_gcode = true; };
   void disableOptimize() { optimize_gcode = false; };
   bool shouldOptimize() { return optimize_gcode; };
+  void enableADVANCED_CRC(int source) { ADVANCED_CRC[source] = true; }
+  void disableADVANCED_CRC(int source) { ADVANCED_CRC[source] = false; }
 
 private:
   GCode codes_buf[GCODE_BUFSIZE];
@@ -69,7 +72,8 @@ private:
   uint8_t chars_in_line[GCODE_SOURCES];
   bool needserror[GCODE_SOURCES];
   bool invalidate_codes;
-  bool optimize_gcode;
+  bool optimize_gcode; // WTF is this here?  This whole pipeline needs serious refactor.
+  bool ADVANCED_CRC[GCODE_SOURCES];
 };
   
 extern GcodeQueue& GCODES;  
