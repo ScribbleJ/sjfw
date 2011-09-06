@@ -177,21 +177,13 @@ public:
   // TODO: replace these awful things.
   void write(char const value) { enqueue(value, true); }
   void write(char const *str) { for(int x=0;str[x]!=0;x++) write(str[x]); }
-  void write(float n, signed char width, unsigned char prec)
+  void write(float n, signed char width=5, unsigned char prec=1)
   {
-    static const char bufsize = 32;
-    char buf[bufsize] = { 0 };
     dtostrf(n,width,prec,buf);
     write(buf);
   }
-  void write(float n)
-  {
-    write(n, 5, 1);
-  }
   void write(int32_t n)
   {
-    static const char bufsize = 32;
-    char buf[bufsize] = { 0 };
     ltoa(n,buf,10);
     write(buf);
   }
@@ -210,8 +202,6 @@ public:
   void label(char const* str, char const* str2) { write(str); write(str2); }
   void label(char const* str, int32_t n) { write(str); write(n); }
   void label(char const* str, int n) { write(str); write((int32_t)n); }
-
-
 
 
   // handleUpdates MUST BE CALLED OFTEN
@@ -389,9 +379,6 @@ private:
     // Normally I wouldn't allow delays in the code at all, but this
     // is at startup, so no worries, and handling it in any other
     // fashion would be painful.
-
-    // The timing on this never works right.  Maybe I need to go find different
-    // source docs.
     wait(100);
     write4init(0x3);
     wait(10);
@@ -402,51 +389,10 @@ private:
     write4init(0x2); 
     wait(10);
 
-    /*
-    // function set
-    write4init(0b0010); 
-    wait(10);
-    write4init(0b1000); 
-    wait(10);
-
-
-    // display off
-    write4init(0b0000); 
-    wait(10);
-    write4init(0b1000); 
-    wait(10);
-
-    // display on
-    write4init(0b0000); 
-    wait(10);
-    write4init(0b1111); 
-    wait(10);
-
-    // entry mode
-    write4init(0b00000000); 
-    wait(100);
-    write4init(0b01100000); 
-    wait(100);
-
-    // clear
-    write4init(0b00000000); 
-    wait(100);
-    write4init(0b00010000); 
-    wait(100);
-
-    // home
-    write4init(0b00000000); 
-    wait(100);
-    write4init(0b00100000); 
-    wait(100);
-    */
-
-
     initialized = true;
   }
 
 #endif  
-
 
   Pin _rs_pin;
   Pin _rw_pin;
@@ -492,6 +438,9 @@ private:
   bool    mode_data[LCD_BUFFER_SIZE];
   RingBufferT<uint8_t> commandQueue;
   RingBufferT<bool> modeQueue;
+
+  // used to store temporary data in conversion
+  char buf[32];
 };
 
 #endif // LIQUID_CRYSTAL_HH

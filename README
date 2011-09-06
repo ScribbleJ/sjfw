@@ -13,7 +13,7 @@ This is a firmware for 3D printers with an advanced gcode pipeline, capable of r
 
 
 This firmware includes some portions which are copped directly from the MBI firmware, and some code that is based on
-code in the Sprinter and Teacup firmwares.
+code in the Sprinter and Teacup firmwares, and one large option taken from Marlin firmware.
 
 THIS COMES WITH NO WARRANTIES, GUARANTEES, PROMISES, OR CAKE.  I do not recommend that you, or anyone, uses this firmware.
 If you do, you do so at your own risk.

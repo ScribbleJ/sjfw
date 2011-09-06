@@ -46,6 +46,7 @@ class Host
     Host(Host&);
     Host& operator=(Host&);
     int port;
+    char convbuf[32];
 
     void Init0(unsigned long baud);
     void Init2(unsigned long baud);
@@ -69,27 +70,21 @@ class Host
     void write(const char *data) { uint8_t i = 0, r; while ((r = data[i++])) write(r); }
     void write(uint32_t n, int radix)
     {
-      static const char bufsize = 32;
-      char buf[bufsize];
-      ultoa(n,buf,radix);
-      write(buf);
+      ultoa(n,convbuf,radix);
+      write(convbuf);
     }
     void write(int32_t n, int radix)
     {
-      static const char bufsize = 32;
-      char buf[bufsize];
-      ltoa(n,buf,radix);
-      write(buf);
+      ltoa(n,convbuf,radix);
+      write(convbuf);
     }
     void write(int16_t n, int radix) { write((int32_t)n, radix); }
     void write(uint16_t n, int radix) { write((int32_t)n, radix); }
 
     void write(float n, signed char width, unsigned char prec)
     {
-      static const char bufsize = 32;
-      char buf[bufsize];
-      dtostrf(n,width,prec,buf);
-      write(buf);
+      dtostrf(n,width,prec,convbuf);
+      write(convbuf);
     }
     void write_P(const char* data)
     {
@@ -105,47 +100,36 @@ class Host
 
 
 
-    void labelnum(const char *label, uint16_t num, bool end)
+    void labelnum(const char *label, uint16_t num, bool end=true)
     {
       write(label);
       write((uint32_t)num,10);
       if(end)
         endl();
     }
-    void labelnum(const char *label, uint16_t num) { labelnum(label, num, true); };
-    void labelnum(const char *label, int32_t num, bool end)
+    void labelnum(const char *label, int32_t num, bool end=true)
     {
       write(label);
       write(num,10);
       if(end)
         endl();
     }
-    void labelnum(const char *label, int32_t num) { labelnum(label, num, true); };
-
-
-
-
-    void labelnum(const char *label, uint32_t num, bool end)
+    void labelnum(const char *label, uint32_t num, bool end=true)
     {
       write(label);
       write(num,10);
       if(end)
         endl();
     }
-    void labelnum(const char *label, unsigned long num) { labelnum(label, num, true); };
+    void labelnum(const char *label, int num, bool end=true) { labelnum(label, (uint16_t)num, end); };
 
-    void labelnum(const char *label, int num) { labelnum(label, (uint16_t)num, true); };
-    void labelnum(const char *label, int num, bool end) { labelnum(label, (uint16_t)num, end); };
-
-    void labelnum(const char *label, float num, bool end)
+    void labelnum(const char *label, float num, bool end=true)
     {
       write(label);
       write(num,0,4);
       if(end)
         endl();
     }
-    void labelnum(const char *label, float num) { labelnum(label, num, true); };
-
 
     void rxerror(const char*errmsg, int32_t linenum)
     {
