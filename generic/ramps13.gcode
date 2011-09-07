@@ -1,8 +1,8 @@
 M402         ;Write this configuration to EEPROM
 
+; Standard RAMPS 1.3/1.4 Pinsettings.
 M207 P13 S10 ;Set hotend pins, P=thermistor, S=FET
 M208 P14 S8  ;Set platform pins, P=thermistor, S=FET
-
 M309 P1 S1 ;Set endstop inversion and pullups; must happen before M304/M305 OR ELSE!!!!!!
 M300 X54 Y60 Z46 E26 ;Set axis STEP pins
 M301 X55 Y61 Z48 E28 ;Set axis DIR pins
@@ -12,12 +12,16 @@ M305 X2 Y15 Z19      ;Set axis MAX pins
 M307 X0 Y0 Z1 E0     ;Set axis inversion; 0=no, 1=yes
 M308 X0 Y0 Z1 E0     ;Set axis disable-after-move
 
-M200 X62.745 Y62.745 Z2267.718 E729.99 ;set axis steps per mm; must happen before m201/202/203 OR ELSE!
-M201 X2000 Y2000 Z75 E5000 ;set axis start speeds
+; These axis speeds and steps-per-mm are the ones I'm using and almost certainly need 
+; to be different for you!
+M200 X62.745 Y62.745 Z566.93 E182.5 ;set axis steps per mm; must happen before m201/202/203 OR ELSE!
+;M200 X62.745 Y62.745 Z2267.718 E729.99 ;set axis steps per mm; must happen before m201/202/203 OR ELSE!
+M201 X1000 Y1000 Z75 E5000 ;set axis start speeds
 M203 X2000 Y2000 Z75 E5000 ;set axis 'average' speeds
-M202 X9000 Y9000 Z150 E12000 ;set axis max speeds
-M206 X300 Y300 Z50 E2000 ;set accel mm/s/s
+M202 X6000 Y6000 Z150 E12000 ;set axis max speeds
+M206 X500 Y500 Z50 E2000 ;set accel mm/s/s
 
+; LCD setup as per wiki.
 M250 P63     ;set LCD RS pin
 M251 P42     ;set LCD RW pin
 M252 P65     ;set LCD E pin

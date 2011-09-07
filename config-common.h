@@ -12,9 +12,9 @@
 #define HOST_RECV_BUFSIZE 100
 #define HOST_SEND_BUFSIZE 100
 #else
-#define GCODE_BUFSIZE 10
+#define GCODE_BUFSIZE 7
 #define HOST_RECV_BUFSIZE 200
-#define HOST_SEND_BUFSIZE 200
+#define HOST_SEND_BUFSIZE 800
 #endif
 
 // Each source eats anough ram for 1 addtl gcode
@@ -42,8 +42,14 @@
 #define HOST_BAUD 57600
 // if defined, INTERRUPT_STEPS allows the comm ISRs to interrupt the movement ISR.
 #define INTERRUPT_STEPS
+// How often to recompute speed for acceleration in sjfw
+#define ACCEL_INC_TIME F_CPU/100
+
 //#define COMMS_ERR2
+#define DEBUG_OPT
 //#define DEBUG_MOVE
 
 #define BT_BAUD 9600
 //#define BT_DEBUG
+
+
