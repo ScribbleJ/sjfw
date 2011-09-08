@@ -126,14 +126,14 @@ class Axis
   
   static float getFinalVelocity(float start_feed, float dist, float accel)
   {
-    //start_feed /= 60.0f;
-    return sqrt((start_feed * start_feed) + (2.0f * accel * dist));
+    start_feed /= 60.0f;
+    return sqrt((start_feed * start_feed) + (2.0f * accel * dist)) * 60.0f;
   }
 
   float getSpeedAtEnd(float start_feed, float accel, uint32_t movesteps)
   {
-    //start_feed /= 60.0f;
-    return  sqrt((start_feed * start_feed) + (2.0f * accel * (float)((float)movesteps * steps_per_unit)));
+    start_feed /= 60.0f;
+    return  sqrt((start_feed * start_feed) + (2.0f * accel * (float)((float)movesteps / steps_per_unit))) * 60.0f;
   }
 
   float getEndpos(float start, uint32_t steps, bool dir) 

@@ -385,6 +385,7 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
     gcode.decel_from  =  dist;
   }
 
+  // TODO: this only changes when we change accel rates; can we just store it per-axis until we scale accels properly?
   gcode.accel_inc   = (float)((float)accel * 60.0f / ACCELS_PER_SECOND);
   gcode.accel_timer = ACCEL_INC_TIME;
 
@@ -399,19 +400,17 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
   if(gcode.optimized)
     return;
 
-  if(gcode[G].isUnused() || nextg[G].isUnused())
-    return;
-
-  // Only optimize chains o moves; any other code will break a chain
-  if(gcode[G].getInt() != 1 || nextg[G].getInt() != 1)
-    return;
-
-  if(gcode.movesteps == 0)
-    return;
-  if(nextg.movesteps == 0)
-    return;
-
   gcode.optimized = true;
+
+  if(gcode[G].isUnused() || gcode[G].getInt() != 1 || gcode.movesteps == 0)
+    return;
+
+  if(nextg[G].isUnused() || nextg[G].getInt() != 1 || nextg.movesteps == 0)
+  {
+    handle_unopt(gcode);
+    return;
+  }
+
   //HOST.write("Optimize\n");
 
   // Compute the maximum speed we can be going at the end o the move in order
@@ -448,7 +447,7 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
     if(gcode.axismovesteps[ax] && nextg.axismovesteps[ax] && gcode.axisdirs[ax] != nextg.axisdirs[ax])
       fail = true;
 
-    // If one axis is increasing while another is decreasing, we must fail.
+    // If one axis is increasing while another is decreasing, we might need special action?
     if(axisspeeds[ax] > nextspeeds[ax])
       dirchanges++;
     else
@@ -466,9 +465,11 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
 
   }
 
+  // Test to see if one axis is increasing in speed while another is decreasing
   //if(abs(dirchanges) != NUM_AXES)
   //  fail = true;
 
+  // Which way are the moves going?
   if(nextspeeds[diffaxis] > axisspeeds[diffaxis]) direction = true;
 
 #ifdef DEBUG_OPT    
@@ -529,10 +530,15 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
 
   // Speed at which we can reach 0 in the forseeable future
   float speedto0 = AXES[nextg.leading_axis].
-                    getSpeedAtEnd(0,
+                    getSpeedAtEnd(AXES[nextg.leading_axis].getStartFeed(),
                                   nextg.accel, 
-                                  nextg.axismovesteps[gcode.leading_axis]);
-  speedto0 = (speedto0 * gcode.axisratio[nextg.leading_axis]) + AXES[gcode.leading_axis].getStartFeed();
+                                  nextg.movesteps);
+
+  if(speedto0 < nextg.startfeed)
+    nextg.startfeed = speedto0;
+    
+  // now speedto0 is the maximum speed the primary in the next move can be going.  We need the equivalent speed of the primary in this move.
+  speedto0 = (speedto0 * gcode.axisratio[nextg.leading_axis]);
   if(speedto0 < gcode.endfeed)
   {
 #ifdef DEBUG_OPT
@@ -540,7 +546,7 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
     HOST.labelnum(",",speedto0);
 #endif
     gcode.endfeed = speedto0;
-    nextg.startfeed = max(nextg.axisratio[gcode.leading_axis] * speedto0, min(AXES[nextg.leading_axis].getStartFeed(), nextg.maxfeed));
+    nextg.startfeed = gcode.endfeed / gcode.axisratio[nextg.leading_axis];
   }
 
   // Fix speeds just in case
@@ -592,6 +598,11 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
     if(distance_to_end >= gcode.movesteps)
     {
       // TODO: this is NOT GOOD.  Throw an error.
+#ifdef DEBUG_OPT
+      HOST.labelnum("TOO FAST! ", gcode.movesteps, false);
+      HOST.labelnum(", needs ", distance_to_end, false);
+      HOST.labelnum(" at ", gcode.accel);
+#endif      
       gcode.decel_from = gcode.movesteps;
       gcode.accel_until = gcode.movesteps;
       // TODO: fix - should be speed we will reach + jerk
@@ -689,6 +700,13 @@ void Motion::handle_unopt(GCode &gcode)
     uint32_t distance_to_max = AXES[gcode.leading_axis].getAccelDist(gcode.startfeed, gcode.maxfeed, gcode.accel);
     if(distance_to_end >= gcode.movesteps)
     {
+#ifdef DEBUG_OPT
+      HOST.labelnum("TOO FAST! ", gcode.movesteps, false);
+      HOST.labelnum(", needs ", distance_to_end, false);
+      HOST.labelnum(" at ", gcode.accel, false);
+      HOST.labelnum(" - ", gcode.startfeed, false);
+      HOST.labelnum(" - ", gcode.endfeed);
+#endif      
       // TODO: this is NOT GOOD.  Throw an error.
       gcode.decel_from = gcode.movesteps;
       gcode.accel_until = gcode.movesteps;
