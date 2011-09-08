@@ -268,7 +268,6 @@ void Motion::getActualEndpos(GCode& gcode)
 }
 
 
-#define ACCEL_INC_TIME F_CPU/100
 void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
 {
   if(gcode.state >= GCode::PREPARED)
@@ -325,9 +324,6 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
     gcode.actualmm += pow(gcode.axismovesteps[ax]/AXES[ax].getStepsPerMM(), 2);
   }
   gcode.actualmm = sqrt(gcode.actualmm);
-#ifdef DEBUG_MOVE
-    HOST.labelnum("MM: ", gcode.actualmm);
-#endif    
 
   float axisspeeds[NUM_AXES];
   // Calculate individual axis movement speeds
@@ -335,10 +331,6 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
   for(int ax=0;ax<NUM_AXES;ax++)
   {
     axisspeeds[ax] = (gcode.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult;
-#ifdef DEBUG_MOVE    
-    //HOST.labelnum("SP[", ax, false);
-    //HOST.labelnum("]:", axisspeeds[ax]);
-#endif
   }
 
   // Calculate ratio of movement speeds to main axis
@@ -348,10 +340,6 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
       gcode.axisratio[ax] = axisspeeds[gcode.leading_axis] / axisspeeds[ax];
     else
       gcode.axisratio[ax] = 0;
-#ifdef DEBUG_MOVE
-    //HOST.labelnum("SR[", ax, false);
-    //HOST.labelnum("]:", gcode.axisratio[ax]);
-#endif
   }
 
   // Check all axis for violation o top speed.  Take the biggest violator and change
@@ -374,10 +362,6 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
         littlediff = d;
     }
   }
-#ifdef DEBUG_MOVE
-  HOST.labelnum("BD:", bigdiff);
-  HOST.labelnum("LD:", littlediff);
-#endif
   gcode.maxfeed = axisspeeds[gcode.leading_axis] - bigdiff;
   gcode.startfeed = axisspeeds[gcode.leading_axis] - littlediff;
   gcode.endfeed   = gcode.startfeed;
@@ -387,19 +371,9 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
   // instead we just take the accel of the leadng axis.
   float accel = AXES[gcode.leading_axis].getAccel();
   gcode.accel = accel;
-#ifdef DEBUG_MOVE
-  HOST.labelnum("F1: ", gcode.startfeed);
-  HOST.labelnum("F2: ", gcode.maxfeed);
-  HOST.labelnum("Accel: ", accel);
-#endif
+
   uint32_t dist = AXES[gcode.leading_axis].getAccelDist(gcode.startfeed, gcode.maxfeed, accel);
-  float accelTime = AXES[gcode.leading_axis].getAccelTime(gcode.startfeed, gcode.maxfeed, accel);
   uint32_t halfmove = gcode.movesteps >> 1;
-#ifdef DEBUG_MOVE
-  HOST.labelnum("Dist: ", dist);
-  HOST.labelnum("Time: ", accelTime);
-//  HOST.labelnum("Half:", halfmove);
-#endif
   if(halfmove <= dist)
   {
     gcode.accel_until = gcode.movesteps - halfmove;
@@ -411,7 +385,7 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
     gcode.decel_from  =  dist;
   }
 
-  gcode.accel_inc   = (float)((float)accel * 60.0f / 1000.0f);
+  gcode.accel_inc   = (float)((float)accel * 60.0f / ACCELS_PER_SECOND);
   gcode.accel_timer = ACCEL_INC_TIME;
 
   gcode.optimized = false;
@@ -559,7 +533,6 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
                                   nextg.accel, 
                                   nextg.axismovesteps[gcode.leading_axis]);
   speedto0 = (speedto0 * gcode.axisratio[nextg.leading_axis]) + AXES[gcode.leading_axis].getStartFeed();
-  HOST.labelnum("st0i:",speedto0);
   if(speedto0 < gcode.endfeed)
   {
 #ifdef DEBUG_OPT
@@ -787,9 +760,6 @@ void Motion::gcode_execute(GCode& gcode)
     }
     deltas[ax] = gcode.axismovesteps[ax];
     errors[ax] = gcode.movesteps >> 1;
-#ifdef DEBUG_MOVE
-//    AXES[ax].dump_to_host();
-#endif
   }
 
 #ifdef LOOKAHEAD
@@ -812,10 +782,6 @@ void Motion::gcode_execute(GCode& gcode)
   }
 #endif
 
-
-#ifdef DEBUG_MOVE
-  gcode.dump_movedata();
-#endif
   // setup pointer to current move data for interrupt
   gcode.state = GCode::ACTIVE;
   current_gcode = &gcode;
@@ -894,29 +860,21 @@ void Motion::handleInterrupt()
     }
   }
 
-  current_gcode->accel_timer += current_gcode->currentinterval;
-/*  
-#ifdef INTERRUPT_STEPS
-  if(current_gcode->accel_timer > ACCEL_INC_TIME)
-  {
-    busy = true;
-    disableInterrupt();
-    sei();
-  }
-#endif  
-*/
 
+  accelsteps = 0;
+  current_gcode->accel_timer += current_gcode->currentinterval;
   // Handle acceleration and deceleration
-  if(current_gcode->accel_timer > ACCEL_INC_TIME)
+  while(current_gcode->accel_timer > ACCEL_INC_TIME)
   {
     current_gcode->accel_timer -= ACCEL_INC_TIME;
+    accelsteps++;
+  }
 
+  if(accelsteps)
+  {
     if(current_gcode->movesteps >= current_gcode->accel_until && current_gcode->currentfeed < current_gcode->maxfeed)
     { 
-      //if(current_gcode->movesteps >= current_gcode->fastaccel)
-      //  current_gcode->currentfeed += current_gcode->accel_inc*16;
-      //else
-        current_gcode->currentfeed += current_gcode->accel_inc;
+      current_gcode->currentfeed += current_gcode->accel_inc * accelsteps;
 
       if(current_gcode->currentfeed > current_gcode->maxfeed)
         current_gcode->currentfeed = current_gcode->maxfeed;
@@ -927,10 +885,7 @@ void Motion::handleInterrupt()
     }
     else if(current_gcode->movesteps <= current_gcode->decel_from && current_gcode->currentfeed > current_gcode->endfeed)
     { 
-      //if(current_gcode->movesteps < (current_gcode->decel_from / 8))
-      //  current_gcode->currentfeed -= current_gcode->accel_inc*16;
-      //else
-        current_gcode->currentfeed -= current_gcode->accel_inc;
+      current_gcode->currentfeed -= current_gcode->accel_inc * accelsteps;
 
       if(current_gcode->currentfeed < current_gcode->endfeed)
         current_gcode->currentfeed = current_gcode->endfeed;

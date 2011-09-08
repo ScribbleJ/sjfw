@@ -133,7 +133,7 @@ public:
     HOST.labelnum("L:",linenum,false);
     HOST.labelnum(" T:",(millis() - startmillis),false);
     HOST.labelnum(" F:",feed,false);
-    HOST.labelnum(" Steps:",movesteps,false);
+    HOST.labelnum(" Steps:",axismovesteps[leading_axis],false);
     HOST.labelnum(" Lead:",leading_axis,false);
     HOST.labelnum(" CurI:",currentinterval,false);
     HOST.labelnum(" CurF:",currentfeed,false);
