@@ -29,7 +29,7 @@ $p->write_settings || die("Can't write settings.\n");
 $p->pulse_dtr_on(100);
 $p->pulse_dtr_off(100);
 
-my $s = IO::Select->new([\*STDIN]);
+my $s = IO::Select->new(\*STDIN);
 
 my $bufmax = 1;
 my $bufsize = 0;
@@ -63,9 +63,9 @@ sub addcrc($$)
 
 
 
+my $line = '';
 while(1)
 {
-  my @ready = $s->can_read(0);
   if($resend and $bufsize < $bufmax)
   {
     my $numhist = scalar @linehist;
@@ -99,27 +99,32 @@ while(1)
       $SJFW_CRC = 1;
     }
   }
-  elsif($bufsize < $bufmax and scalar @ready and $started > 1)
+  elsif($bufsize < $bufmax and scalar $s->can_read(0) and $started > 1)
   {
-    my $line=<STDIN>;
-    if($line eq undef)
+    my $char;
+    if(sysread(STDIN,$char,1) != 1)
     {
       sleep(30); # temporary hack
       die("All done.\n");
     }
-    chomp $line;
-    $line =~ s/\(.*$//o;
-    $line =~ s/\;.*$//o;
+    $line .= $char;
+    if($char eq "\n")
+    {
+      chomp $line;
+      $line =~ s/\(.*$//o;
+      $line =~ s/\;.*$//o;
 
-    push @linehist, [$linenum, $line];
+      push @linehist, [$linenum, $line];
 
-    $line = addcrc($line, $linenum);
+      $line = addcrc($line, $linenum);
 
-    print PH $line;
-    print '> ' . $line;
+      print PH $line;
+      print '> ' . $line;
 
-    $bufsize++;
-    $linenum++;
+      $line = '';
+      $bufsize++;
+      $linenum++;
+    }
   }
     
   my ($cin, $cch) = $p->read(1);

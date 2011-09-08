@@ -2,11 +2,22 @@
 use strict;
 use warnings;
 use FileHandle;
-use IPC::Open2;
+use IPC::Run qw(run timeout start pump);
+
+my $feed = 2000;
+my $xmin = 1;
+my $ymin = 1;
+
+
+
+
+
 
 our $| = 1;
 
-my $hostpid = open2(\*HOSTREAD, \*HOSTWRITE, "/home/chris/reprap/sjfw/util/host.pl /dev/ttyACM0") || die("Cannot open host.");
+my ($HOSTWRITE, $HOSTREAD, $err);
+
+my $h = start([qw(/home/chris/reprap/sjfw/util/host.pl /dev/ttyACM0)], \$HOSTWRITE, \$HOSTREAD, \$err, timeout(30)) or die("Can't start: $?");
 
 my @pos = (0,0,0,0);
 
@@ -14,35 +25,43 @@ sub comandpos($)
 {
   my $com = shift;
 
-  print HOSTWRITE $com . "\n";
-  print HOSTWRITE "M114\n";
+  $HOSTWRITE .= "$com\n";
+  $HOSTWRITE .= "M114\n";
   
-  while(my $line = <HOSTREAD>)
+  while(1)
   {
-    if($line =~ m/C: X:(\d+) Y:(\d+) Z:(\d+) A:(\d+)/)
+    pump $h;
+    if($HOSTREAD =~ m/C: X:([\d\.-]+) Y:([\d\.-]+) Z:([\d\.-]+) A:([\d\.-]+)/)
     {
       $pos[0]=$1;
       $pos[1]=$2;
       $pos[2]=$3;
       $pos[3]=$4;
-      print STDERR "us: " . $line;
-      return;
+      print STDERR $HOSTREAD;
+      $HOSTREAD = '';
+      last;
     }
     else
     {
-      print STDERR "Notus: " . $line;
     }
+    print STDERR $HOSTREAD;
+    $HOSTREAD = '';
   }
 }
 
-sub printpos()
+sub printpos(@)
 {
+  my @pos = @_;
   print "X:$pos[0] Y:$pos[1] Z:$pos[2]\n";
 }
 
-printpos();
-comandpos("G1 X10 F9000");
-printpos();
+my @sp = (0,0,0,0);
+sub storepos() { @sp = @pos; }
+
+comandpos("G1 X5 F$feed");
+printpos(@pos);
+comandpos("G1 X-10 F$feed");
+printpos(@pos);
 
 
 
