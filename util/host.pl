@@ -104,8 +104,8 @@ while(1)
     my $char;
     if(sysread(STDIN,$char,1) != 1)
     {
-      sleep(30); # temporary hack
       die("All done.\n");
+      sleep(30); # temporary hack
     }
     $line .= $char;
     if($char eq "\n")

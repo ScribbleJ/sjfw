@@ -222,43 +222,6 @@ float Motion::getSmallestEndFeed(GCode& gcode)
   return mi;
 }
 
-unsigned long Motion::getLargestStartInterval(GCode& gcode)
-{
-  unsigned long mi = 0;
-  for(int ax=0;ax < NUM_AXES;ax++)
-  {
-    if(gcode.axismovesteps[ax] == 0) continue;
-    unsigned long t = AXES[ax].getStartInterval(gcode.feed);
-    if(t > mi) mi = t;
-  }
-  return mi;
-}
-
-unsigned long Motion::getLargestEndInterval(GCode& gcode)
-{
-  unsigned long mi = 0;
-  for(int ax=0;ax < NUM_AXES;ax++)
-  {
-    if(gcode.axismovesteps[ax] == 0) continue;
-    unsigned long t = AXES[ax].getEndInterval(gcode.feed);
-    if(t > mi) mi = t;
-  }
-  return mi;
-}
-
-unsigned long Motion::getLargestTimePerAccel(GCode& gcode)
-{
-  unsigned long mi = 0;
-  for(int ax=0;ax < NUM_AXES;ax++)
-  {
-    if(gcode.axismovesteps[ax] == 0) continue;
-    unsigned long t = AXES[ax].getTimePerAccel();
-    if(t > mi) mi = t;
-  }
-  return mi;
-}
-
-
 void Motion::getActualEndpos(GCode& gcode)
 {
   for(int ax=0;ax<NUM_AXES;ax++)
@@ -331,6 +294,10 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
   for(int ax=0;ax<NUM_AXES;ax++)
   {
     axisspeeds[ax] = (gcode.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult;
+#ifdef DEBUG_LAME
+    HOST.labelnum("AS", ax, false);
+    HOST.labelnum(":", axisspeeds[ax]);
+#endif    
   }
 
   // Calculate ratio of movement speeds to main axis
@@ -351,6 +318,13 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
     if(axisspeeds[ax] > AXES[ax].getMaxFeed())
     {
       float d = (axisspeeds[ax] - AXES[ax].getMaxFeed()) * gcode.axisratio[ax];
+#ifdef DEBUG_LAME
+      HOST.labelnum("D",ax,false);
+      HOST.labelnum(":",axisspeeds[ax] - AXES[ax].getMaxFeed(),false);
+      HOST.labelnum(" rat: ", gcode.axisratio[ax]);
+#endif      
+
+
       if(d > bigdiff)
         bigdiff = d;
     }
@@ -362,6 +336,11 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
         littlediff = d;
     }
   }
+#ifdef DEBUG_LAME
+  HOST.labelnum("BD:", bigdiff);
+  HOST.labelnum("LD:", littlediff);
+#endif
+
   gcode.maxfeed = axisspeeds[gcode.leading_axis] - bigdiff;
   gcode.startfeed = axisspeeds[gcode.leading_axis] - littlediff;
   gcode.endfeed   = gcode.startfeed;
@@ -371,6 +350,14 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
   // instead we just take the accel of the leadng axis.
   float accel = AXES[gcode.leading_axis].getAccel();
   gcode.accel = accel;
+
+
+#ifdef DEBUG_LAME
+ HOST.labelnum("F1: ", gcode.startfeed);
+ HOST.labelnum("F2: ", gcode.maxfeed);
+ HOST.labelnum("Accel: ", accel);
+#endif
+
 
   uint32_t dist = AXES[gcode.leading_axis].getAccelDist(gcode.startfeed, gcode.maxfeed, accel);
   uint32_t halfmove = gcode.movesteps >> 1;
@@ -384,6 +371,9 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
     gcode.accel_until =  gcode.movesteps - dist;
     gcode.decel_from  =  dist;
   }
+
+  gcode.currentinterval = AXES[gcode.leading_axis].int_interval_from_feedrate(gcode.startfeed);
+  gcode.currentfeed = gcode.startfeed;
 
   // TODO: this only changes when we change accel rates; can we just store it per-axis until we scale accels properly?
   gcode.accel_inc   = (float)((float)accel * 60.0f / ACCELS_PER_SECOND);
@@ -407,124 +397,127 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
 
   if(nextg[G].isUnused() || nextg[G].getInt() != 1 || nextg.movesteps == 0)
   {
-    handle_unopt(gcode);
+    computeAccel(gcode);
     return;
   }
 
-  //HOST.write("Optimize\n");
-
   // Compute the maximum speed we can be going at the end o the move in order
   // to hit the next move at our best possible
-  bool direction  = false;
-  int   diffaxis = 0;
-  int   dirchanges = 0;
-  int   usedaxes   = 0;
-  bool  fail = false;
 
-  //
+
+  // Calculate the requested speed of each axis at its peak during this move,
+  // including a direction sign.
+  // Also calculate the biggest change in axis speeds over jerk.
   float axisspeeds[NUM_AXES];
   float nextspeeds[NUM_AXES];
-  // Calculate individual axis max movement speeds
-  float mult1 = gcode.feed / gcode.actualmm;
-  float mult2 = nextg.feed / nextg.actualmm;
+  float mult1 = gcode.maxfeed / gcode.actualmm;
+  float mult2 = nextg.maxfeed / nextg.actualmm;
+  float biga = 0, bigb = 0;
+  float jerka = gcode.maxfeed, jerkb = nextg.maxfeed;
+  int whicha=0, whichb=0;
+  bool fail = false;
   for(int ax=0;ax<NUM_AXES;ax++)
   {
-    axisspeeds[ax] = (float)((float)gcode.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult1;
-    nextspeeds[ax] = (float)((float)nextg.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult2;
-#ifdef DEBUG_OPT    
-    HOST.labelnum("ASP[", ax, false);
-    HOST.labelnum("]:", axisspeeds[ax],false);
-    HOST.labelnum(",", nextspeeds[ax]);
-#endif
-  }
-
-
-  float feeddiff = 0;
-  // Check to see which axis has the greatest change in speeds between moves.
-  for(int ax=0;ax < NUM_AXES;ax++)
-  {
-    // If there is an axis changing direction then there's nothing we can do - 
-    if(gcode.axismovesteps[ax] && nextg.axismovesteps[ax] && gcode.axisdirs[ax] != nextg.axisdirs[ax])
-      fail = true;
-
-    // If one axis is increasing while another is decreasing, we might need special action?
-    if(axisspeeds[ax] > nextspeeds[ax])
-      dirchanges++;
-    else
-      dirchanges--;
-    
-
-
-    // store the greatest difference above the 'jerk speed' and which axis it was on.
-    float diff = fabs(axisspeeds[ax] - nextspeeds[ax]);
-    if(diff > AXES[ax].getStartFeed() && diff > feeddiff)
+    if(gcode.axisdirs[ax] != nextg.axisdirs[ax] && gcode.axismovesteps[ax] != 0 && nextg.axismovesteps[ax] != 0)
     {
-      feeddiff = diff;
-      diffaxis = ax;
+      fail = true;
+#ifdef DEBUG_OPT
+      HOST.labelnum("dirchange ax:", ax);
+#endif      
     }
 
+    axisspeeds[ax] = (float)((float)gcode.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult1;
+    nextspeeds[ax] = (float)((float)nextg.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult2;
+
+    if(axisspeeds[ax] > biga)
+    {
+      biga = axisspeeds[ax];
+      whicha = ax;
+    }
+
+    if(nextspeeds[ax] > bigb)
+    {
+      bigb = nextspeeds[ax];
+      whichb = ax;
+    }
+
+    if(nextg.axismovesteps[ax] != 0 and AXES[ax].getStartFeed() < jerka)
+      jerka = AXES[ax].getStartFeed();
+
+    if(nextg.axismovesteps[ax] != 0 and AXES[ax].getStartFeed() < jerkb)
+      jerkb = AXES[ax].getStartFeed();
   }
+  if(!fail)
+  {
+    float smalla = biga, smallb = bigb;
+    if(gcode.axisdirs[ax] != nextg.axisdirs[ax])
+    {
+      if(gcode.axismovesteps[ax] == 0)
+        smalla = 0;
+      if(nextg.axismovesteps[ax] == 0)
+        smallb = 0;
+    }
 
-  // Test to see if one axis is increasing in speed while another is decreasing
-  //if(abs(dirchanges) != NUM_AXES)
-  //  fail = true;
+    for(int ax=0;ax<NUM_AXES;ax++)
+    {
+      if(axisspeeds[ax] > 0 && axisspeeds[ax] < smalla)
+        smalla = axisspeeds[ax];
+      if(nextspeeds[ax] > 0 && nextspeeds[ax] < smallb)
+        smallb = nextspeeds[ax];
+    }
 
-  // Which way are the moves going?
-  if(nextspeeds[diffaxis] > axisspeeds[diffaxis]) direction = true;
+    float rata=1, ratb=1;
+    if(smalla != 0 && biga - smalla > jerka)
+    {
+      rata = jerka / (biga - smalla);
+    }
+    if(smallb != 0 && bigb - smallb > jerkb)
+    {
+      ratb = jerkb / (bigb - smallb);
+    }
 
-#ifdef DEBUG_OPT    
-    HOST.labelnum("FD[", diffaxis, false);
-    HOST.labelnum("]:", feeddiff);
+#ifdef DEBUG_OPT
+    HOST.labelnum("biga:",biga,false);
+    HOST.labelnum(" rata:",rata,false);
+    HOST.labelnum(" smalla:",smalla,false);
+    HOST.labelnum(" jerka:",jerka);
+
+    HOST.labelnum("bigb:",bigb,false);
+    HOST.labelnum(" ratb:",ratb,false);
+    HOST.labelnum(" smallb:",smallb,false);
+    HOST.labelnum(" jerkb:",jerkb);
+
+
 #endif
- 
-  // Possible cases:
-  // 1) No diff means all axis are within jerk limit and we can end this move at top speed and begin the next at top speed.
-  // 2) f1 > f2 means we need to change our end speed to the calculated value == decel to next move start speed.
-  // 3) f2 > f1 means we need to change our next start speed to the calculated value == end this move at ull speed, accel at begin of next
-  // 4) different directions of speed change == nothing we can do but drop to 0/jerk
-#define min(x,y) (x > y ? y : x)
-#define max(x,y) (x > y ? x : y)
 
-  // 4: boo!
-  if(fail)
-  {
-#ifdef DEBUG_OPT
-    HOST.write("ACfail\n");
-#endif    
-  }
-  // 1:
-  else if(feeddiff == 0)
-  {
-    gcode.endfeed = gcode.maxfeed;
-    nextg.startfeed = nextg.maxfeed;
-#ifdef DEBUG_OPT
-    HOST.write("ACsame\n");
-#endif    
-  }
-  // 2: f1 > f2
-  else if(!direction)
-  {
-    float diffaxis_end_speed = (nextspeeds[diffaxis] + (feeddiff - AXES[diffaxis].getStartFeed()));
-    gcode.endfeed   = gcode.axisratio[diffaxis] * diffaxis_end_speed;
+    if(rata * biga > ratb * bigb)
+    {
+      rata = ratb;
+      biga = bigb;
+    }
+    else
+    {
+      rata = ratb;
+      biga = bigb;
+    }
 
-    float next_start_speed = (diffaxis_end_speed + AXES[diffaxis].getStartFeed()) * nextg.axisratio[diffaxis];
-    nextg.startfeed = max(nextg.startfeed, next_start_speed);
-#ifdef DEBUG_OPT
-    HOST.write("ACdec\n");
-#endif    
-  }
-  else // 3: f2 > f1
-  {
-#ifdef DEBUG_OPT
-    HOST.write("ACacc\n");
-#endif    
-    gcode.endfeed = gcode.maxfeed;
-    float next_start_speed = (axisspeeds[diffaxis] + AXES[diffaxis].getStartFeed()) * nextg.axisratio[diffaxis];
-    nextg.startfeed = min(nextg.maxfeed, next_start_speed);
-  }
+    gcode.endfeed   = min(gcode.maxfeed, rata * biga * gcode.axisratio[whicha]);
+    nextg.startfeed = min(nextg.maxfeed, rata * biga * nextg.axisratio[whichb]);
 
-
-  // Perhaps this should be broken into another function - correct for our new desired speeds.
+    gcode.endfeed   = max(gcode.endfeed,   AXES[gcode.leading_axis].getStartFeed());
+    nextg.startfeed = max(nextg.startfeed, AXES[nextg.leading_axis].getStartFeed());
+  }
+      
+#ifdef DEBUG_OPT    
+for(int ax=0;ax<NUM_AXES;ax++)
+{
+    HOST.labelnum("ASP[", ax, false);
+    HOST.labelnum("]:", axisspeeds[ax],false);
+    HOST.labelnum("->", (float)gcode.endfeed / gcode.axisratio[ax],false);
+    HOST.labelnum(", ", (float)nextg.startfeed / nextg.axisratio[ax],false);
+    HOST.labelnum("->", nextspeeds[ax]);
+}
+#endif
   // because we only lookahead one move, our maximum exit speed has to be either the desired
   // exit speed or the speed that the next move can reach to 0 (0+jerk, actually) during.
 
@@ -549,112 +542,14 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
     nextg.startfeed = gcode.endfeed / gcode.axisratio[nextg.leading_axis];
   }
 
-  // Fix speeds just in case
-  /*
-  if(gcode.endfeed > gcode.maxfeed)
-    gcode.endfeed = gcode.maxfeed;
-  if(nextg.startfeed > nextg.maxfeed)
-    nextg.startfeed = nextg.maxfeed;
-  */
+  computeAccel(gcode, &nextg);
 
-  // Two cases:
-  // 1) start speed < end speed; we get to accelerate for free up to end.
-  // 2) start speed >= end speed; we must plan decel irst, then add in appropriate accel.
-  if(gcode.startfeed < gcode.endfeed)
-  {
-    uint32_t distance_to_end = AXES[gcode.leading_axis].getAccelDist(gcode.startfeed, gcode.endfeed, gcode.accel);
-    uint32_t distance_to_max = AXES[gcode.leading_axis].getAccelDist(gcode.startfeed, gcode.maxfeed, gcode.accel);
-    // start is less than end, and we cannot accelerate enough to make the end in time.
-    if(distance_to_end >= gcode.movesteps)
-    {
-      gcode.decel_from = 0;
-      gcode.accel_until = 0;
-      // TODO: fix - should be speed we will reach + jerk
-      gcode.endfeed = AXES[gcode.leading_axis].getSpeedAtEnd(gcode.startfeed, gcode.accel, gcode.movesteps);
-      nextg.startfeed = gcode.endfeed / nextg.axisratio[gcode.leading_axis];
-    }
-    else // start is less than end, and we have extra room to accelerate.
-    {
-      uint32_t halfspace = (gcode.movesteps - distance_to_end)/2;
-      distance_to_max -= distance_to_end;
-      if(distance_to_max <= halfspace)
-      {
-        // Plateau
-        gcode.accel_until = gcode.movesteps - distance_to_end - distance_to_max;
-        gcode.decel_from  = distance_to_max;
-      }
-      else
-      {
-        // Peak
-        gcode.accel_until = gcode.movesteps - distance_to_end - halfspace;
-        gcode.decel_from  = halfspace;
-      }
-    }
-  }
-  else // start speed >= end speed... must decelrate primarily, accel if time.
-  {
-    uint32_t distance_to_end = AXES[gcode.leading_axis].getAccelDist(gcode.endfeed, gcode.startfeed, gcode.accel);
-    uint32_t distance_to_max = AXES[gcode.leading_axis].getAccelDist(gcode.startfeed, gcode.maxfeed, gcode.accel);
-    if(distance_to_end >= gcode.movesteps)
-    {
-      // TODO: this is NOT GOOD.  Throw an error.
-#ifdef DEBUG_OPT
-      HOST.labelnum("TOO FAST! ", gcode.movesteps, false);
-      HOST.labelnum(", needs ", distance_to_end, false);
-      HOST.labelnum(" at ", gcode.accel);
-#endif      
-      gcode.decel_from = gcode.movesteps;
-      gcode.accel_until = gcode.movesteps;
-      // TODO: fix - should be speed we will reach + jerk
-      gcode.endfeed = AXES[gcode.leading_axis].getSpeedAtEnd(gcode.startfeed, -gcode.accel, gcode.movesteps);
-      nextg.startfeed = max(gcode.endfeed * nextg.axisratio[gcode.leading_axis], nextg.startfeed);
-    }
-    else  // lots of room to decelerate
-    {
-      uint32_t halfspace = (gcode.movesteps - distance_to_end)/2;
-      if(distance_to_max <= halfspace)
-      {
-        // Plateau
-        gcode.accel_until = gcode.movesteps - distance_to_max;
-        gcode.decel_from  = distance_to_max + distance_to_end;
-      }
-      else
-      {
-        // Peak
-        gcode.accel_until = gcode.movesteps - halfspace;
-        gcode.decel_from  = halfspace + distance_to_end;
-      }
-    }
-  }
-
-
-  if(nextg.startfeed > nextg.maxfeed)
-    nextg.startfeed = nextg.maxfeed;
-
-#ifdef DEBUG_OPT    
-  HOST.labelnum("lines:",gcode.linenum,false);
-  HOST.labelnum("-",nextg.linenum,false);
-  HOST.labelnum(" steps:", gcode.movesteps,false);
-  HOST.labelnum(" au1:", gcode.accel_until,false);
-  HOST.labelnum(" df1:", gcode.decel_from,false);
-  HOST.labelnum(" nextsteps:", nextg.movesteps,false);
-  HOST.labelnum(" au2:", nextg.accel_until,false);
-  HOST.labelnum(" df2:", nextg.decel_from,false);
-  HOST.labelnum(" start: ", gcode.startfeed, false);
-  HOST.labelnum(" max: ", gcode.maxfeed, false);
-  HOST.labelnum(" attain: ", AXES[gcode.leading_axis].getSpeedAtEnd(gcode.startfeed, gcode.accel, gcode.movesteps-gcode.accel_until), false);
-  HOST.labelnum(" end: ", gcode.endfeed, false);
-  HOST.labelnum(" nextstart: ", nextg.startfeed, false);
-  HOST.labelnum(" nextmax: ", nextg.maxfeed);
-#endif
-
-
-#endif
+#endif // LOOKAHEAD
 }
 
-void Motion::handle_unopt(GCode &gcode)
+
+void Motion::computeAccel(GCode& gcode, GCode* nextg)
 {
-#ifdef LOOKAHEAD
   if(gcode[G].isUnused() || gcode[G].getInt() != 1)
     return;
 
@@ -675,6 +570,8 @@ void Motion::handle_unopt(GCode &gcode)
       gcode.accel_until = 0;
       // TODO: fix - should be speed we will reach + jerk
       gcode.endfeed = AXES[gcode.leading_axis].getSpeedAtEnd(gcode.startfeed, gcode.accel, gcode.movesteps);
+      if(nextg != NULL)
+        nextg->startfeed = gcode.endfeed / nextg->axisratio[gcode.leading_axis];
     }
     else // start is less than end, and we have extra room to accelerate.
     {
@@ -700,18 +597,20 @@ void Motion::handle_unopt(GCode &gcode)
     uint32_t distance_to_max = AXES[gcode.leading_axis].getAccelDist(gcode.startfeed, gcode.maxfeed, gcode.accel);
     if(distance_to_end >= gcode.movesteps)
     {
-#ifdef DEBUG_OPT
+      // TODO: this is NOT GOOD.  Throw an error.
+#ifdef DEBUG_ACCEL
       HOST.labelnum("TOO FAST! ", gcode.movesteps, false);
       HOST.labelnum(", needs ", distance_to_end, false);
       HOST.labelnum(" at ", gcode.accel, false);
       HOST.labelnum(" - ", gcode.startfeed, false);
       HOST.labelnum(" - ", gcode.endfeed);
 #endif      
-      // TODO: this is NOT GOOD.  Throw an error.
       gcode.decel_from = gcode.movesteps;
       gcode.accel_until = gcode.movesteps;
       // TODO: fix - should be speed we will reach + jerk
       gcode.endfeed = AXES[gcode.leading_axis].getSpeedAtEnd(gcode.startfeed, -gcode.accel, gcode.movesteps);
+      if(nextg != NULL)
+        nextg->startfeed = max(gcode.endfeed * nextg->axisratio[gcode.leading_axis], nextg->startfeed);
     }
     else  // lots of room to decelerate
     {
@@ -731,16 +630,35 @@ void Motion::handle_unopt(GCode &gcode)
     }
   }
 
-#ifdef DEBUG_OPT    
-  HOST.labelnum("unopt: ", gcode.linenum,false);
+  gcode.currentinterval = AXES[gcode.leading_axis].int_interval_from_feedrate(gcode.startfeed);
+  gcode.currentfeed = gcode.startfeed;
+
+  if(nextg != NULL && nextg->startfeed > nextg->maxfeed)
+    nextg->startfeed = nextg->maxfeed;
+
+#ifdef DEBUG_ACCEL    
+  HOST.labelnum("lines:",gcode.linenum,false);
+  if(nextg != NULL)
+    HOST.labelnum("-",nextg->linenum,false);
   HOST.labelnum(" steps:", gcode.movesteps,false);
   HOST.labelnum(" au1:", gcode.accel_until,false);
   HOST.labelnum(" df1:", gcode.decel_from,false);
+  HOST.labelnum(" attain: ", AXES[gcode.leading_axis].getSpeedAtEnd(gcode.startfeed, gcode.accel, gcode.movesteps-gcode.accel_until), false);
   HOST.labelnum(" start: ", gcode.startfeed, false);
   HOST.labelnum(" max: ", gcode.maxfeed, false);
-  HOST.labelnum(" attain: ", AXES[gcode.leading_axis].getSpeedAtEnd(gcode.startfeed, gcode.accel, gcode.movesteps-gcode.accel_until), false);
-  HOST.labelnum(" end: ", gcode.endfeed);
-#endif
+  HOST.labelnum(" end: ", gcode.endfeed, false);
+  if(nextg != NULL)
+  {
+    HOST.labelnum(" nextstart: ", nextg->startfeed, false);
+    HOST.labelnum(" nextmax: ", nextg->maxfeed,false);
+    HOST.labelnum(" nextsteps:", nextg->movesteps,false);
+    HOST.labelnum(" au2:", nextg->accel_until,false);
+    HOST.labelnum(" df2:", nextg->decel_from);
+  }
+  else
+  {
+    HOST.write(" - unopt.\n");
+  }
 #endif
 }
 
@@ -767,7 +685,6 @@ void Motion::gcode_execute(GCode& gcode)
     return;
   }
 
-
   // set axis move data, invalidate all precomputes if bad data
   for(int ax=0;ax<NUM_AXES;ax++)
   {
@@ -779,26 +696,6 @@ void Motion::gcode_execute(GCode& gcode)
     deltas[ax] = gcode.axismovesteps[ax];
     errors[ax] = gcode.movesteps >> 1;
   }
-
-#ifdef LOOKAHEAD
-  if(!gcode.optimized && GCODES.shouldOptimize())
-  {
-    // It's possible we had our start parameters optimized by the previous code but didn't
-    // get optimized ourselves.
-    handle_unopt(gcode);
-  }
-
-  gcode.currentinterval = AXES[gcode.leading_axis].int_interval_from_feedrate(gcode.startfeed);
-  gcode.currentfeed = gcode.startfeed;
-
-  // TODO: this catches a rounding error in the lookahead code.
-  if(gcode.currentinterval > 120000)
-  {
-    //HOST.write(gcode.linenum);
-    //HOST.labelnum("WTF: ", gcode.currentinterval);
-    gcode.currentinterval = MIN_INTERVAL;
-  }
-#endif
 
   // setup pointer to current move data for interrupt
   gcode.state = GCode::ACTIVE;

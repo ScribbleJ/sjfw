@@ -88,8 +88,8 @@ public:
   void gcode_precalc(GCode& gcode, float& feedin, Point* lastend);
   // Run extra math to do G1 even better
   void gcode_optimize(GCode& gcode, GCode& nextg);
-  // Handle a gcode which is not optimized, but may have been mixed about by an optimized one
-  void handle_unopt(GCode& gcode);
+  // (re)compute acceleration curve after optimization
+  void computeAccel(GCode& gcode, GCode* nextg=NULL);
   // Actually execute a (precalculated) movement gcode.
   void gcode_execute(GCode& gcode);
 
@@ -99,10 +99,6 @@ public:
 private:
   // Calculate the number of steps for each axis in a move.
   void getMovesteps(GCode& gcode);
-  // These three functions select the data to use during a move
-  unsigned long getLargestStartInterval(GCode& gcode);
-  unsigned long getLargestEndInterval(GCode& gcode);
-  unsigned long getLargestTimePerAccel(GCode& gcode);
   float getSmallestStartFeed(GCode& gcode);
   float getSmallestEndFeed(GCode& gcode);
 
