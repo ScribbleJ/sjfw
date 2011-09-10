@@ -403,6 +403,7 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
 
   // Compute the maximum speed we can be going at the end o the move in order
   // to hit the next move at our best possible
+  bool fail = false;
 
 
   // Calculate the requested speed of each axis at its peak during this move,
@@ -412,10 +413,13 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
   float nextspeeds[NUM_AXES];
   float mult1 = gcode.maxfeed / gcode.actualmm;
   float mult2 = nextg.maxfeed / nextg.actualmm;
-  float biga = 0, bigb = 0;
-  float jerka = gcode.maxfeed, jerkb = nextg.maxfeed;
-  int whicha=0, whichb=0;
-  bool fail = false;
+  for(int ax=0;ax<NUM_AXES;ax++)
+  {
+    axisspeeds[ax] = (float)((float)gcode.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult1;
+    nextspeeds[ax] = (float)((float)nextg.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult2;
+  }
+
+  // If any axes are changing in direction, we need to fail.
   for(int ax=0;ax<NUM_AXES;ax++)
   {
     if(gcode.axisdirs[ax] != nextg.axisdirs[ax] && gcode.axismovesteps[ax] != 0 && nextg.axismovesteps[ax] != 0)
@@ -425,37 +429,89 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
       HOST.labelnum("dirchange ax:", ax);
 #endif      
     }
-
-    axisspeeds[ax] = (float)((float)gcode.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult1;
-    nextspeeds[ax] = (float)((float)nextg.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult2;
-
-    if(axisspeeds[ax] > biga)
-    {
-      biga = axisspeeds[ax];
-      whicha = ax;
-    }
-
-    if(nextspeeds[ax] > bigb)
-    {
-      bigb = nextspeeds[ax];
-      whichb = ax;
-    }
-
-    if(nextg.axismovesteps[ax] != 0 and AXES[ax].getStartFeed() < jerka)
-      jerka = AXES[ax].getStartFeed();
-
-    if(nextg.axismovesteps[ax] != 0 and AXES[ax].getStartFeed() < jerkb)
-      jerkb = AXES[ax].getStartFeed();
   }
-  if(!fail)
+
+  float feeddiff = 0;
+  int   diffaxis = 0;
+  bool  diffdir = true;
+  int   dirchanges = 0;
+  for(int ax=0;ax<NUM_AXES;ax++)
   {
-    float smalla = biga, smallb = bigb;
-    if(gcode.axisdirs[ax] != nextg.axisdirs[ax])
+    // If one axis is increasing while another is decreasing, we must take special action
+    if(axisspeeds[ax] > nextspeeds[ax])
+      dirchanges++;
+    else 
+      dirchanges--;
+
+    // store the greatest difference above the 'jerk speed' and which axis it was on.
+    float diff = fabs(axisspeeds[ax] - nextspeeds[ax]);
+    if(diff > AXES[ax].getStartFeed() && diff > feeddiff)
     {
-      if(gcode.axismovesteps[ax] == 0)
-        smalla = 0;
-      if(nextg.axismovesteps[ax] == 0)
-        smallb = 0;
+      feeddiff = diff;
+      diffaxis = ax;
+      if(axisspeeds[ax] > nextspeeds[ax])
+        diffdir = false;
+    }
+  }
+
+#ifdef DEBUG_MOVE
+  HOST.labelnum("FD[", diffaxis, false);
+  HOST.labelnum("]:", feeddiff);
+#endif
+
+  if(fail)  // We can't join, don't even try.
+  {
+#ifdef DEBUG_OPT  
+    HOST.write("FAIL\n");
+#endif
+  }
+  else if(feeddiff == 0) // We can join at top speed.
+  {
+#ifdef DEBUG_OPT  
+    HOST.write("SAME\n");
+#endif
+    gcode.endfeed = gcode.maxfeed;
+    nextg.startfeed = nextg.maxfeed;
+  }
+  else if(abs(dirchanges) != NUM_AXES) // One axis accel, another decel, must join with max distance of jerk
+  {
+#ifdef DEBUG_OPT  
+    HOST.write("DIVERGE\n");
+#endif
+    float biga = 0, bigb = 0;
+    float jerka = gcode.maxfeed, jerkb = nextg.maxfeed;
+    int whicha=0, whichb=0;
+    for(int ax=0;ax<NUM_AXES;ax++)
+    {
+      if(axisspeeds[ax] > biga)
+      {
+        biga = axisspeeds[ax];
+        whicha = ax;
+      }
+
+      if(nextspeeds[ax] > bigb)
+      {
+        bigb = nextspeeds[ax];
+        whichb = ax;
+      }
+
+      if(nextg.axismovesteps[ax] != 0 and AXES[ax].getStartFeed() < jerka)
+        jerka = AXES[ax].getStartFeed();
+
+      if(nextg.axismovesteps[ax] != 0 and AXES[ax].getStartFeed() < jerkb)
+        jerkb = AXES[ax].getStartFeed();
+    }
+
+    float smalla = biga, smallb = bigb;
+    for(int ax=0;ax<NUM_AXES;ax++)
+    {
+      if(gcode.axisdirs[ax] != nextg.axisdirs[ax])
+      {
+        if(gcode.axismovesteps[ax] == 0)
+          smalla = 0;
+        if(nextg.axismovesteps[ax] == 0)
+          smallb = 0;
+      }
     }
 
     for(int ax=0;ax<NUM_AXES;ax++)
@@ -486,8 +542,6 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
     HOST.labelnum(" ratb:",ratb,false);
     HOST.labelnum(" smallb:",smallb,false);
     HOST.labelnum(" jerkb:",jerkb);
-
-
 #endif
 
     if(rata * biga > ratb * bigb)
@@ -507,17 +561,40 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
     gcode.endfeed   = max(gcode.endfeed,   AXES[gcode.leading_axis].getStartFeed());
     nextg.startfeed = max(nextg.startfeed, AXES[nextg.leading_axis].getStartFeed());
   }
+  else if(diffdir) // Increase speed to join
+  {
+#ifdef DEBUG_OPT  
+    HOST.write("INC\n");
+#endif
+    gcode.endfeed = gcode.maxfeed;
+    float next_start_speed = (axisspeeds[diffaxis] + AXES[diffaxis].getStartFeed()) * nextg.axisratio[diffaxis];
+    nextg.startfeed = min(nextg.maxfeed, next_start_speed);
+  }
+  else // Decrease to join
+  {
+#ifdef DEBUG_OPT  
+    HOST.write("DEC\n");
+#endif
+    float diffaxis_end_speed = (nextspeeds[diffaxis] + (feeddiff - AXES[diffaxis].getStartFeed()));
+    gcode.endfeed = gcode.axisratio[diffaxis] * diffaxis_end_speed;
+
+    float next_start_speed = (diffaxis_end_speed + AXES[diffaxis].getStartFeed()) * nextg.axisratio[diffaxis];
+    nextg.startfeed = max(nextg.startfeed, next_start_speed);
+  }
+
       
 #ifdef DEBUG_OPT    
-for(int ax=0;ax<NUM_AXES;ax++)
-{
+  for(int ax=0;ax<NUM_AXES;ax++)
+  {
     HOST.labelnum("ASP[", ax, false);
     HOST.labelnum("]:", axisspeeds[ax],false);
     HOST.labelnum("->", (float)gcode.endfeed / gcode.axisratio[ax],false);
     HOST.labelnum(", ", (float)nextg.startfeed / nextg.axisratio[ax],false);
     HOST.labelnum("->", nextspeeds[ax]);
-}
+  }
 #endif
+
+
   // because we only lookahead one move, our maximum exit speed has to be either the desired
   // exit speed or the speed that the next move can reach to 0 (0+jerk, actually) during.
 
