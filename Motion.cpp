@@ -385,19 +385,24 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
 
 
 // Diverent moves need to be handled specially.
-void Motion::fix_diverge(float *ends, float *starts)
+// Divergent moves are ones where one axis is increasing in speed, while another is
+// decreasing.  This means if we blindly adjust one side, then the other, as we do, 
+// the second adjustment is likely to bring the first adjustment out of whack.
+// So here we basically limit speed to the maximum speed from which it's impossible to go out of whack.
+// TODO: Don't assume all diverence is on XY
+void Motion::fix_diverge(int32_t *ends, int32_t *starts)
 {
-    float dA = fabs(ends[0] - ends[1]);
-    float dB = fabs(starts[0] - starts[1]);
+    int32_t dA = labs(ends[0] - ends[1]);
+    int32_t dB = labs(starts[0] - starts[1]);
     if(dA > AXES[0].getStartFeed() + dB)
     {
-      float ar     = (AXES[0].getStartFeed() + dB) / dA;
+      float ar     = (float)(AXES[0].getStartFeed() + dB) / (float)dA;
 
       if(ar < 1)
       {
         for(int ax=0;ax<NUM_AXES;ax++)
         {
-          ends[ax] = ends[ax] * ar;
+          ends[ax] = (float)ends[ax] * ar;
         }
 #ifdef DEBUG_LAME
       HOST.labelnum("divratio: ", ar);
@@ -416,19 +421,23 @@ void Motion::fix_diverge(float *ends, float *starts)
     }
 }
 
-void Motion::join_moves(float *ends, float *starts)
+
+// This is a routine that limits endspeed to a rate at which we can hit
+// start speeds.  Run it in reverse to limit the start speed to something we 
+// can hit from our end speed.
+void Motion::join_moves(int32_t *ends, int32_t *starts)
 {
   float ratio = 1;
   for(int ax=0;ax<NUM_AXES;ax++)
   {
     float ar = 1;
-    float jump = AXES[ax].getStartFeed();
-    float desired = fabs(starts[ax]) + jump;
+    uint32_t jump = AXES[ax].getStartFeed();
+    uint32_t desired = fabs(starts[ax]) + jump;
 
     if((starts[ax] >=0) != (ends[ax] >= 0))
       desired = jump;
 
-    ar = desired / fabs(ends[ax]);
+    ar = float(desired) / fabs(ends[ax]);
 
     if(ar < ratio)
     {
@@ -437,13 +446,17 @@ void Motion::join_moves(float *ends, float *starts)
   }
   for(int ax=0;ax<NUM_AXES;ax++)
   {
-    ends[ax] = ends[ax] * ratio;
+    ends[ax] = (float)ends[ax] * ratio;
   }
 #ifdef DEBUG_LAME
   HOST.labelnum("ratio: ", ratio);
 #endif  
 }
 
+
+// This is the lookahead algorithm.  From a high level, we simply 
+// limit our end speed and the next start speed to appropriate limits, 
+// then further limit them to a speed where reaching a stop is possible.
 void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
 {
 #ifdef LOOKAHEAD
@@ -453,9 +466,12 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
 
   gcode.optimized = true;
 
+  // If this isn't a move, we have nothing to do.
   if(gcode[G].isUnused() || gcode[G].getInt() != 1 || gcode.movesteps == 0)
     return;
 
+  // If the NEXT gcode isn't a move, then we will just recomute our accels
+  // (assuming the previous move changed them during it's optimization)
   if(nextg[G].isUnused() || nextg[G].getInt() != 1 || nextg.movesteps == 0)
   {
     computeAccel(gcode);
@@ -463,57 +479,48 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
   }
 
   // Calculate the requested speed of each axis at its peak during this move,
-  // including a direction sign.
-  // Also calculate the biggest change in axis speeds over jerk.
-  float axisspeeds[NUM_AXES];
-  float endspeeds[NUM_AXES];
-  float nextspeeds[NUM_AXES];
-  float startspeeds[NUM_AXES];
-  float mult1 = gcode.maxfeed / gcode.actualmm;
-  float mult2 = nextg.maxfeed / nextg.actualmm;
+  // including a direction sign.  TODO: We calculated this once already, maybe we can store it.
+  int32_t axisspeeds[NUM_AXES];
+  int32_t endspeeds[NUM_AXES];
+  int32_t nextspeeds[NUM_AXES];
+  int32_t startspeeds[NUM_AXES];
+  float mult1 = (float)gcode.maxfeed / gcode.actualmm;
+  float mult2 = (float)nextg.maxfeed / nextg.actualmm;
   int diverge = 0;
   for(int ax=0;ax<NUM_AXES;ax++)
   {
     axisspeeds[ax] = (float)((float)gcode.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult1;
-    axisspeeds[ax] *= gcode.axisdirs[ax] ? 1.0f : -1.0f;
+    axisspeeds[ax] *= gcode.axisdirs[ax] ? 1 : -1;
     endspeeds[ax] = axisspeeds[ax];
     nextspeeds[ax] = (float)((float)nextg.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult2;
-    nextspeeds[ax] *= nextg.axisdirs[ax] ? 1.0f : -1.0f;
+    nextspeeds[ax] *= nextg.axisdirs[ax] ? 1 : -1;
     startspeeds[ax] = nextspeeds[ax];
+    // Diverge is equal to the number of axis, unless
+    // one axis is increasing while another decreases.
     if(endspeeds[ax] >= startspeeds[ax])
       diverge++;
     else
       diverge--;
   }
 
-  // in diverence, lower each side so diverin axis speeds are within jump + opposite sides diverence
-  // TODO: Don't assume all diverence is on XY
-
+  // in diverence, lower the divergent side(s) to a safe speed.
   if(diverge != NUM_AXES)
   {
 #ifdef DEBUG_OPT
     HOST.write("diverge.\n");
 #endif    
+    // Fix this move to be acceptably divergent for the next move.
     fix_diverge(endspeeds,startspeeds); 
+    // Fix the next move to be acceptably divergent for this move.
     fix_diverge(startspeeds,endspeeds); 
   }
 
 
+  // Calculate the end speeds (of this move) we can use to meet the start speeds (of the next move).
   join_moves(endspeeds,startspeeds);
-
-#ifdef DEBUG_LAME    
-  for(int ax=0;ax<NUM_AXES;ax++)
-  {
-    HOST.labelnum("ASP[", ax, false);
-    HOST.labelnum("]:", axisspeeds[ax],false);
-    HOST.labelnum("->", endspeeds[ax],false);
-    HOST.labelnum(", ", startspeeds[ax],false);
-    HOST.labelnum("->", nextspeeds[ax], false);
-    HOST.labelnum(" @jump:", AXES[ax].getStartFeed());
-  }
-#endif
-
+  // Calculate the start speeds (of the next move) we can use to meet the end speeds (of this move)
   join_moves(startspeeds,endspeeds);
+
 
 #ifdef DEBUG_OPT    
   for(int ax=0;ax<NUM_AXES;ax++)
@@ -527,41 +534,37 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
   }
 #endif
 
-
-  gcode.endfeed = fabs(endspeeds[gcode.leading_axis]);
-  nextg.startfeed = fabs(startspeeds[nextg.leading_axis]);
-  // because we only lookahead one move, our maximum exit speed has to be either the desired
-  // exit speed or the speed that the next move can reach to 0 (0+jerk, actually) during.
-
-  // Speed at which we can reach 0 in the forseeable future
+  // Speed at which the next move's leading axis can reach 0 during the next move.
   float speedto0 = AXES[nextg.leading_axis].
                     getSpeedAtEnd(AXES[nextg.leading_axis].getStartFeed(),
                                   nextg.accel, 
                                   nextg.movesteps);
 
-  if(speedto0 < nextg.startfeed)
+  // If the next move cannot reach 0, limit it so it can.
+  if(speedto0 < startspeeds[nextg.leading_axis])
   {
 #ifdef DEBUG_OPT
-    HOST.labelnum("st0beg:",nextg.startfeed,false);
-    HOST.labelnum(",",speedto0);
+    HOST.labelnum("st0beg:",speedto0);
 #endif
-    nextg.startfeed = speedto0;
+    startspeeds[nextg.leading_axis] = speedto0;
   }
-
     
   // now speedto0 is the maximum speed the primary in the next move can be going.  We need the equivalent speed of the primary in this move.
   speedto0 = (speedto0 * gcode.axisratio[nextg.leading_axis]);
   // If this move isn't moving the primary of the next move, then speedto0 will come out to 0.
   // This is obviously incorrect...
-  if(speedto0 > 1 && speedto0 < gcode.endfeed)
+  if(speedto0 < endspeeds[gcode.leading_axis])
   {
 #ifdef DEBUG_OPT
-    HOST.labelnum("st0end:",gcode.endfeed,false);
-    HOST.labelnum(",",speedto0);
+    HOST.labelnum("st0end:",speedto0);
 #endif
-    gcode.endfeed = speedto0;
-    nextg.startfeed = gcode.endfeed / gcode.axisratio[nextg.leading_axis];
+    endspeeds[gcode.leading_axis] = speedto0;
   }
+
+  gcode.endfeed = max(gcode.endfeed,labs(endspeeds[gcode.leading_axis]));
+  nextg.startfeed = max(nextg.startfeed,labs(startspeeds[nextg.leading_axis]));
+  // because we only lookahead one move, our maximum exit speed has to be either the desired
+  // exit speed or the speed that the next move can reach to 0 (0+jerk, actually) during.
 
   computeAccel(gcode, &nextg);
 
@@ -569,6 +572,9 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
 }
 
 
+// This computes an acceleration curve, given requested start, max, and end speeds for a move.
+// Optimally, also pass the next move, and it will adjust the start speed there to match the
+// actual speeds we can achieve < max.
 void Motion::computeAccel(GCode& gcode, GCode* nextg)
 {
   if(gcode[G].isUnused() || gcode[G].getInt() != 1)
@@ -683,6 +689,8 @@ void Motion::computeAccel(GCode& gcode, GCode* nextg)
 #endif
 }
 
+
+// Takes the next queued gcode and begins running it.
 void Motion::gcode_execute(GCode& gcode)
 {
   // Only execute codes that are prepared.
@@ -706,12 +714,13 @@ void Motion::gcode_execute(GCode& gcode)
     return;
   }
 
-  // set axis move data, invalidate all precomputes if bad data
+  // Prepare axis move data -- Invalidate all precomputes if bad data (happens on hitting an endstop)
   for(int ax=0;ax<NUM_AXES;ax++)
   {
     if(!AXES[ax].setupMove(gcode.startpos[ax], gcode.axisdirs[ax], gcode.axismovesteps[ax]))
     {
       GCODES.Invalidate();
+      // We'll get back here after the first move is recomputed.
       return;
     }
     deltas[ax] = gcode.axismovesteps[ax];
@@ -747,13 +756,17 @@ void Motion::writePositionToHost(GCode& gc)
 }
 
 
-
+// SJFW's main movement routine in some sense; this is executed by the processor
+// for each step of the primary axis in a movement.
 void Motion::handleInterrupt()
 {
+  // This shouldn't be necessary if I've managed things properly, but I doubt I have.
   if(busy)
     return;
 
 #ifdef INTERRUPT_STEPS
+  // We typically have this option enabled to allow the comms interrupt
+  // to occur while we are doing anything heavy here.
   busy = true;
   //resetTimer();
   disableInterrupt();
@@ -833,7 +846,8 @@ void Motion::handleInterrupt()
 
   }
 
-
+  // This check is only important if we hit endstops; lets us know all the involved axis
+  // have reached their end early.
   if(!axesAreMoving())
   {
     current_gcode->movesteps = 0;
@@ -901,6 +915,8 @@ void Motion::disableInterrupt()
   TIMSK1 &= ~(_BV(OCIE1A));
 }
 
+// With a 16-bit timer operating at 1:1 with the clock,
+// we have to verflow at 0xFFFF, thus the 60000 check below.
 void Motion::setInterruptCycles(unsigned long cycles) 
 {
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE)

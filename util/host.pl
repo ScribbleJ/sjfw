@@ -62,6 +62,7 @@ sub addcrc($$)
 
 
 
+my $t1 = time();
 
 my $line = '';
 while(1)
@@ -104,8 +105,11 @@ while(1)
     my $char;
     if(sysread(STDIN,$char,1) != 1)
     {
-      die("All done.\n");
+      my $t2 = time();
+      my $mins = ($t2 - $t1) / 60;
+      printf("All done - took %4.4f mins.\n", $mins);
       sleep(30); # temporary hack
+      die("Finish.");
     }
     $line .= $char;
     if($char eq "\n")

@@ -103,8 +103,8 @@ private:
   float getSmallestEndFeed(GCode& gcode);
 
   // opt support
-  void fix_diverge(float *ends, float* starts);
-  void join_moves(float *ends, float* starts);
+  void fix_diverge(int32_t *ends, int32_t* starts);
+  void join_moves(int32_t *ends, int32_t* starts);
 
 
 
