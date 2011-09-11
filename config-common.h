@@ -12,9 +12,9 @@
 #define HOST_RECV_BUFSIZE 100
 #define HOST_SEND_BUFSIZE 100
 #else
-#define GCODE_BUFSIZE 10
+#define GCODE_BUFSIZE 5
 #define HOST_RECV_BUFSIZE 200
-#define HOST_SEND_BUFSIZE 1200
+#define HOST_SEND_BUFSIZE 2000
 #endif
 
 // Each source eats anough ram for 1 addtl gcode

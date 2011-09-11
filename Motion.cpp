@@ -383,10 +383,71 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
 
 }
 
+
+// Diverent moves need to be handled specially.
+void Motion::fix_diverge(float *ends, float *starts)
+{
+    float dA = fabs(ends[0] - ends[1]);
+    float dB = fabs(starts[0] - starts[1]);
+    if(dA > AXES[0].getStartFeed() + dB)
+    {
+      float ar     = (AXES[0].getStartFeed() + dB) / dA;
+
+      if(ar < 1)
+      {
+        for(int ax=0;ax<NUM_AXES;ax++)
+        {
+          ends[ax] = ends[ax] * ar;
+        }
+#ifdef DEBUG_LAME
+      HOST.labelnum("divratio: ", ar);
+#endif  
+
+#ifdef DEBUG_LAME    
+      for(int ax=0;ax<NUM_AXES;ax++)
+      {
+        HOST.labelnum("DIV:[", ax, false);
+        HOST.labelnum("]:", ends[ax],false);
+        HOST.labelnum("->", starts[ax], false);
+        HOST.labelnum(" @jump:", AXES[ax].getStartFeed());
+      }
+#endif
+      }
+    }
+}
+
+void Motion::join_moves(float *ends, float *starts)
+{
+  float ratio = 1;
+  for(int ax=0;ax<NUM_AXES;ax++)
+  {
+    float ar = 1;
+    float jump = AXES[ax].getStartFeed();
+    float desired = fabs(starts[ax]) + jump;
+
+    if((starts[ax] >=0) != (ends[ax] >= 0))
+      desired = jump;
+
+    ar = desired / fabs(ends[ax]);
+
+    if(ar < ratio)
+    {
+      ratio = ar;
+    }
+  }
+  for(int ax=0;ax<NUM_AXES;ax++)
+  {
+    ends[ax] = ends[ax] * ratio;
+  }
+#ifdef DEBUG_LAME
+  HOST.labelnum("ratio: ", ratio);
+#endif  
+}
+
 void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
 {
 #ifdef LOOKAHEAD
-  // I need to think about this a lot more.
+  // THIS NEEDS SERIOUS REFACTORIN
   if(gcode.optimized)
     return;
 
@@ -401,200 +462,74 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
     return;
   }
 
-  // Compute the maximum speed we can be going at the end o the move in order
-  // to hit the next move at our best possible
-  bool fail = false;
-
-
   // Calculate the requested speed of each axis at its peak during this move,
   // including a direction sign.
   // Also calculate the biggest change in axis speeds over jerk.
   float axisspeeds[NUM_AXES];
+  float endspeeds[NUM_AXES];
   float nextspeeds[NUM_AXES];
+  float startspeeds[NUM_AXES];
   float mult1 = gcode.maxfeed / gcode.actualmm;
   float mult2 = nextg.maxfeed / nextg.actualmm;
+  int diverge = 0;
   for(int ax=0;ax<NUM_AXES;ax++)
   {
     axisspeeds[ax] = (float)((float)gcode.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult1;
+    axisspeeds[ax] *= gcode.axisdirs[ax] ? 1.0f : -1.0f;
+    endspeeds[ax] = axisspeeds[ax];
     nextspeeds[ax] = (float)((float)nextg.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult2;
-  }
-
-  // If any axes are changing in direction, we need to fail.
-  for(int ax=0;ax<NUM_AXES;ax++)
-  {
-    if(gcode.axisdirs[ax] != nextg.axisdirs[ax] && gcode.axismovesteps[ax] != 0 && nextg.axismovesteps[ax] != 0)
-    {
-      fail = true;
-#ifdef DEBUG_OPT
-      HOST.labelnum("dirchange ax:", ax);
-#endif      
-    }
-  }
-
-  float feeddiff = 0;
-  int   diffaxis = 0;
-  bool  diffdir = true;
-  int   dirchanges = 0;
-  for(int ax=0;ax<NUM_AXES;ax++)
-  {
-    // If one axis is increasing while another is decreasing, we must take special action
-    if(axisspeeds[ax] > nextspeeds[ax])
-      dirchanges++;
-    else 
-      dirchanges--;
-
-    // store the greatest difference above the 'jerk speed' and which axis it was on.
-    float diff = fabs(axisspeeds[ax] - nextspeeds[ax]);
-    if(diff > AXES[ax].getStartFeed() && diff > feeddiff)
-    {
-      feeddiff = diff;
-      diffaxis = ax;
-      if(axisspeeds[ax] > nextspeeds[ax])
-        diffdir = false;
-    }
-  }
-
-#ifdef DEBUG_MOVE
-  HOST.labelnum("FD[", diffaxis, false);
-  HOST.labelnum("]:", feeddiff);
-#endif
-
-  if(fail)  // We can't join, don't even try.
-  {
-#ifdef DEBUG_OPT  
-    HOST.write("FAIL\n");
-#endif
-  }
-  else if(feeddiff == 0) // We can join at top speed.
-  {
-#ifdef DEBUG_OPT  
-    HOST.write("SAME\n");
-#endif
-    gcode.endfeed = gcode.maxfeed;
-    nextg.startfeed = nextg.maxfeed;
-  }
-  else if(abs(dirchanges) != NUM_AXES) // One axis accel, another decel, must join with max distance of jerk
-  {
-#ifdef DEBUG_OPT  
-    HOST.write("DIVERGE\n");
-#endif
-    float biga = 0, bigb = 0;
-    float jerka = gcode.maxfeed, jerkb = nextg.maxfeed;
-    int whicha=0, whichb=0;
-    for(int ax=0;ax<NUM_AXES;ax++)
-    {
-      if(axisspeeds[ax] > biga)
-      {
-        biga = axisspeeds[ax];
-        whicha = ax;
-      }
-
-      if(nextspeeds[ax] > bigb)
-      {
-        bigb = nextspeeds[ax];
-        whichb = ax;
-      }
-
-      if(nextg.axismovesteps[ax] != 0 and AXES[ax].getStartFeed() < jerka)
-        jerka = AXES[ax].getStartFeed();
-
-      if(nextg.axismovesteps[ax] != 0 and AXES[ax].getStartFeed() < jerkb)
-        jerkb = AXES[ax].getStartFeed();
-    }
-
-    float smalla = biga, smallb = bigb;
-    for(int ax=0;ax<NUM_AXES;ax++)
-    {
-      if(gcode.axisdirs[ax] != nextg.axisdirs[ax])
-      {
-        if(gcode.axismovesteps[ax] == 0)
-          smalla = 0;
-        if(nextg.axismovesteps[ax] == 0)
-          smallb = 0;
-      }
-    }
-
-    for(int ax=0;ax<NUM_AXES;ax++)
-    {
-      if(axisspeeds[ax] > 0 && axisspeeds[ax] < smalla)
-        smalla = axisspeeds[ax];
-      if(nextspeeds[ax] > 0 && nextspeeds[ax] < smallb)
-        smallb = nextspeeds[ax];
-    }
-
-    float rata=1, ratb=1;
-    if(smalla != 0 && biga - smalla > jerka)
-    {
-      rata = jerka / (biga - smalla);
-    }
-    if(smallb != 0 && bigb - smallb > jerkb)
-    {
-      ratb = jerkb / (bigb - smallb);
-    }
-
-#ifdef DEBUG_OPT
-    HOST.labelnum("biga:",biga,false);
-    HOST.labelnum(" rata:",rata,false);
-    HOST.labelnum(" smalla:",smalla,false);
-    HOST.labelnum(" jerka:",jerka);
-
-    HOST.labelnum("bigb:",bigb,false);
-    HOST.labelnum(" ratb:",ratb,false);
-    HOST.labelnum(" smallb:",smallb,false);
-    HOST.labelnum(" jerkb:",jerkb);
-#endif
-
-    if(rata * biga > ratb * bigb)
-    {
-      rata = ratb;
-      biga = bigb;
-    }
+    nextspeeds[ax] *= nextg.axisdirs[ax] ? 1.0f : -1.0f;
+    startspeeds[ax] = nextspeeds[ax];
+    if(endspeeds[ax] >= startspeeds[ax])
+      diverge++;
     else
-    {
-      rata = ratb;
-      biga = bigb;
-    }
-
-    gcode.endfeed   = min(gcode.maxfeed, rata * biga * gcode.axisratio[whicha]);
-    nextg.startfeed = min(nextg.maxfeed, rata * biga * nextg.axisratio[whichb]);
-
-    gcode.endfeed   = max(gcode.endfeed,   AXES[gcode.leading_axis].getStartFeed());
-    nextg.startfeed = max(nextg.startfeed, AXES[nextg.leading_axis].getStartFeed());
+      diverge--;
   }
-  else if(diffdir) // Increase speed to join
+
+  // in diverence, lower each side so diverin axis speeds are within jump + opposite sides diverence
+  // TODO: Don't assume all diverence is on XY
+
+  if(diverge != NUM_AXES)
   {
-#ifdef DEBUG_OPT  
-    HOST.write("INC\n");
-#endif
-    gcode.endfeed = gcode.maxfeed;
-    float next_start_speed = (axisspeeds[diffaxis] + AXES[diffaxis].getStartFeed()) * nextg.axisratio[diffaxis];
-    nextg.startfeed = min(nextg.maxfeed, next_start_speed);
+#ifdef DEBUG_OPT
+    HOST.write("diverge.\n");
+#endif    
+    fix_diverge(endspeeds,startspeeds); 
+    fix_diverge(startspeeds,endspeeds); 
   }
-  else // Decrease to join
+
+
+  join_moves(endspeeds,startspeeds);
+
+#ifdef DEBUG_LAME    
+  for(int ax=0;ax<NUM_AXES;ax++)
   {
-#ifdef DEBUG_OPT  
-    HOST.write("DEC\n");
-#endif
-    float diffaxis_end_speed = (nextspeeds[diffaxis] + (feeddiff - AXES[diffaxis].getStartFeed()));
-    gcode.endfeed = gcode.axisratio[diffaxis] * diffaxis_end_speed;
-
-    float next_start_speed = (diffaxis_end_speed + AXES[diffaxis].getStartFeed()) * nextg.axisratio[diffaxis];
-    nextg.startfeed = max(nextg.startfeed, next_start_speed);
+    HOST.labelnum("ASP[", ax, false);
+    HOST.labelnum("]:", axisspeeds[ax],false);
+    HOST.labelnum("->", endspeeds[ax],false);
+    HOST.labelnum(", ", startspeeds[ax],false);
+    HOST.labelnum("->", nextspeeds[ax], false);
+    HOST.labelnum(" @jump:", AXES[ax].getStartFeed());
   }
+#endif
 
-      
+  join_moves(startspeeds,endspeeds);
+
 #ifdef DEBUG_OPT    
   for(int ax=0;ax<NUM_AXES;ax++)
   {
     HOST.labelnum("ASP[", ax, false);
     HOST.labelnum("]:", axisspeeds[ax],false);
-    HOST.labelnum("->", (float)gcode.endfeed / gcode.axisratio[ax],false);
-    HOST.labelnum(", ", (float)nextg.startfeed / nextg.axisratio[ax],false);
-    HOST.labelnum("->", nextspeeds[ax]);
+    HOST.labelnum("->", endspeeds[ax],false);
+    HOST.labelnum(", ", startspeeds[ax],false);
+    HOST.labelnum("->", nextspeeds[ax], false);
+    HOST.labelnum(" @jump:", AXES[ax].getStartFeed());
   }
 #endif
 
 
+  gcode.endfeed = fabs(endspeeds[gcode.leading_axis]);
+  nextg.startfeed = fabs(startspeeds[nextg.leading_axis]);
   // because we only lookahead one move, our maximum exit speed has to be either the desired
   // exit speed or the speed that the next move can reach to 0 (0+jerk, actually) during.
 
@@ -605,14 +540,23 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
                                   nextg.movesteps);
 
   if(speedto0 < nextg.startfeed)
+  {
+#ifdef DEBUG_OPT
+    HOST.labelnum("st0beg:",nextg.startfeed,false);
+    HOST.labelnum(",",speedto0);
+#endif
     nextg.startfeed = speedto0;
+  }
+
     
   // now speedto0 is the maximum speed the primary in the next move can be going.  We need the equivalent speed of the primary in this move.
   speedto0 = (speedto0 * gcode.axisratio[nextg.leading_axis]);
-  if(speedto0 < gcode.endfeed)
+  // If this move isn't moving the primary of the next move, then speedto0 will come out to 0.
+  // This is obviously incorrect...
+  if(speedto0 > 1 && speedto0 < gcode.endfeed)
   {
 #ifdef DEBUG_OPT
-    HOST.labelnum("st0:",gcode.endfeed,false);
+    HOST.labelnum("st0end:",gcode.endfeed,false);
     HOST.labelnum(",",speedto0);
 #endif
     gcode.endfeed = speedto0;

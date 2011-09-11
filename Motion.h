@@ -102,6 +102,11 @@ private:
   float getSmallestStartFeed(GCode& gcode);
   float getSmallestEndFeed(GCode& gcode);
 
+  // opt support
+  void fix_diverge(float *ends, float* starts);
+  void join_moves(float *ends, float* starts);
+
+
 
 
   // Functions for handling pulsing motors using a timer interrupt for timing.
