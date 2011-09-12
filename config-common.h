@@ -12,9 +12,9 @@
 #define HOST_RECV_BUFSIZE 100
 #define HOST_SEND_BUFSIZE 100
 #else
-#define GCODE_BUFSIZE 15
+#define GCODE_BUFSIZE 7
 #define HOST_RECV_BUFSIZE 200
-#define HOST_SEND_BUFSIZE 200
+#define HOST_SEND_BUFSIZE 1800
 #endif
 
 // Each source eats anough ram for 1 addtl gcode
@@ -35,7 +35,7 @@
 // How often to update the temperature display on the LCD.
 #define LCD_REFRESH_MILLIS 2000
 // Size of LCD command queue.. should be minimum of LCD_X*LCD_Y + 100
-#define LCD_BUFFER_SIZE 200
+#define LCD_BUFFER_SIZE 250
 
 
 
@@ -47,9 +47,9 @@
 #define ACCEL_INC_TIME F_CPU/ACCELS_PER_SECOND
 
 //#define COMMS_ERR2
-//#define DEBUG_OPT
-//#define DEBUG_MOVE
-//#define DEBUG_ACCEL
+#define DEBUG_OPT
+#define DEBUG_MOVE
+#define DEBUG_ACCEL
 
 #define BT_BAUD 9600
 //#define BT_DEBUG

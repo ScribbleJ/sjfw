@@ -329,9 +329,9 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
         bigdiff = d;
     }
 
-    if(axisspeeds[ax] > AXES[ax].getStartFeed())
+    if(axisspeeds[ax] > AXES[ax].getStartFeed()/2)
     {
-      float d = (axisspeeds[ax] - AXES[ax].getStartFeed()) * gcode.axisratio[ax];
+      float d = (axisspeeds[ax] - (AXES[ax].getStartFeed()/2)) * gcode.axisratio[ax];
       if(d > littlediff)
         littlediff = d;
     }
@@ -345,6 +345,7 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
   gcode.startfeed = axisspeeds[gcode.leading_axis] - littlediff;
   gcode.endfeed   = gcode.startfeed;
   gcode.currentfeed = gcode.startfeed;
+  gcode.minfeed = gcode.startfeed;
 
   // TODO: We shoudl treat accel as we do the speeds above and scale it to fit the chosen axis. 
   // instead we just take the accel of the leadng axis.
@@ -390,13 +391,21 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
 // the second adjustment is likely to bring the first adjustment out of whack.
 // So here we basically limit speed to the maximum speed from which it's impossible to go out of whack.
 // TODO: Don't assume all diverence is on XY
+// this algorithm is crap.
 void Motion::fix_diverge(int32_t *ends, int32_t *starts)
 {
-    int32_t dA = labs(ends[0] - ends[1]);
-    int32_t dB = labs(starts[0] - starts[1]);
-    if(dA > AXES[0].getStartFeed() + dB)
+    int32_t dA = labs(labs(ends[0]) - labs(ends[1]));
+    int32_t dB = labs(labs(starts[0]) - labs(starts[1]));
+    // max diverge is 2x jump - diff in other axis.
+    // .. or something like that.
+    //int32_t mdiv = (AXES[0].getStartFeed() * 2) - dB;
+    int32_t mdiv = AXES[0].getStartFeed()*2;
+    if(dB < AXES[0].getStartFeed())
+      mdiv -= dB;
+
+    if(dA > mdiv)
     {
-      float ar     = (float)(AXES[0].getStartFeed() + dB) / (float)dA;
+      float ar     = (float)mdiv / (float)dA;
 
       if(ar < 1)
       {
@@ -425,7 +434,7 @@ void Motion::fix_diverge(int32_t *ends, int32_t *starts)
 // This is a routine that limits endspeed to a rate at which we can hit
 // start speeds.  Run it in reverse to limit the start speed to something we 
 // can hit from our end speed.
-void Motion::join_moves(int32_t *ends, int32_t *starts)
+bool Motion::join_moves(int32_t *ends, int32_t *starts)
 {
   float ratio = 1;
   for(int ax=0;ax<NUM_AXES;ax++)
@@ -434,8 +443,10 @@ void Motion::join_moves(int32_t *ends, int32_t *starts)
     uint32_t jump = AXES[ax].getStartFeed();
     uint32_t desired = fabs(starts[ax]) + jump;
 
-    if((starts[ax] >=0) != (ends[ax] >= 0))
+    if((starts[ax] == 0) != (ends[ax] == 0))
       desired = jump;
+    else if((starts[ax] > 0) != (ends[ax] > 0))
+      desired = jump/2;
 
     ar = float(desired) / fabs(ends[ax]);
 
@@ -444,13 +455,15 @@ void Motion::join_moves(int32_t *ends, int32_t *starts)
       ratio = ar;
     }
   }
-  for(int ax=0;ax<NUM_AXES;ax++)
+  if(ratio < 1)
   {
-    ends[ax] = (float)ends[ax] * ratio;
+    for(int ax=0;ax<NUM_AXES;ax++)
+    {
+      ends[ax] = (float)ends[ax] * ratio;
+    }
+    return true;
   }
-#ifdef DEBUG_LAME
-  HOST.labelnum("ratio: ", ratio);
-#endif  
+  return false;
 }
 
 
@@ -486,7 +499,6 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
   int32_t startspeeds[NUM_AXES];
   float mult1 = (float)gcode.maxfeed / gcode.actualmm;
   float mult2 = (float)nextg.maxfeed / nextg.actualmm;
-  int diverge = 0;
   for(int ax=0;ax<NUM_AXES;ax++)
   {
     axisspeeds[ax] = (float)((float)gcode.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult1;
@@ -495,56 +507,69 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
     nextspeeds[ax] = (float)((float)nextg.axismovesteps[ax] / AXES[ax].getStepsPerMM()) * mult2;
     nextspeeds[ax] *= nextg.axisdirs[ax] ? 1 : -1;
     startspeeds[ax] = nextspeeds[ax];
-    // Diverge is equal to the number of axis, unless
-    // one axis is increasing while another decreases.
-    if(endspeeds[ax] >= startspeeds[ax])
-      diverge++;
-    else
-      diverge--;
   }
 
-  // in diverence, lower the divergent side(s) to a safe speed.
-  if(diverge != NUM_AXES)
+  int32_t *ends, *starts, *temp;
+  ends = endspeeds;
+  starts = startspeeds;
+  // TODO this is stupid shit.
+  /*int MAX_OPTS = (float)AXES[0].getMaxFeed() / (float)AXES[0].getStartFeed();
+  if(MAX_OPTS < 1)
+    MAX_OPTS = 1;
+
+*/
+  int c;
+// this algorithm is crap.
+  for(c=0;c<2;c++)
   {
-#ifdef DEBUG_OPT
-    HOST.write("diverge.\n");
-#endif    
-    // Fix this move to be acceptably divergent for the next move.
-    fix_diverge(endspeeds,startspeeds); 
-    // Fix the next move to be acceptably divergent for this move.
-    fix_diverge(startspeeds,endspeeds); 
+    // Calculate the end speeds (of this move) we can use to meet the start speeds (of the next move).
+    if(!join_moves(ends,starts) && c >= 1)
+      break;
+    temp = ends;
+    ends = starts;
+    starts = temp;
   }
 
-
-  // Calculate the end speeds (of this move) we can use to meet the start speeds (of the next move).
-  join_moves(endspeeds,startspeeds);
-  // Calculate the start speeds (of the next move) we can use to meet the end speeds (of this move)
-  join_moves(startspeeds,endspeeds);
-
-
-#ifdef DEBUG_OPT    
   for(int ax=0;ax<NUM_AXES;ax++)
   {
+    if(labs(endspeeds[ax] - startspeeds[ax]) > AXES[ax].getStartFeed())
+    {
+//      if(labs(endspeeds[ax] - startspeeds[ax]) - AXES[ax].getStartFeed() > (float)AXES[ax].getStartFeed() * 0.05f)
+//      {
+#ifdef DEBUG_OPT    
+        HOST.write("JUMP EXCEED\n");
+#endif
+//        endspeeds[ax] = AXES[ax].getStartFeed() / 2;
+//        startspeeds[ax] = AXES[ax].getStartFeed() / 2;
+//      }
+    }
+
+#ifdef DEBUG_OPT    
+  HOST.labelnum("OPTS:",c);
     HOST.labelnum("ASP[", ax, false);
     HOST.labelnum("]:", axisspeeds[ax],false);
     HOST.labelnum("->", endspeeds[ax],false);
     HOST.labelnum(", ", startspeeds[ax],false);
     HOST.labelnum("->", nextspeeds[ax], false);
     HOST.labelnum(" @jump:", AXES[ax].getStartFeed());
-  }
 #endif
+  }
 
   // Speed at which the next move's leading axis can reach 0 during the next move.
   float speedto0 = AXES[nextg.leading_axis].
-                    getSpeedAtEnd(AXES[nextg.leading_axis].getStartFeed(),
+                    getSpeedAtEnd(AXES[nextg.leading_axis].getStartFeed()/2,
                                   nextg.accel, 
                                   nextg.movesteps);
 
+  // NOT TODO: startspeeds/endspeeds is signed previous to this operation but unsigned
+  // after.  Not important, though.
+
   // If the next move cannot reach 0, limit it so it can.
-  if(speedto0 < startspeeds[nextg.leading_axis])
+  if(speedto0 < labs(startspeeds[nextg.leading_axis]))
   {
 #ifdef DEBUG_OPT
     HOST.labelnum("st0beg:",speedto0);
+    HOST.labelnum("beg:",startspeeds[nextg.leading_axis]);
 #endif
     startspeeds[nextg.leading_axis] = speedto0;
   }
@@ -553,13 +578,19 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
   speedto0 = (speedto0 * gcode.axisratio[nextg.leading_axis]);
   // If this move isn't moving the primary of the next move, then speedto0 will come out to 0.
   // This is obviously incorrect...
-  if(speedto0 < endspeeds[gcode.leading_axis])
+  if(speedto0 < labs(endspeeds[gcode.leading_axis]))
   {
 #ifdef DEBUG_OPT
     HOST.labelnum("st0end:",speedto0);
+    HOST.labelnum("end:",endspeeds[gcode.leading_axis]);
 #endif
     endspeeds[gcode.leading_axis] = speedto0;
   }
+
+#ifdef DEBUG_OPT
+    HOST.labelnum("ef: ", gcode.endfeed, false);
+    HOST.labelnum("sf: ", gcode.startfeed, false);
+#endif    
 
   gcode.endfeed = max(gcode.endfeed,labs(endspeeds[gcode.leading_axis]));
   nextg.startfeed = max(nextg.startfeed,labs(startspeeds[nextg.leading_axis]));
@@ -582,6 +613,9 @@ void Motion::computeAccel(GCode& gcode, GCode* nextg)
 
   if(gcode.movesteps == 0)
     return;
+
+  if(gcode.startfeed < gcode.minfeed) // Optimization might have accidentally lowered us past this point.
+    gcode.startfeed = gcode.minfeed;
 
   // Two cases:
   // 1) start speed < end speed; we get to accelerate for free up to end.

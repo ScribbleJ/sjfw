@@ -21,10 +21,10 @@ AVR_TOOLS_PATH = /usr/bin
 AVR_GCC_PATH = $(AVR_TOOLS_PATH)
 
 #Reasonable settings for Atmega1280 (regardless of board)
-UPLOAD_RATE = 57600
-AVRDUDE_PROGRAMMER = stk500v1
-PORT = /dev/ttyUSB0
-MCU = atmega1280
+#UPLOAD_RATE = 57600
+#AVRDUDE_PROGRAMMER = stk500v1
+#PORT = /dev/ttyUSB0
+#MCU = atmega1280
 
 #Reasonable settings for Atmega644p
 #UPLOAD_RATE = 38400
@@ -33,10 +33,10 @@ MCU = atmega1280
 #MCU = atmega644p
 
 # Reasonable settings for Atmega2560 (regardless of board)
-#UPLOAD_RATE = 115200
-#AVRDUDE_PROGRAMMER = stk500v2
-#PORT = /dev/ttyACM0
-#MCU = atmega2560
+UPLOAD_RATE = 115200
+AVRDUDE_PROGRAMMER = stk500v2
+PORT = /dev/ttyACM0
+MCU = atmega2560
 
 
 

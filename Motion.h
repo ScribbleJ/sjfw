@@ -104,7 +104,7 @@ private:
 
   // opt support
   void fix_diverge(int32_t *ends, int32_t* starts);
-  void join_moves(int32_t *ends, int32_t* starts);
+  bool join_moves(int32_t *ends, int32_t* starts);
 
 
 
