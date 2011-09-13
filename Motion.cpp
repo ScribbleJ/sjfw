@@ -440,7 +440,7 @@ bool Motion::join_moves(int32_t *ends, int32_t *starts)
   for(int ax=0;ax<NUM_AXES;ax++)
   {
     float ar = 1;
-    uint32_t jump = AXES[ax].getStartFeed();
+    uint32_t jump = (float)AXES[ax].getStartFeed() * 0.75f;
     uint32_t desired = fabs(starts[ax]) + jump;
 
     if((starts[ax] == 0) != (ends[ax] == 0))
@@ -513,14 +513,13 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
   ends = endspeeds;
   starts = startspeeds;
   // TODO this is stupid shit.
-  /*int MAX_OPTS = (float)AXES[0].getMaxFeed() / (float)AXES[0].getStartFeed();
-  if(MAX_OPTS < 1)
-    MAX_OPTS = 1;
+  int MAX_OPTS = (float)AXES[0].getMaxFeed() / (float)AXES[0].getStartFeed();
+  if(MAX_OPTS < 4)
+    MAX_OPTS = 4;
 
-*/
   int c;
 // this algorithm is crap.
-  for(c=0;c<2;c++)
+  for(c=0;c<MAX_OPTS;c++)
   {
     // Calculate the end speeds (of this move) we can use to meet the start speeds (of the next move).
     if(!join_moves(ends,starts) && c >= 1)
@@ -532,18 +531,6 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
 
   for(int ax=0;ax<NUM_AXES;ax++)
   {
-    if(labs(endspeeds[ax] - startspeeds[ax]) > AXES[ax].getStartFeed())
-    {
-//      if(labs(endspeeds[ax] - startspeeds[ax]) - AXES[ax].getStartFeed() > (float)AXES[ax].getStartFeed() * 0.05f)
-//      {
-#ifdef DEBUG_OPT    
-        HOST.write("JUMP EXCEED\n");
-#endif
-//        endspeeds[ax] = AXES[ax].getStartFeed() / 2;
-//        startspeeds[ax] = AXES[ax].getStartFeed() / 2;
-//      }
-    }
-
 #ifdef DEBUG_OPT    
   HOST.labelnum("OPTS:",c);
     HOST.labelnum("ASP[", ax, false);
@@ -553,6 +540,18 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
     HOST.labelnum("->", nextspeeds[ax], false);
     HOST.labelnum(" @jump:", AXES[ax].getStartFeed());
 #endif
+
+    if(labs(endspeeds[ax] - startspeeds[ax]) > AXES[ax].getStartFeed())
+    {
+      if(labs(endspeeds[ax] - startspeeds[ax]) - AXES[ax].getStartFeed() > (float)AXES[ax].getStartFeed())
+      {
+#ifdef DEBUG_JUMP    
+        HOST.labelnum("JUMP EXCEED LINE ", gcode.linenum);
+#endif
+        endspeeds[gcode.leading_axis] = AXES[gcode.leading_axis].getStartFeed() / 2;
+        startspeeds[nextg.leading_axis] = AXES[nextg.leading_axis].getStartFeed() / 2;
+      }
+    }
   }
 
   // Speed at which the next move's leading axis can reach 0 during the next move.
@@ -567,7 +566,7 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
   // If the next move cannot reach 0, limit it so it can.
   if(speedto0 < labs(startspeeds[nextg.leading_axis]))
   {
-#ifdef DEBUG_OPT
+#ifdef DEBUG_LAME
     HOST.labelnum("st0beg:",speedto0);
     HOST.labelnum("beg:",startspeeds[nextg.leading_axis]);
 #endif
@@ -580,14 +579,14 @@ void Motion::gcode_optimize(GCode& gcode, GCode& nextg)
   // This is obviously incorrect...
   if(speedto0 < labs(endspeeds[gcode.leading_axis]))
   {
-#ifdef DEBUG_OPT
+#ifdef DEBUG_LAME
     HOST.labelnum("st0end:",speedto0);
     HOST.labelnum("end:",endspeeds[gcode.leading_axis]);
 #endif
     endspeeds[gcode.leading_axis] = speedto0;
   }
 
-#ifdef DEBUG_OPT
+#ifdef DEBUG_LAME
     HOST.labelnum("ef: ", gcode.endfeed, false);
     HOST.labelnum("sf: ", gcode.startfeed, false);
 #endif    

@@ -12,17 +12,17 @@
     </programmer>
     <firmware
        major="1"
-       minor="6"
-       relpath="firmware/1280-w-100k-v1.6.hex"
-       name="Thermistor on Motherboard 1.6"
-       description="sjfw v1.6 for single-board Repraps."
+       minor="8"
+       relpath="firmware/1280-w-100k-v1.8.hex"
+       name="Thermistor on Motherboard 1.8"
+       description="sjfw v1.8 for single-board Repraps."
        />
     <firmware
        major="1"
-       minor="6"
-       relpath="firmware/1280-w-ec-v1.6.hex"
-       name="Temperature on EC 1.6"
-       description="sjfw v1.6 for ThingOMatic/Gen4."
+       minor="8"
+       relpath="firmware/1280-w-ec-v1.8.hex"
+       name="Temperature on EC 1.8"
+       description="sjfw v1.8 for ThingOMatic/Gen4."
        />
     <firmware
        major="1"
@@ -50,17 +50,17 @@
     </programmer>
     <firmware
        major="1"
-       minor="6"
-       relpath="firmware/2560-w-100k-v1.6.hex"
-       name="Thermistor on Motherboard 1.6"
-       description="sjfw v1.6 for single-board Repraps."
+       minor="8"
+       relpath="firmware/2560-w-100k-v1.8.hex"
+       name="Thermistor on Motherboard 1.8"
+       description="sjfw v1.8 for single-board Repraps."
        />
     <firmware
        major="1"
-       minor="6"
-       relpath="firmware/2560-w-ec-v1.6.hex"
-       name="Temperature on EC 1.6"
-       description="sjfw v1.6 for ThingOMatic/Gen4."
+       minor="8"
+       relpath="firmware/2560-w-ec-v1.8.hex"
+       name="Temperature on EC 1.8"
+       description="sjfw v1.8 for ThingOMatic/Gen4."
        />
     <firmware
        major="1"
@@ -81,11 +81,26 @@
   <board name="Mega644p " icon="icon-mb24.png">
     <version major="1" minor="0"/>
     <programmer class="replicatorg.uploader.AvrdudeUploader">
-      <protocol>avrisp</protocol>
+      <protocol>stk500v1</protocol>
       <speed>38400</speed>
       <arch>m644p</arch>
       <manualreset>true</manualreset>
     </programmer>
+    <firmware
+       major="1"
+       minor="8"
+       relpath="firmware/644p-w-ec-v1.8.hex"
+       name="Temperature on EC 1.8"
+       description="sjfw v1.8 for Gen3"
+       />
+    <firmware
+       major="1"
+       minor="8"
+       relpath="firmware/644p-w-100k-v1.8.hex"
+       name="Thermistor on Motherboard 1.8"
+       description="sjfw v1.8 for single-board Repraps"
+       />
+
     <firmware
        major="1"
        minor="7"

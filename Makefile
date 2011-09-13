@@ -2,8 +2,8 @@
 # Settings particular to your system
 ###########################
 USE_SD = 1
-USE_LCD = 1
-USE_KEYPAD = 1
+#USE_LCD = 1
+#USE_KEYPAD = 1
 #USE_BT = 1
 #USE_MARLIN = 1
 INCLUDE_SJFW_LOOKAHEAD = 1
@@ -30,13 +30,13 @@ AVR_GCC_PATH = $(AVR_TOOLS_PATH)
 #UPLOAD_RATE = 38400
 #AVRDUDE_PROGRAMMER = stk500v1
 #PORT = /dev/ttyUSB0
-#MCU = atmega644p
+MCU = atmega644p
 
 # Reasonable settings for Atmega2560 (regardless of board)
-UPLOAD_RATE = 115200
-AVRDUDE_PROGRAMMER = stk500v2
-PORT = /dev/ttyACM0
-MCU = atmega2560
+#UPLOAD_RATE = 115200
+#AVRDUDE_PROGRAMMER = stk500v2
+#PORT = /dev/ttyACM0
+#MCU = atmega2560
 
 
 
