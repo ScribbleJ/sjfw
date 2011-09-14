@@ -17,8 +17,8 @@ M308 X0 Y0 Z1 E0     ;Set axis disable-after-move
 M200 X62.745 Y62.745 Z566.93 E729.99 ;set axis steps per mm; must happen before m201/202/203 OR ELSE!
 ;M200 X62.745 Y62.745 Z2267.718 E729.99 ;set axis steps per mm; must happen before m201/202/203 OR ELSE!
 M201 X2000 Y2000 Z75 E1500 ;set axis start speeds
-M202 X9000 Y9000 Z300 E2000 ;set axis max speeds
-M206 X1000 Y1000 Z100 E2000 ;set accel mm/s/s
+M202 X6000 Y6000 Z300 E2000 ;set axis max speeds
+M206 X1500 Y1500 Z100 E2000 ;set accel mm/s/s
 
 ; LCD setup as per wiki.
 M250 P63     ;set LCD RS pin

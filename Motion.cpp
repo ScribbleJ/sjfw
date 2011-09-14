@@ -35,17 +35,6 @@ void Motion::setCurrentPosition(GCode &gcode)
   }
 }
 
-void Motion::setAbsolute()
-{
-  for(int ax=0;ax<NUM_AXES;ax++)
-    AXES[ax].setAbsolute();
-}
-
-void Motion::setRelative()
-{
-  for(int ax=0;ax<NUM_AXES;ax++)
-    AXES[ax].setRelative();
-}
 
 void Motion::setMinimumFeedrate(GCode& gcode)
 {
@@ -188,7 +177,7 @@ void Motion::getMovesteps(GCode& gcode)
   for(int ax=0;ax < NUM_AXES;ax++)
   {
     gcode.axismovesteps[ax] = AXES[ax].getMovesteps(gcode.startpos[ax], 
-                                                             gcode[ax].isUnused() ? gcode.startpos[ax] : AXES[ax].isRelative() ? gcode.startpos[ax] + gcode[ax].getFloat() : gcode[ax].getFloat(), 
+                                                             gcode[ax].isUnused() ? gcode.startpos[ax] : gcode[ax].getFloat(), 
                                                              gcode.axisdirs[ax]);
     if(gcode.movesteps < gcode.axismovesteps[ax])
     {
@@ -351,6 +340,13 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
   // instead we just take the accel of the leadng axis.
   float accel = AXES[gcode.leading_axis].getAccel();
   gcode.accel = accel;
+
+
+  for(int ax=0;ax<NUM_AXES;ax++)
+  {
+    if(gcode.axismovesteps[ax])
+      AXES[ax].enable();
+  }
 
 
 #ifdef DEBUG_LAME

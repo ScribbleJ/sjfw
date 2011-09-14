@@ -90,8 +90,6 @@ public:
     }
     
     state = NEW;
-    preparecalls = 0;
-    executecalls = 0;
     lastms = 0;
     linenum = -1;
     feed=0;
@@ -109,6 +107,9 @@ public:
 
   static void resetlastpos();
 
+  // This gets called at the time the gcode is created; there's some codes (G91, for eg) that are critical
+  // to handle at this stage.
+  void enqueue();
   // Stuff to do if it's a G move code, otherwise not I guess.
   // This function MAY get called repeatedly before the execute() function.
   // it WILL be called at least once.
@@ -153,8 +154,6 @@ private:
   CodeParam cps[T+1];                    
   unsigned long lastms;
   unsigned long startmillis; // Time execution began
-  unsigned int preparecalls;
-  unsigned int executecalls;
   static Point lastpos;
   static float lastfeed;
 
@@ -170,6 +169,7 @@ public:
   // TODO: this should be ELSEWHERE.
   static Pin fanpin;
   static bool DONTRUNEXTRUDER;
+  static bool ISRELATIVE;
 
   // all good
   float feed;

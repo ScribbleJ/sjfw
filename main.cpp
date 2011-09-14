@@ -29,6 +29,7 @@ void mainloop()
   for (;;) { 
     // Checks to see if gcodes are waiting to run and runs them if so.
     GCODES.handlenext();
+    GCODES.checkaxes();
       
     // Checks to see if recieve buffer has enough data to parse, and sends it to 
     // GcodeQueue.h for processing if so.

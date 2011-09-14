@@ -47,10 +47,6 @@ public:
   Point& getCurrentPosition();
   // Sets current position; doesn't cause a move, just updates the current position variables.
   void setCurrentPosition(GCode &gcode);
-  // Interpret movement data as absolute
-  void setAbsolute();
-  // Interpret movement data as relative
-  void setRelative();
   // Returns true if machine is in motion
   bool axesAreMoving(); 
   // Change stored feedrates/axis data

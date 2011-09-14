@@ -28,27 +28,26 @@ Point GCode::lastpos;
 float GCode::lastfeed;
 Pin   GCode::fanpin = Pin();
 bool  GCode::DONTRUNEXTRUDER=false;
+bool  GCode::ISRELATIVE=false;
 
 // Stuff to do if it's a G move code, otherwise not I guess.
 // This function MAY get called repeatedly before the execute() function.
 // It WILL get called at least once.
 void GCode::prepare()
 {
-  if(DONTRUNEXTRUDER)
-  {
-    cps[E].unset();
-  }
 #ifdef USE_MARLIN
   // Marlin might be able to prepare in advance of being asked to execute the codes with some help.
   state = PREPARED;
   return;
 #else
-  // preparecalls only for reporting - not used.
-  preparecalls++;
-
 
   if(state == PREPARED)
     return;
+
+  if(DONTRUNEXTRUDER)
+  {
+    cps[E].unset();
+  }
 
   // Only GCodes need preparing.
   if(cps[G].isUnused())
@@ -58,6 +57,7 @@ void GCode::prepare()
 #endif
 }
 
+// Called when we have extra time to optimize a gcode.
 void GCode::optimize(GCode& next)
 {
 #ifndef USE_MARLIN
@@ -71,6 +71,38 @@ void GCode::optimize(GCode& next)
 #endif
 }
 
+// Called at the time of enqueue
+void GCode::enqueue()
+{
+  if(!cps[G].isUnused())
+  {
+    switch(cps[G].getInt())
+    {
+      case 0:
+      case 1:
+      case 2:
+        for(int ax=0;ax<NUM_AXES;ax++)
+        {
+          if(!cps[ax].isUnused())
+          {
+            if(ISRELATIVE)
+            {
+              float foo = lastpos[ax] + cps[ax].getFloat();
+              cps[ax].setFloat(foo);
+            }
+          }
+        }
+        break;
+      case 90:  // Set Absolute Positioning
+        ISRELATIVE = false;
+        break;
+      case 91:  // Set Relative Positioning
+        ISRELATIVE = true;
+        break;
+    }
+  }
+  prepare(); // Need to prepare at this point so that we have the correct lastpos
+}
 
 // Do some stuff and return.  This function will be called repeatedly while 
 // the state is still ACTIVE, and you can set up an interrupt for precise timings.
@@ -79,7 +111,6 @@ void GCode::execute()
   if(startmillis == 0)
     startmillis = millis();
 
-  executecalls++;
   if(state < PREPARED)
   {
     prepare();
@@ -103,9 +134,7 @@ void GCode::execute()
 
 void GCode::dump_to_host()
 {
-  HOST.write('P'); HOST.write(preparecalls, 10);
-  HOST.write('E'); HOST.write(executecalls, 10);
-  HOST.write(' ');
+  HOST.labelnum("L:", linenum);
   for(int x=0;x<T;x++)
     cps[x].dump_to_host();
   HOST.endl();
@@ -161,11 +190,11 @@ void GCode::do_g_code()
       state = DONE;
       break;
     case 90: // Absolute positioning
-      SETOBJ(setAbsolute());
+      // We shouldn't arrive here as it's handled during enqueue();
       state = DONE;
       break;
     case 91: // Relative positioning
-      SETOBJ(setRelative());
+      // We shouldn't arrive here as it's handled during enqueue();
       state = DONE;
       break;
     case 92: // Set position

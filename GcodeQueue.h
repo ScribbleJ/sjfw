@@ -42,6 +42,9 @@ public:
 
   // Should be called often from mainloop; handles gcode dispatch
   void handlenext();
+  // disables inactive axes - not sure why this is here.
+  void checkaxes();
+
   // Change current line number
   void setLineNumber(uint32_t l, uint8_t source);
   void setLineNumber(unsigned int l) { setLineNumber(l, 0); }

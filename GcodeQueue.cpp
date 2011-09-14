@@ -13,18 +13,18 @@
 
 
 
-
-void GcodeQueue::handlenext()
+// TODO: Why is this here?
+void GcodeQueue::checkaxes()
 {
-  static unsigned int loops = 0;
 #ifndef USE_MARLIN  
   static unsigned long last = millis();
   unsigned long now = millis();
   // Check once a second to disable motors.
   if(now - last > 1000)
   {
+    //HOST.write("checkaxes ");
     last = now;
-    bool axesseen[NUM_AXES];
+    bool axesseen[NUM_AXES] = { false };
     for(int x=0;x<codes.getCount();x++)
     {
       for(int ax = 0; ax<NUM_AXES; ax++)
@@ -34,9 +34,20 @@ void GcodeQueue::handlenext()
       }
     }
     for(int ax = 0; ax<NUM_AXES; ax++)
+    {
+      //HOST.labelnum("ax:",ax, false);
+      //HOST.labelnum(":", axesseen[ax], false);
+      //HOST.write(' ');
       if(!axesseen[ax]) MOTION.disableAxis(ax);
+    }
+    //HOST.endl();
   }
 #endif  
+}
+
+void GcodeQueue::handlenext()
+{
+  static unsigned int loops = 0;
 
   if(codes.getCount() == 0)
   {
@@ -95,6 +106,7 @@ void GcodeQueue::enqueue(GCode &c)
 #endif    
     return;
   }
+  c.enqueue();
   codes.push(c);
   //HOST.labelnum("AC-QL:", codes.getCount());
 

@@ -27,7 +27,6 @@ class Axis
     start_feed   = min_feedrate;
     accel_rate = accel_rate_in_units;
     position = 0;
-    relative = false;
     this->dir_inverted = dir_inverted;
     steps_to_take = 0;
     steps_remaining = 0;
@@ -69,9 +68,6 @@ class Axis
   // Doesn't take into account position is not updated during move.
   float getCurrentPosition() { return position; }
   void  setCurrentPosition(float pos) { position = pos; }
-  void  setAbsolute() { relative = false; }
-  void  setRelative() { relative = true; }
-  bool  isRelative()  { return relative; }
   void  setMinimumFeedrate(float feedrate) { if(feedrate <= 0) return; start_feed = feedrate; }
   void  setMaximumFeedrate(float feedrate) { if(feedrate <= 0) return; max_feed = feedrate;  }
   void  setAverageFeedrate(float feedrate) { if(feedrate <= 0) return;  }
@@ -304,7 +300,6 @@ private:
 	 Pin enable_pin;
 	 Pin min_pin;
 	 Pin max_pin;
-	bool relative;
   bool disable_after_move;
 
 };
