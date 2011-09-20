@@ -55,13 +55,16 @@ class Axis
   uint32_t interval_from_feedrate(float feedrate)
   {
     float a = (float)(F_CPU * 60.0f) / (feedrate * steps_per_unit);
+    if(a>F_CPU) a = F_CPU;
     return a;
   }
 
   inline uint32_t int_interval_from_feedrate(uint32_t feedrate)
   {
     // Max error - roughly 2.5%.  Only used for accel so not really a problem.
-    return ((uint32_t)F_CPU * 60) / (feedrate * spu_int);
+    uint32_t a = ((uint32_t)F_CPU * 60) / (feedrate * spu_int);
+    if(a>F_CPU) a = F_CPU;
+    return a;
   }
 
 	bool isMoving() { return (steps_remaining > 0); };
@@ -71,7 +74,6 @@ class Axis
   void  setMinimumFeedrate(float feedrate) { if(feedrate <= 0) return; start_feed = feedrate; }
   void  setMaximumFeedrate(float feedrate) { if(feedrate <= 0) return; max_feed = feedrate;  }
   void  setAverageFeedrate(float feedrate) { if(feedrate <= 0) return;  }
-  // WARNING! BECAUSE OF THE WAY WE STORE ACCEL DATA< YOU MUST USE THE ABOVE THREE CALLS TO RESET THE FEEDRATES AFTER CHANGING THE STEPS
   void  setStepsPerUnit(float steps) { if(steps <= 0) return; steps_per_unit = steps; spu_int = steps; }
   void  setAccel(float rate) { if(rate <= 0) return; accel_rate = rate; }
   float getAccel() { return accel_rate; }

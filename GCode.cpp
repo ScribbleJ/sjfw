@@ -574,7 +574,7 @@ void GCode::do_m_code()
 #endif
 }
 
-void GCode::resetlastpos() 
+void GCode::resetlastpos()
 { 
 #ifndef USE_MARLIN
   lastpos = MOTION.getCurrentPosition();
@@ -588,4 +588,16 @@ void GCode::doPinSet(int arduinopin, int on)
   p.setDirection(true);
   p.setValue(on == 0 ? false : true);
 }
+
+void GCode::togglefan()
+{
+#ifndef USE_MBIEC
+  if(fanpin.isNull())
+    return;
+  fanpin.setValue(!fanpin.getValue());
+#else
+  TEMPERATURE.togglefan();
+#endif
+}
+
 

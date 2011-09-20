@@ -16,6 +16,18 @@
 // Testing shows this is probably better put nearer 1000.
 #define MIN_INTERVAL 500
 
+void Motion::setFeedModifier(float mod)
+{
+  feed_modifier = mod/100.0f;
+
+}
+float Motion::getFeedModifier()
+{
+  return(feed_modifier*100.0f);
+}
+
+
+ 
 Point& Motion::getCurrentPosition()
 {
   static Point p;
@@ -369,7 +381,7 @@ void Motion::gcode_precalc(GCode& gcode, float& feedin, Point* lastend)
     gcode.decel_from  =  dist;
   }
 
-  gcode.currentinterval = AXES[gcode.leading_axis].int_interval_from_feedrate(gcode.startfeed);
+  gcode.currentinterval = AXES[gcode.leading_axis].interval_from_feedrate((float)gcode.startfeed * feed_modifier);
   gcode.currentfeed = gcode.startfeed;
 
   // TODO: this only changes when we change accel rates; can we just store it per-axis until we scale accels properly?
@@ -436,6 +448,10 @@ bool Motion::join_moves(int32_t *ends, int32_t *starts)
   for(int ax=0;ax<NUM_AXES;ax++)
   {
     float ar = 1;
+    // The 0.75f in the next line is the shit part; it's there because
+    // it helps us guarantee we're within jerk after 4 iterations (see 
+    // unused diverge function above for explanation why) but it 
+    // obviouly means no move that is adjusted is going to be optimum.
     uint32_t jump = (float)AXES[ax].getStartFeed() * 0.75f;
     uint32_t desired = fabs(starts[ax]) + jump;
 
@@ -686,7 +702,7 @@ void Motion::computeAccel(GCode& gcode, GCode* nextg)
     }
   }
 
-  gcode.currentinterval = AXES[gcode.leading_axis].int_interval_from_feedrate(gcode.startfeed);
+  gcode.currentinterval = AXES[gcode.leading_axis].interval_from_feedrate((float)gcode.startfeed * feed_modifier);
   gcode.currentfeed = gcode.startfeed;
 
   if(nextg != NULL && nextg->startfeed > nextg->maxfeed)
@@ -857,7 +873,7 @@ void Motion::handleInterrupt()
       if(current_gcode->currentfeed > current_gcode->maxfeed)
         current_gcode->currentfeed = current_gcode->maxfeed;
 
-      current_gcode->currentinterval = AXES[current_gcode->leading_axis].int_interval_from_feedrate(current_gcode->currentfeed);
+      current_gcode->currentinterval = AXES[current_gcode->leading_axis].interval_from_feedrate((float)(current_gcode->currentfeed) * feed_modifier);
 
       setInterruptCycles(current_gcode->currentinterval);
     }
@@ -868,7 +884,7 @@ void Motion::handleInterrupt()
       if(current_gcode->currentfeed < current_gcode->endfeed)
         current_gcode->currentfeed = current_gcode->endfeed;
 
-      current_gcode->currentinterval = AXES[current_gcode->leading_axis].int_interval_from_feedrate(current_gcode->currentfeed);
+      current_gcode->currentinterval = AXES[current_gcode->leading_axis].interval_from_feedrate((float)(current_gcode->currentfeed) * feed_modifier);
 
       setInterruptCycles(current_gcode->currentinterval);
     }

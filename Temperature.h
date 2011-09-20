@@ -53,6 +53,7 @@ class Temperature
   private:
 #ifdef USE_MBIEC
     MBIEC& EC;
+    bool fanon;
 public:
     // Changes FET pin
     void changePinHotend(Port p, int pin) { return; }
@@ -66,7 +67,8 @@ public:
     // Changes Temperature Table
     void changeTempTable(int16_t adc_val, int16_t temp_val, int8_t which) { return; }
     // Toggles fan
-    bool setFan(bool on) { return EC.dofanreq(on); }
+    void togglefan() { fanon = !fanon; while(!EC.dofanreq(fanon)); }
+    bool setFan(bool on) { fanon = on; return EC.dofanreq(fanon); }
 
 #else
     Thermistor hotend_therm;

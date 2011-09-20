@@ -133,7 +133,7 @@ uint16_t MBIEC::getPlatformST()
 
 
 #define MAX_EC_INTERVAL_MS 500
-#define MIN_EC_INTERVAL_MS 10
+#define MIN_EC_INTERVAL_MS 20
 #define MIN_REQUEST_INTERVAL 50
 void MBIEC::update()
 {

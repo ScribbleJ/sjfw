@@ -29,42 +29,30 @@ void mainloop()
   for (;;) { 
     // Checks to see if gcodes are waiting to run and runs them if so.
     GCODES.handlenext();
+    // Rather than interleaving, we'll just run it twice in succession, to catch instances where it
+    // wants an immediate rerun, otherwise assume it's good 'till we get back.
+    GCODES.handlenext();
     GCODES.checkaxes();
       
     // Checks to see if recieve buffer has enough data to parse, and sends it to 
     // GcodeQueue.h for processing if so.
     HOST.scan_input();
 
-    // Checks to see if gcodes are waiting to run and runs them if so.
-    GCODES.handlenext();
- 
     // Updates temperature information; scans temperature sources
     TEMPERATURE.update();
-
-    // Checks to see if gcodes are waiting to run and runs them if so.
-    GCODES.handlenext();
 
     // Manage Eeprom operations
     eeprom::update();
 
-    // Checks to see if gcodes are waiting to run and runs them if so.
-    GCODES.handlenext();
+#ifdef HAS_LCD
+    // Update LCD, read keypresses, etc.
+    LCDKEYPAD.handleUpdates();
+#endif    
 
 #ifdef HAS_SD
     // Manage SD card operations
     sdcard::update();
-
-    // Checks to see if gcodes are waiting to run and runs them if so.
-    GCODES.handlenext();
 #endif
-
-#ifdef HAS_LCD
-    // Update LCD, read keypresses, etc.
-    LCDKEYPAD.handleUpdates();
-
-    // Checks to see if gcodes are waiting to run and runs them if so.
-    GCODES.handlenext();
-#endif    
 
 #ifdef HAS_BT
     // Look for incoming data

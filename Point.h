@@ -13,7 +13,20 @@ class Point
 {
 public:
   float axes[NUM_AXES];
-  Point() { };
+  Point() 
+  { 
+      for(int ax=0;ax<NUM_AXES;ax++)
+        axes[ax] = 0.0f;
+  }
+  // Convenience constructor for LCDKeypad
+  Point(float amount, int x)
+  {
+     for(int ax=0;ax<NUM_AXES;ax++)
+        axes[ax] = 0.0f;
+
+     axes[x] = amount;
+  }
+
   Point& operator=(const Point& tocopy)
   {
     for(int ax=0;ax<NUM_AXES;ax++)

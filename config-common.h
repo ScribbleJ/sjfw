@@ -1,6 +1,9 @@
 /* YOU ARE PROBABLY LOOKING FOR THE BOARD CONFIG FILES UNDER ramps/ AND gen4/
    AND NOT THIS FILE, which is just defining some things peculiar to the sourcecode. */
 
+#define LCD_TAGLINE "SJFW by ScribbleJ"
+#define LOW_FEED_MODIFIER 25.0f
+
 #define REPRAP_COMPAT 
 //#define ADV_CHECKSUMS
 #define REPG_COMPAT
@@ -12,7 +15,7 @@
 #define HOST_RECV_BUFSIZE 100
 #define HOST_SEND_BUFSIZE 100
 #else
-#define GCODE_BUFSIZE 15
+#define GCODE_BUFSIZE 10
 #define HOST_RECV_BUFSIZE 200
 #define HOST_SEND_BUFSIZE 200
 #endif

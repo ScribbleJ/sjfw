@@ -22,6 +22,7 @@ Temperature::Temperature()
   report_m = 0;
   report_l = 0;
   report_h = 0;
+  fanon = false;
 }
 
 void Temperature::update()

@@ -22,7 +22,10 @@ public:
   // Singleton pattern... only one Gcode queue exists.
   static GcodeQueue& Instance() { static GcodeQueue instance; return instance; }
 private:
-  explicit GcodeQueue()  :codes(GCODE_BUFSIZE, codes_buf) 
+  explicit GcodeQueue()  :codes(GCODE_BUFSIZE, codes_buf)
+#ifdef USE_PRIORITY
+  , priority_codes(GCODE_PRIORITY_BUFSIZE, priority_buf)
+#endif  
   { 
     for(int x=0;x<GCODE_SOURCES;x++)
     {
@@ -35,6 +38,7 @@ private:
       ADVANCED_CRC[x] = false;
     }
     optimize_gcode = false;
+    pause = false;
   }
   GcodeQueue(GcodeQueue const&);
   void operator=(const GcodeQueue&);
@@ -49,9 +53,9 @@ public:
   void setLineNumber(uint32_t l, uint8_t source);
   void setLineNumber(unsigned int l) { setLineNumber(l, 0); }
   // Drop a new gcode on the stack
-  void enqueue(GCode& c);
+  void enqueue(GCode& c,int queue=0);
   // Tells us whether queue is full.
-  bool isFull();
+  bool isFull(int queue=0);
   // Decode a (partial) gcode string
   void parsebytes(char *bytes, uint8_t numbytes) { parsebytes(bytes, numbytes, 0); }
   void parsebytes(char *bytes, uint8_t numbytes, uint8_t source);
@@ -64,9 +68,15 @@ public:
   void enableADVANCED_CRC(int source) { ADVANCED_CRC[source] = true; }
   void disableADVANCED_CRC(int source) { ADVANCED_CRC[source] = false; }
 
+  void togglepause() { pause = !pause; }
+
 private:
   GCode codes_buf[GCODE_BUFSIZE];
   RingBufferT<GCode> codes;
+#ifdef USE_PRIORITY
+  GCode priority_buf[GCODE_PRIORITY_BUFSIZE];
+  RingBufferT<GCode> priority_codes;
+#endif  
 
   GCode sources[GCODE_SOURCES];
   enum crc_state_t { NOCRC, CRC, CRCCOMPLETE } crc_state[GCODE_SOURCES];
@@ -75,6 +85,7 @@ private:
   uint8_t chars_in_line[GCODE_SOURCES];
   bool needserror[GCODE_SOURCES];
   bool invalidate_codes;
+  bool pause;
   bool optimize_gcode; // WTF is this here?  This whole pipeline needs serious refactor.
   bool ADVANCED_CRC[GCODE_SOURCES];
 };

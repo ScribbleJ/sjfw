@@ -27,6 +27,7 @@ private:
   {
     setupInterrupt();
     interruptOverflow=0;
+    feed_modifier = 1.0f;
     busy = false;
   };
   Motion(Motion&);
@@ -38,6 +39,7 @@ private:
   volatile long errors[NUM_AXES];
   volatile int interruptOverflow;
   bool busy;
+  volatile float feed_modifier;
 
 public:
   // Return request Axis
@@ -57,6 +59,8 @@ public:
   void setAverageFeedrate(GCode& gcode);
   void setStepsPerUnit(GCode& gcode);
   void setAccel(GCode& gcode);
+  void setFeedModifier(float mod);
+  float getFeedModifier();
 
   void setStepPins(GCode& gcode);
   void setDirPins(GCode& gcode);

@@ -14,6 +14,7 @@
 #include "Temperature.h"
 #include "GCode.h"
 #include "GcodeQueue.h"
+#include "Motion.h"
 
 #ifdef HAS_SD
 #include "SDCard.h"
@@ -32,7 +33,7 @@ extern float const RATES_OF_CHANGE[];
 class LCDKeypad
 {
 public:
-  enum MODE { TEMP, SDSELECT, MOTORS, MENU };
+  enum MODE { TEMP, SDSELECT, MOTORS, MENU, MODS };
 
 
   LCDKeypad() 
@@ -48,6 +49,7 @@ public:
     last_lcdrefresh = millis();
     motordistance_roc = &RATES_OF_CHANGE[0];
     ROC_START = motordistance_roc;
+    MOD_AXIS=0;
     lcd_x = LCD.getCols();
     lcd_y = LCD.getRows();
     switchmode_TEMP();
@@ -57,6 +59,7 @@ public:
   {
     LCD.reinit();
     LCD.clear();
+    switchmode_TEMP();
     display_TEMP();
   }
 
@@ -88,10 +91,10 @@ public:
 
   }
 
-  void setRS(int pin) { LCD.setRS(pin); }
-  void setRW(int pin) { LCD.setRW(pin); }
+  void setRS(int pin) { LCD.setRS(pin); reinit(); }
+  void setRW(int pin) { LCD.setRW(pin); reinit(); }
   void setE(int pin) { LCD.setE(pin); }
-  void setD(int n, int pin) { LCD.setD(n, pin); }
+  void setD(int n, int pin) { LCD.setD(n, pin); reinit(); }
 #ifdef HAS_KEYPAD  
   void setRowPin(int n, int pin) { KEYPAD.setRowPin(n, pin); }
   void setColPin(int n, int pin) { KEYPAD.setColPin(n, pin); }
@@ -115,6 +118,9 @@ public:
       case MENU:
         switchmode_MENU();
         break;
+      case MODS:
+        switchmode_MODS();
+        break;
       default:
         break;
     }
@@ -136,6 +142,7 @@ private:
   float motordistance;
   float const* motordistance_roc;
   float const* ROC_START;
+  int MOD_AXIS;
   bool extrude;
   char tgraph[8*8];
   int lcd_x;
@@ -161,6 +168,9 @@ private:
       case MENU:
         handled = keyhandler_MENU(key);
         break;
+      case MODS:
+        handled = keyhandler_MODS(key);
+        break;
     }
     if(!handled)
     {
@@ -182,7 +192,7 @@ private:
         changeMode(MOTORS);
         break;
       case 'D':
-        changeMode(MENU);
+        changeMode(MODS);
         break;
       default:
         ;
@@ -215,6 +225,7 @@ private:
 
   bool keyhandler_MENU(char key) { return false; }
 
+  
   bool keyhandler_MOTORS(char key) 
   { 
     bool handled = false;
@@ -303,11 +314,11 @@ private:
         handled = true;
         break;
       case '4':
-        TEMPERATURE.setHotend(0);
+        while(!TEMPERATURE.setHotend(0));
         handled = true;
         break;
       case '6':
-        TEMPERATURE.setPlatform(0);
+        while(!TEMPERATURE.setPlatform(0));
         handled = true;
         break;
       case '7':
@@ -318,8 +329,8 @@ private:
         adjustTempBed(-5);
         handled = true;
         break;
-      case 'D':
-        LCD.reinit();
+      case 'A':
+        reinit();
         handled = true;
         break;
     }
@@ -337,7 +348,7 @@ private:
     now += diff;
     if(now < 0)
       now = 0;
-    TEMPERATURE.setHotend(now);
+    while(!TEMPERATURE.setHotend(now));
   }
 
   void adjustTempBed(int diff)
@@ -346,7 +357,7 @@ private:
     now += diff;
     if(now < 0)
       now = 0;
-    TEMPERATURE.setPlatform(now);
+    while(!TEMPERATURE.setPlatform(now));
   }
 #endif  
 
@@ -384,6 +395,7 @@ private:
 
   void display_TEMP()
   {
+    LCD.clear();
     LCD.home();
     int t=0;
     if(lcd_x>16)
@@ -454,10 +466,215 @@ private:
     if(currentmode != TEMP)
       return;
 
-    display_TEMP();
+    int t=0;
+    if(lcd_x>16)
+    {
+      LCD.setCursor(8,0);
+      LCD.write_P(PSTR("        "));
+      LCD.setCursor(8,0);
+    }
+    else
+    {
+      LCD.setCursor(2,0);
+      LCD.write_P(PSTR("        "));
+      LCD.setCursor(2,0);
+    }
+    t = TEMPERATURE.getHotend();
+    if(t == 1024)
+      LCD.write_P(PSTR("MISSING!"));
+    else
+    {
+      LCD.write(t);
+      LCD.setCursor(lcd_x > 16 ? 11 : 6,0);
+      LCD.write_P(PSTR("/ "));
+      LCD.write(TEMPERATURE.getHotendST());
+    }
+    LCD.setCursor(0,1);
+    if(lcd_x>16)
+    {
+      LCD.setCursor(8,1);
+      LCD.write_P(PSTR("         "));
+      LCD.setCursor(8,1);
+    }
+    else
+    {
+      LCD.setCursor(2,1);
+      LCD.write_P(PSTR("        "));
+      LCD.setCursor(2,1);
+    }
+
+    t = TEMPERATURE.getPlatform();
+    if(t == 1024)
+      LCD.write_P(PSTR("MISSING!"));
+    else
+    {
+      LCD.write(t);
+      LCD.setCursor(lcd_x > 16 ? 11 : 6,1);
+      LCD.write_P(PSTR("/ "));
+      LCD.write(TEMPERATURE.getPlatformST());
+    }
+    LCD.setCursor(lcd_x > 16 ? 16 : 12,0);
+    LCD.write((char)0);
+    LCD.write((char)2);
+    LCD.write((char)4);
+    LCD.write((char)6);
+    LCD.setCursor(lcd_x > 16 ? 16 : 12,1);
+    LCD.write((char)1);
+    LCD.write((char)3);
+    LCD.write((char)5);
+    LCD.write((char)7);
   }
 
 #ifdef HAS_KEYPAD
+  void switchmode_MODS()
+  {
+    currentmode = MODS;
+    display_MODS();
+  }
+  void display_MODS()
+  {
+    LCD.clear();
+    LCD.label("AXIS:",MOD_AXIS);
+    LCD.setCursor(10,0);
+    LCD.label("MIN:",(int32_t)MOTION.getAxis(MOD_AXIS).getStartFeed());
+    LCD.setCursor(0,1);
+    LCD.label("ACC:",MOTION.getAxis(MOD_AXIS).getAccel()); 
+    LCD.setCursor(10,1);
+    LCD.label("MAX:",(int32_t)MOTION.getAxis(MOD_AXIS).getMaxFeed());
+    LCD.setCursor(0,2);
+    LCD.label("FD:",MOTION.getFeedModifier()); LCD.write("%");
+    LCD.setCursor(9,2);
+    LCD.label("STP:",MOTION.getAxis(MOD_AXIS).getStepsPerMM());
+
+    tagline();
+  }
+
+  bool keyhandler_MODS(char key) 
+  { 
+    bool handled = false;
+    float t;
+    switch(key)
+    {
+      case 'A': // Switch axis, or default
+      case 'B':
+      case 'C':
+      case 'D':
+        if(key - 'A' == MOD_AXIS)
+          break;
+        MOD_AXIS = key - 'A';
+        handled = true;
+        break;
+      case '1': // Lower Minimum Feedrate
+        t = MOTION.getAxis(MOD_AXIS).getStartFeed();
+        t-=100;
+        if(t>=100)
+        {
+          MOTION.getAxis(MOD_AXIS).setMinimumFeedrate(t);
+          handled = true;
+        }
+        break;
+      case '3': // Raise Minimum Feed
+        t = MOTION.getAxis(MOD_AXIS).getStartFeed();
+        t+=100;
+        if(t<=MOTION.getAxis(MOD_AXIS).getMaxFeed())
+        {
+          MOTION.getAxis(MOD_AXIS).setMinimumFeedrate(t);
+          handled = true;
+        }
+        break;
+      case '7': // Lower Max Feed
+        t = MOTION.getAxis(MOD_AXIS).getMaxFeed();
+        t-=100;
+        if(t>=MOTION.getAxis(MOD_AXIS).getStartFeed())
+        {
+          MOTION.getAxis(MOD_AXIS).setMaximumFeedrate(t);
+          handled = true;
+        }
+        break;
+      case '9':  // Raise Max Feed
+        t = MOTION.getAxis(MOD_AXIS).getMaxFeed();
+        t+=100;
+        MOTION.getAxis(MOD_AXIS).setMaximumFeedrate(t);
+        handled = true;
+        break;
+      case '4':  // Lower Accel
+        t = MOTION.getAxis(MOD_AXIS).getAccel();
+        t-=100;
+        if(t>=100)
+        {
+          MOTION.getAxis(MOD_AXIS).setAccel(t);
+          handled = true;
+        }
+        break;
+      case '6':  // Raise Accel
+        t = MOTION.getAxis(MOD_AXIS).getAccel();
+        t+=100;
+        MOTION.getAxis(MOD_AXIS).setAccel(t);
+        handled = true;
+        break;
+      case '2': // jog axis positive
+        switch(MOD_AXIS)
+        {
+          case 0:
+          case 1:
+            MOTION.getAxis(MOD_AXIS).setCurrentPosition(
+              MOTION.getAxis(MOD_AXIS).getCurrentPosition() - 1.0f);
+            break;
+          case 2:
+            MOTION.getAxis(MOD_AXIS).setCurrentPosition(
+              MOTION.getAxis(MOD_AXIS).getCurrentPosition() - 0.1f);
+            break;
+          case 3:
+            MOTION.getAxis(3).setStepsPerUnit(
+              MOTION.getAxis(3).getStepsPerMM() + 10);
+            break;
+        }
+        handled = true;
+        break;
+      case '8': // jog axis negative
+        switch(MOD_AXIS)
+        {
+          case 0:
+          case 1:
+            MOTION.getAxis(MOD_AXIS).setCurrentPosition(
+              MOTION.getAxis(MOD_AXIS).getCurrentPosition() + 1.0f);
+            break;
+          case 2:
+            MOTION.getAxis(MOD_AXIS).setCurrentPosition(
+              MOTION.getAxis(MOD_AXIS).getCurrentPosition() + 0.1f);
+            break;
+          case 3:
+            MOTION.getAxis(3).setStepsPerUnit(
+              MOTION.getAxis(3).getStepsPerMM() - 10);
+            break;
+        }
+        handled = true;
+        break;
+      case '*': // Lower feed percentage
+        t = MOTION.getFeedModifier();
+        t -= 5.0f;
+        if(t<LOW_FEED_MODIFIER) t = LOW_FEED_MODIFIER;
+        MOTION.setFeedModifier(t);
+        handled = true;
+        break;
+      case '#': // Raise feed percentage
+        MOTION.setFeedModifier(MOTION.getFeedModifier() + 5.0f);
+        handled = true;
+        break;
+      case '0': // Toggle fan
+        GCode::togglefan();
+        handled = true;
+        break;
+      case '5': // Toggle pause
+        GCODES.togglepause();
+        handled = true;
+        break;
+    }
+    if(handled)
+      display_MODS();
+    return(handled);
+  }
+
   void switchmode_MOTORS()
   {
     currentmode = MOTORS;
@@ -519,7 +736,6 @@ private:
   void switchmode_MENU()
   {
     currentmode = MENU;
-    LCD.reinit();
     LCD.clear();
     LCD.write_P(PSTR("MAIN MENU"));
   }
@@ -564,10 +780,7 @@ private:
     if(lcd_y < 4)
       return;
     LCD.setCursor(0,3);
-    if(lcd_x > 16)
-      LCD.write_P(PSTR("SJFW by ScribbleJ"));
-    else
-      LCD.write_P(PSTR("ScribbleJ's SJFW"));
+    LCD.write_P(PSTR(LCD_TAGLINE));
   }
 
 };

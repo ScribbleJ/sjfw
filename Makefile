@@ -44,7 +44,7 @@ MCU = atmega2560
 ########################
 # Stuff you prolly don't need to change from here down.
 ########################
-SJFW_VERSION = 1.8
+SJFW_VERSION = 1.10
 
 ifeq ($(USE_LCD),1)
  LCD_FILES = LCDKeypad.cpp

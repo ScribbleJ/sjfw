@@ -33,6 +33,16 @@ void GcodeQueue::checkaxes()
           axesseen[ax] = true;
       }
     }
+#ifdef USE_PRIORITY    
+    for(int x=0;x<prority_codes.getCount();x++)
+    {
+      for(int ax = 0; ax<NUM_AXES; ax++)
+      {
+        if(priority_codes.peek(x).axismovesteps[ax] != 0)
+          axesseen[ax] = true;
+      }
+    }
+#endif    
     for(int ax = 0; ax<NUM_AXES; ax++)
     {
       //HOST.labelnum("ax:",ax, false);
@@ -63,8 +73,9 @@ void GcodeQueue::handlenext()
     if(codes.isEmpty())
       return;
   }
+
   // Oops, something went wrong
-  if(invalidate_codes)
+  if(invalidate_codes) 
   {
     for(unsigned int x=0;x<codes.getCount();x++)
       codes.peek(x).state = GCode::NEW;
@@ -74,6 +85,17 @@ void GcodeQueue::handlenext()
     invalidate_codes = false;
     return;
   }
+
+
+#ifdef USE_PRIORITY    
+  if(!priority_codes.isEmpty())
+  {
+    priority_codes.peek(0).execute();
+  }
+  else 
+#endif  
+  if(codes.isEmpty() || pause)
+    return;
 
   codes.peek(0).execute();
 
@@ -97,22 +119,37 @@ void GcodeQueue::handlenext()
 
 void GcodeQueue::setLineNumber(uint32_t l, uint8_t source) { line_number[source] = l - 1; }
 
-void GcodeQueue::enqueue(GCode &c)
+void GcodeQueue::enqueue(GCode &c,int queue)
 {
   if(c[M].isUnused() == c[G].isUnused()) // Both used or both unused is an error.
-  {
-#ifndef REPRAP_COMPAT  
-    c.dump_to_host();
-#endif    
     return;
-  }
-  c.enqueue();
-  codes.push(c);
-  //HOST.labelnum("AC-QL:", codes.getCount());
 
+  c.enqueue(); // Allows the code to do something at enqueue time.
+
+  if(queue == 0)
+  {
+    codes.push(c);
+    //HOST.labelnum("AC-QL:", codes.getCount());
+  }
+
+#ifdef USE_PRIORITY    
+  else if(queue == 1)
+  {
+    priority_codes.push(c);
+  }
+#endif  
+  // TODO: else die with an error?
 }
 
-bool GcodeQueue::isFull() { return codes.isFull(); }
+bool GcodeQueue::isFull(int queue) 
+{ 
+#ifdef USE_PRIORITY    
+  if(queue == 1) 
+    return priority_codes.isFull(); 
+#endif    
+  
+  return codes.isFull(); 
+}
 
 void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
 {
@@ -376,5 +413,9 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
   
 }
 
-void GcodeQueue::Invalidate() { invalidate_codes = true; }
+void GcodeQueue::Invalidate() 
+{ 
+  invalidate_codes = true; 
+}
+
 GcodeQueue& GCODES = GcodeQueue::Instance();

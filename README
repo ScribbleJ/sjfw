@@ -2,13 +2,13 @@ ScribbleJ Firmware
 (c) 2011 Christopher "ScribbleJ" Jansen
 http://reprap.org/wiki/Sjfw
 
-This is a firmware for 3D printers with an advanced gcode pipeline, capable of running at high speeds efficiently.
+This is a firmware for modern 3D printers with an advanced gcode pipeline.
 
 * Run-time configuration of all settings.
-* Advanced preparsing gcode pipeline
-* Acceleration
+* Advanced preparsing gcode pipeline.
+* Acceleration and lookahead.
 * "Dimension" - 5D/Volumetric, buzzword buzzword.
-* LCD and Control Panel
+* LCD and Operator Control Panel.
 * Hostless printing from SD Card.
 
 

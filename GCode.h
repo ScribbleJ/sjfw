@@ -170,6 +170,7 @@ public:
   static Pin fanpin;
   static bool DONTRUNEXTRUDER;
   static bool ISRELATIVE;
+  static void togglefan();
 
   // all good
   float feed;

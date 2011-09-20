@@ -14,8 +14,8 @@ M308 X0 Y0 Z1 E0     ;Set axis disable-after-move
 
 ; These axis speeds and steps-per-mm are the ones I'm using and almost certainly need 
 ; to be different for you!
-M200 X62.745 Y62.745 Z566.93 E729.99 ;set axis steps per mm; must happen before m201/202/203 OR ELSE!
-;M200 X62.745 Y62.745 Z2267.718 E729.99 ;set axis steps per mm; must happen before m201/202/203 OR ELSE!
+M200 X62.745 Y62.745 Z566.93 E729.99 ;set axis steps per mm
+;M200 X62.745 Y62.745 Z2267.718 E729.99 ;set axis steps per mm
 M201 X2000 Y2000 Z75 E1500 ;set axis start speeds
 M202 X6000 Y6000 Z300 E2000 ;set axis max speeds
 M206 X1500 Y1500 Z100 E2000 ;set accel mm/s/s
@@ -44,6 +44,7 @@ M211 P5000   ;Autoreport temperatures every 5 seconds
 M104 S0      ;Be sure Extruder is off - helpful with EC
 M140 S0      ;Be sure Bed is off - helpful with EC
 M84          ;Disable all motors
+M106         ;Fan on
 
 M350 P1      ;Enable lookahead
 

@@ -213,6 +213,9 @@ public:
     if(!initialized)
       return;
 
+    if(commandQueue.isEmpty())
+      return;
+
     if(isBusy())
       return;
 

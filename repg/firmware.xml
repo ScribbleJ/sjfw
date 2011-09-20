@@ -12,31 +12,31 @@
     </programmer>
     <firmware
        major="1"
-       minor="8"
-       relpath="firmware/1280-w-100k-v1.8.hex"
-       name="Thermistor on Motherboard 1.8"
-       description="sjfw v1.8 for single-board Repraps."
+       minor="9"
+       relpath="firmware/1280-w-100k-v1.9.hex"
+       name="Thermistor on Motherboard 1.9"
+       description="sjfw v1.9 for single-board Repraps."
        />
     <firmware
        major="1"
-       minor="8"
-       relpath="firmware/1280-w-ec-v1.8.hex"
-       name="Temperature on EC 1.8"
-       description="sjfw v1.8 for ThingOMatic/Gen4."
+       minor="9"
+       relpath="firmware/1280-w-ec-v1.9.hex"
+       name="Temperature on EC 1.9"
+       description="sjfw v1.9 for ThingOMatic/Gen4."
        />
     <firmware
        major="1"
-       minor="7"
-       relpath="firmware/1280-w-100k-v1.7.hex"
-       name="Thermistor on Motherboard 1.7"
-       description="sjfw v1.7 for single-board Repraps."
+       minor="10"
+       relpath="firmware/1280-w-100k-v1.10.hex"
+       name="Thermistor on Motherboard 1.10"
+       description="sjfw v1.10 for single-board Repraps."
        />
     <firmware
        major="1"
-       minor="7"
-       relpath="firmware/1280-w-ec-v1.7.hex"
-       name="Temperature on EC 1.7"
-       description="sjfw v1.7 for ThingOMatic/Gen4."
+       minor="10"
+       relpath="firmware/1280-w-ec-v1.10.hex"
+       name="Temperature on EC 1.10"
+       description="sjfw v1.10 for ThingOMatic/Gen4."
        />
   </board>
 
@@ -50,31 +50,31 @@
     </programmer>
     <firmware
        major="1"
-       minor="8"
-       relpath="firmware/2560-w-100k-v1.8.hex"
-       name="Thermistor on Motherboard 1.8"
-       description="sjfw v1.8 for single-board Repraps."
+       minor="9"
+       relpath="firmware/2560-w-100k-v1.9.hex"
+       name="Thermistor on Motherboard 1.9"
+       description="sjfw v1.9 for single-board Repraps."
        />
     <firmware
        major="1"
-       minor="8"
-       relpath="firmware/2560-w-ec-v1.8.hex"
-       name="Temperature on EC 1.8"
-       description="sjfw v1.8 for ThingOMatic/Gen4."
+       minor="9"
+       relpath="firmware/2560-w-ec-v1.9.hex"
+       name="Temperature on EC 1.9"
+       description="sjfw v1.9 for ThingOMatic/Gen4."
        />
     <firmware
        major="1"
-       minor="7"
-       relpath="firmware/2560-w-100k-v1.7.hex"
-       name="Thermistor on Motherboard 1.7"
-       description="sjfw v1.7 for single-board Repraps."
+       minor="10"
+       relpath="firmware/2560-w-100k-v1.10.hex"
+       name="Thermistor on Motherboard 1.10"
+       description="sjfw v1.10 for single-board Repraps."
        />
     <firmware
        major="1"
-       minor="7"
-       relpath="firmware/2560-w-ec-v1.7.hex"
-       name="Temperature on EC 1.7"
-       description="sjfw v1.7 for ThingOMatic/Gen4."
+       minor="10"
+       relpath="firmware/2560-w-ec-v1.10.hex"
+       name="Temperature on EC 1.10"
+       description="sjfw v1.10 for ThingOMatic/Gen4."
        />
   </board>
 
