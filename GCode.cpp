@@ -242,7 +242,7 @@ void GCode::do_m_code()
       break;
     case 104: // Set Extruder Temperature (Fast)
       SKIPEXTRUDE;
-      if(TEMPERATURE.setHotend(cps[S].getInt()))
+      if(cps[S].isUnused() || TEMPERATURE.setHotend(cps[S].getInt()))
       {
 #ifndef REPG_COMPAT        
         Host::Instance(source).labelnum("prog ", linenum, false); Host::Instance(source).write(' ');  write_temps_to_host(source);
@@ -287,10 +287,10 @@ void GCode::do_m_code()
 #endif
     case 109: // Set Extruder Temperature
       SKIPEXTRUDE;
-      if(state != ACTIVE && TEMPERATURE.setHotend(cps[S].getInt()))
+      if(state != ACTIVE && (cps[S].isUnused() || TEMPERATURE.setHotend(cps[S].getInt())))
         state = ACTIVE;
 
-      if(TEMPERATURE.getHotend() >= cps[S].getInt())
+      if(state == ACTIVE && TEMPERATURE.getHotend() >= TEMPERATURE.getHotendST())
       {
 #ifndef REPG_COMPAT        
         Host::Instance(source).labelnum("prog ", linenum, false); Host::Instance(source).write(' ');  write_temps_to_host(source);
@@ -357,7 +357,7 @@ void GCode::do_m_code()
       }
     case 140: // Bed Temperature (Fast) 
       SKIPEXTRUDE;
-      if(TEMPERATURE.setPlatform(cps[S].getInt()))
+      if(cps[S].isUnused() || TEMPERATURE.setPlatform(cps[S].getInt()))
       {
 #ifndef REPG_COMPAT        
         Host::Instance(source).labelnum("prog ", linenum, false); Host::Instance(source).write(' ');  write_temps_to_host(source); 

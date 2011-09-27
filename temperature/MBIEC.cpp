@@ -103,12 +103,18 @@ void MBIEC::handle_command_response(uint16_t p)
     
 bool MBIEC::setHotend(uint16_t p)
 {
-  return dotoolreq(SLAVE_CMD_SET_TEMP, p);
+  bool t = dotoolreq(SLAVE_CMD_SET_TEMP, p);
+  if(t)
+    hotend_set_temp = p;
+  return t;
 }
 
 bool MBIEC::setPlatform(uint16_t p)
 {
-  return dotoolreq(SLAVE_CMD_SET_PLATFORM_TEMP, p);
+  bool t = dotoolreq(SLAVE_CMD_SET_PLATFORM_TEMP, p);
+  if(t)
+    platform_set_temp = p;
+  return t;
 }
 
 uint16_t MBIEC::getHotend()
@@ -133,8 +139,8 @@ uint16_t MBIEC::getPlatformST()
 
 
 #define MAX_EC_INTERVAL_MS 500
-#define MIN_EC_INTERVAL_MS 20
-#define MIN_REQUEST_INTERVAL 50
+#define MIN_EC_INTERVAL_MS 30
+#define MIN_REQUEST_INTERVAL 100
 void MBIEC::update()
 {
   unsigned long now = millis();
@@ -158,14 +164,13 @@ void MBIEC::update()
   static const uint8_t commands[] = 
   {
     SLAVE_CMD_GET_TEMP,
-    SLAVE_CMD_GET_PLATFORM_TEMP,
     SLAVE_CMD_GET_SP,
+    SLAVE_CMD_GET_PLATFORM_TEMP,
     SLAVE_CMD_GET_PLATFORM_SP
   };
-  static const uint8_t cmdnum = 5;
   static int cmd = 0;
   dotoolreq(commands[cmd++]);
-  if(cmd >= cmdnum)
+  if(cmd > 3)
     cmd = 0;
 }
 
