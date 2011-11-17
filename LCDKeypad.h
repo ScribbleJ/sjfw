@@ -273,19 +273,35 @@ private:
         return true;
       case '2':
         t[G].setInt(1);
+#ifdef REVERSE_PRINTER
+        t[Y].setFloat(p[Y] + motordistance);
+#else
         t[Y].setFloat(p[Y] - motordistance);
+#endif
         break;
       case '8':
         t[G].setInt(1);
+#ifdef REVERSE_PRINTER
+        t[Y].setFloat(p[Y] - motordistance);
+#else
         t[Y].setFloat(p[Y] + motordistance);
+#endif
         break;
       case '4':
         t[G].setInt(1);
+#ifdef REVERSE_PRINTER
+        t[X].setFloat(p[X] + motordistance);
+#else
         t[X].setFloat(p[X] - motordistance);
+#endif
         break;
       case '6':
         t[G].setInt(1);
+#ifdef REVERSE_PRINTER
+        t[X].setFloat(p[X] - motordistance);
+#else
         t[X].setFloat(p[X] + motordistance);
+#endif
         break;
       case '3':
         t[G].setInt(1);
