@@ -165,7 +165,7 @@ bool findFileInDir(const char* name, struct fat_dir_entry_struct* dir_entry)
 	fat_reset_dir(dd);
 	while(fat_read_dir(dd, dir_entry))
 	{
-		if(strcmp(dir_entry->long_name, name) == 0)
+		if(strncasecmp(dir_entry->long_name, name, SD_MAX_FN) == 0)
 		{
 			fat_reset_dir(dd);
 			return true;
