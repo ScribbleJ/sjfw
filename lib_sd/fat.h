@@ -89,6 +89,17 @@ struct fat_dir_entry_struct
     offset_t entry_offset;
 };
 
+struct fat_file_struct
+{
+    struct fat_fs_struct* fs;
+    struct fat_dir_entry_struct dir_entry;
+    offset_t pos;
+    cluster_t pos_cluster;
+#ifdef FAT_DELAY_DIRENTRY_UPDATE
+    uint8_t needs_write;
+#endif
+};
+
 struct fat_fs_struct* fat_open(struct partition_struct* partition);
 void fat_close(struct fat_fs_struct* fs);
 

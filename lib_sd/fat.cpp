@@ -161,6 +161,7 @@ struct fat_fs_struct
     cluster_t cluster_free;
 };
 
+/*
 struct fat_file_struct
 {
     struct fat_fs_struct* fs;
@@ -171,6 +172,7 @@ struct fat_file_struct
     uint8_t needs_write;
 #endif
 };
+*/
 
 struct fat_dir_struct
 {
