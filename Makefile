@@ -9,7 +9,7 @@ USE_KEYPAD = 1
 INCLUDE_SJFW_LOOKAHEAD = 1
 
 # EC for Gen3/4 only.  Others default to 100k Thermistors.
-USE_EXTRUDERCONTROLLER = 1
+# USE_EXTRUDERCONTROLLER = 1
 
 # "generic" is a special config with no pins defined.
 # You should be able to compile this for your chip, upload it, then configure the pins at
