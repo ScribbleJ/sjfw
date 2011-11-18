@@ -135,15 +135,17 @@ SdErrorCode directoryNextEntry(char* buffer, uint8_t bufsize) {
 	uint8_t tries = 5;
 	while (tries) {
 		if (fat_read_dir(dd, &entry)) {
-			int i;
-			for (i = 0; (i < bufsize-1) && entry.long_name[i] != 0; i++) {
-				buffer[i] = entry.long_name[i];
-			}
-			buffer[i] = 0;
-			if (i > 0) {
-				break;
-			} else {
-				tries--;
+			if ((entry.attributes & FAT_ATTRIB_VOLUME) == 0) {
+				int i;
+				for (i = 0; (i < bufsize-1) && entry.long_name[i] != 0; i++) {
+					buffer[i] = entry.long_name[i];
+				}
+				buffer[i] = 0;
+				if (i > 0) {
+					break;
+				} else {
+					tries--;
+				}
 			}
 		} else {
 			buffer[0] = 0;
