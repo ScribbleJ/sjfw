@@ -17,7 +17,7 @@ USE_EXTRUDERCONTROLLER = 1
 CONFIG_PATH = generic
 
 # this needs to point to the directory where you have avrdude, avr-gcc, and such.
-AVR_TOOLS_PATH = /usr/bin
+AVR_TOOLS_PATH =
 AVR_GCC_PATH = $(AVR_TOOLS_PATH)
 
 #Reasonable settings for Atmega1280 (regardless of board)
@@ -121,19 +121,19 @@ AVRDUDE_WRITE_FLASH = -U flash:w:main.hex:i
 AVRDUDE_FLAGS = -V -p $(MCU) -P $(PORT) -c $(AVRDUDE_PROGRAMMER) -b $(UPLOAD_RATE) -D
 
 # Program settings
-CC = $(AVR_GCC_PATH)/avr-gcc
-CXX = $(AVR_GCC_PATH)/avr-g++
-OBJCOPY = $(AVR_TOOLS_PATH)/avr-objcopy
-OBJDUMP = $(AVR_TOOLS_PATH)/avr-objdump
-AR  = $(AVR_TOOLS_PATH)/avr-ar
-SIZE = $(AVR_TOOLS_PATH)/avr-size
-NM = $(AVR_TOOLS_PATH)/avr-nm
-AVRDUDE = $(AVR_TOOLS_PATH)/avrdude
+CC = $(AVR_GCC_PATH)avr-gcc
+CXX = $(AVR_GCC_PATH)avr-g++
+OBJCOPY = $(AVR_TOOLS_PATH)avr-objcopy
+OBJDUMP = $(AVR_TOOLS_PATH)avr-objdump
+AR  = $(AVR_TOOLS_PATH)avr-ar
+SIZE = $(AVR_TOOLS_PATH)avr-size
+NM = $(AVR_TOOLS_PATH)avr-nm
+AVRDUDE = $(AVR_TOOLS_PATH)avrdude
 REMOVE = rm -f
 MV = mv -f
 
 # Define all object files.
-OBJ = $(CXXSRC:.cpp=.o) 
+OBJ = $(CXXSRC:.cpp=.o)
 
 # Combine all necessary flags and optional flags.
 # Add target processor to flags.
