@@ -168,6 +168,7 @@ private:
 public:
   // TODO: this should be ELSEWHERE.
   static Pin fanpin;
+  static Pin powerpin;
   static bool DONTRUNEXTRUDER;
   static bool ISRELATIVE;
   static void togglefan();

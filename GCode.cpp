@@ -30,6 +30,8 @@ Pin   GCode::fanpin = Pin();
 bool  GCode::DONTRUNEXTRUDER=false;
 bool  GCode::ISRELATIVE=false;
 
+Pin   GCode::powerpin = Pin();
+
 // Stuff to do if it's a G move code, otherwise not I guess.
 // This function MAY get called repeatedly before the execute() function.
 // It WILL get called at least once.
@@ -236,6 +238,16 @@ void GCode::do_m_code()
   {
     case 0: // Finish up and shut down.
     case 18: // 18 used by RepG.
+	case 80: // power on
+		powerpin.setDirection(true);
+		powerpin.setValue(false);
+		state = DONE;
+		break;
+	case 81: // power off
+		powerpin.setValue(true);
+		powerpin.setDirection(false);
+		state = DONE;
+		break;
     case 84: // "Stop Idle Hold" == shut down motors.
       SETOBJ(disableAllMotors());
       state = DONE;
@@ -439,6 +451,15 @@ void GCode::do_m_code()
         fanpin = Pin(ArduinoMap::getPort(cps[P].getInt()),  ArduinoMap::getPinnum(cps[P].getInt()));
         fanpin.setDirection(true);
         fanpin.setValue(false);
+      }
+      state = DONE;
+      break;
+    case 217: // set power pin
+      if(!cps[P].isUnused())
+      {
+        powerpin = Pin(ArduinoMap::getPort(cps[P].getInt()),  ArduinoMap::getPinnum(cps[P].getInt()));
+        powerpin.setDirection(false);
+        powerpin.setValue(true);
       }
       state = DONE;
       break;
