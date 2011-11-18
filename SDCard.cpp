@@ -1,19 +1,19 @@
 /*
- * Copyright 2010 by Adam Mayer <adam@makerbot.com>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
- */
+* Copyright 2010 by Adam Mayer <adam@makerbot.com>
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>
+*/
 
 #include "SDCard.h"
 
@@ -52,43 +52,43 @@ bool has_more;
 
 bool openPartition()
 {
-  /* open first partition */
-  partition = partition_open(sd_raw_read,
-                             sd_raw_read_interval,
-                             0,
-                             0,
-                             0);
+	/* open first partition */
+	partition = partition_open(sd_raw_read,
+														sd_raw_read_interval,
+														0,
+														0,
+														0);
 
-  if(!partition)
-  {
-    /* If the partition did not open, assume the storage device
-    * is a "superfloppy", i.e. has no MBR.
-    */
-    partition = partition_open(sd_raw_read,
-                               sd_raw_read_interval,
-                               0,
-                               0,
-                               -1);
-  }
-  if(!partition)
-    return false;
-  return true;
+	if(!partition)
+	{
+		/* If the partition did not open, assume the storage device
+		* is a "superfloppy", i.e. has no MBR.
+		*/
+		partition = partition_open(sd_raw_read,
+															sd_raw_read_interval,
+															0,
+															0,
+															-1);
+	}
+	if(!partition)
+		return false;
+	return true;
 }
 
 bool openFilesys()
 {
-  /* open file system */
-  fs = fat_open(partition);
-  return fs != 0;
+	/* open file system */
+	fs = fat_open(partition);
+	return fs != 0;
 }
 
 bool openRoot()
 {
-  // Open root directory
-  struct fat_dir_entry_struct rootdirectory;
-  fat_get_dir_entry_of_path(fs, "/", &rootdirectory);
-  dd = fat_open_dir(fs, &rootdirectory);
-  return dd != 0;
+	// Open root directory
+	struct fat_dir_entry_struct rootdirectory;
+	fat_get_dir_entry_of_path(fs, "/", &rootdirectory);
+	dd = fat_open_dir(fs, &rootdirectory);
+	return dd != 0;
 }
 
 SdErrorCode initCard() {
@@ -109,24 +109,24 @@ SdErrorCode initCard() {
 	} else if (!openRoot()) {
 		reset();
 		return SD_ERR_NO_ROOT;
-		
+
 	/* we need to keep locked as the last check */
 	} else if (sd_raw_locked()) {
 		return SD_ERR_CARD_LOCKED;
 	}
-    playing = false;
-    paused = false;
+		playing = false;
+		paused = false;
 	return SD_SUCCESS;
 }
 
 SdErrorCode directoryReset() {
-  reset();
-  SdErrorCode rsp = initCard();
-  if (rsp != SD_SUCCESS && rsp != SD_ERR_CARD_LOCKED) {
-    return rsp;
-  }
-  fat_reset_dir(dd);
-  return SD_SUCCESS;
+	reset();
+	SdErrorCode rsp = initCard();
+	if (rsp != SD_SUCCESS && rsp != SD_ERR_CARD_LOCKED) {
+		return rsp;
+	}
+	fat_reset_dir(dd);
+	return SD_SUCCESS;
 }
 
 SdErrorCode directoryNextEntry(char* buffer, uint8_t bufsize) {
@@ -162,27 +162,32 @@ SdErrorCode directoryNextEntry(char* buffer, uint8_t bufsize) {
 
 bool findFileInDir(const char* name, struct fat_dir_entry_struct* dir_entry)
 {
-  while(fat_read_dir(dd, dir_entry))
-  {
-    if(strcmp(dir_entry->long_name, name) == 0)
-    {
-      fat_reset_dir(dd);
-      return true;
-    }
-  }
-  return false;
+	fat_reset_dir(dd);
+	while(fat_read_dir(dd, dir_entry))
+	{
+		if(strcmp(dir_entry->long_name, name) == 0)
+		{
+			fat_reset_dir(dd);
+			return true;
+		}
+	}
+	return false;
 }
 
 bool openFile(const char* name, struct fat_file_struct** file)
 {
-  struct fat_dir_entry_struct fileEntry;
-  if(!findFileInDir(name, &fileEntry))
-  {
-    return false;
-  }
+	struct fat_dir_entry_struct fileEntry;
+	if(!findFileInDir(name, &fileEntry))
+	{
+		return false;
+	}
 
-  *file = fat_open_file(fs, &fileEntry);
-  return true;
+	*file = fat_open_file(fs, &fileEntry);
+	if (*file != 0) {
+		strncpy(currentfile, name, SD_MAX_FN);
+		return true;
+	}
+	return false;
 }
 
 bool isReading() {
@@ -190,49 +195,50 @@ bool isReading() {
 }
 
 void fetchNextByte() {
-  int16_t read = fat_read_file(file, &next_byte, 1);
-  has_more = read > 0;
+	int16_t read = fat_read_file(file, &next_byte, 1);
+	has_more = read > 0;
 }
 
 bool readHasNext() {
-  return has_more;
+	return has_more;
 }
 
 uint8_t readNext() {
-  uint8_t rv = next_byte;
-  fetchNextByte();
-  return rv;
+	uint8_t rv = next_byte;
+	fetchNextByte();
+	return rv;
 }
 
 SdErrorCode startRead(char const* filename) {
-  reset();
-  SdErrorCode result = initCard();
-  /* for playback it's ok if the card is locked */
-  if (result != SD_SUCCESS && result != SD_ERR_CARD_LOCKED) {
-    return result;
-  }
-  file = 0;
-  if (!openFile(filename, &file) || file == 0) {
-    return SD_ERR_FILE_NOT_FOUND;
-  }
-  playing = true;
-  fetchNextByte();
-  return SD_SUCCESS;
+	reset();
+	SdErrorCode result = initCard();
+	/* for playback it's ok if the card is locked */
+	if (result != SD_SUCCESS && result != SD_ERR_CARD_LOCKED) {
+		return result;
+	}
+	if (file)
+		finishRead();
+	if (!openFile(filename, &file) || file == 0) {
+		return SD_ERR_FILE_NOT_FOUND;
+	}
+	playing = true;
+	fetchNextByte();
+	return SD_SUCCESS;
 }
 
 void readRewind(uint8_t bytes) {
-  int32_t offset = -((int32_t)bytes);
-  fat_seek_file(file, &offset, FAT_SEEK_CUR);
+	int32_t offset = -((int32_t)bytes);
+	fat_seek_file(file, &offset, FAT_SEEK_CUR);
 }
 
 void finishRead() {
-  playing = false;
-  paused = false;
-  if (file != 0) {
-	  fat_close_file(file);
-	  //sd_raw_sync();
-  }
-  file = 0;
+	playing = false;
+	paused = false;
+	if (file != 0) {
+		fat_close_file(file);
+		//sd_raw_sync();
+	}
+	file = 0;
 }
 
 
@@ -254,116 +260,116 @@ void reset() {
 }
 
 bool autorun() {
-  if (playing)
-    return false;
+	if (playing)
+		return false;
 
-  SdErrorCode e = startRead("sjfwauto.gcd");
-  if(e != SD_SUCCESS)
-  {
-    return false;
-  }
+	SdErrorCode e = startRead("sjfwauto.gcd");
+	if(e != SD_SUCCESS)
+	{
+		return false;
+	}
 
-  return true;
+	return true;
 }
 
 void update() {
-  if(!playing || paused)
-    return;
-  
-  if(GCODES.isFull())
-  {
-    return;
-  }
-  
-  if(!readHasNext())
-  {
-    finishRead();
-    return;
-  }
+	if(!playing || paused)
+		return;
 
-  char buf[MAX_GCODE_FRAG_SIZE] = {0};
-  int x=0;
-  for(;x < MAX_GCODE_FRAG_SIZE && readHasNext(); x++)
-  {
-    buf[x] = readNext();
-    if(buf[x] <= 32)
-      break;
-  }
-  if(buf[x] > 32)
-  {
-    HOST.write("SRO\n");
-    // TODO: Buffer overrun... error out
-    return;
-  }
+	if(GCODES.isFull())
+	{
+		return;
+	}
 
-  GCODES.parsebytes(buf, x, SD_SOURCE);
+	if(!readHasNext())
+	{
+		finishRead();
+		return;
+	}
+
+	char buf[MAX_GCODE_FRAG_SIZE] = {0};
+	int x=0;
+	for(;x < MAX_GCODE_FRAG_SIZE && readHasNext(); x++)
+	{
+		buf[x] = readNext();
+		if(buf[x] <= 32)
+			break;
+	}
+	if(buf[x] > 32)
+	{
+		HOST.write("SRO\n");
+		// TODO: Buffer overrun... error out
+		return;
+	}
+
+	GCODES.parsebytes(buf, x, SD_SOURCE);
 }
 
 char const* getCurrentfile()
 {
-  if (file)
-    return file->dir_entry.long_name;
-  else
-    return currentfile;
+	if (file)
+		return file->dir_entry.long_name;
+	else
+		return currentfile;
 }
 
 char const* getNextfile()
 {
-  if (playing)
-    finishRead();
+	if (playing)
+		finishRead();
 
-  sdcard::SdErrorCode e;
-  if(currentfile[0] == 0)
-  {
-    e = sdcard::directoryReset();
-    //if(e != sdcard::SD_SUCCESS)  HOST.labelnum("dr: ", e, true);
-  }
+	sdcard::SdErrorCode e;
+	if(currentfile[0] == 0)
+	{
+		e = sdcard::directoryReset();
+		//if(e != sdcard::SD_SUCCESS)  HOST.labelnum("dr: ", e, true);
+	}
 
-  do {
-    e = sdcard::directoryNextEntry(currentfile,SD_MAX_FN);
-  } while (e == sdcard::SD_SUCCESS && currentfile[0] == '.');
-  //if(e != sdcard::SD_SUCCESS) HOST.labelnum("dne: ", e, true);
-  return currentfile;
+	do {
+		e = sdcard::directoryNextEntry(currentfile,SD_MAX_FN);
+	} while (e == sdcard::SD_SUCCESS && currentfile[0] == '.');
+	//if(e != sdcard::SD_SUCCESS) HOST.labelnum("dne: ", e, true);
+	return currentfile;
 }
 
 bool pause() {
-  if (!playing)
-    return false;
+	if (!playing)
+		return false;
 
-  paused = true;
-  return paused;
+	paused = true;
+	return paused;
 }
 
 bool printcurrent() {
-  if (playing)
-  {
-    if (paused)
-    {
-      paused = false;
-      return true;
-    }
-    finishRead();
-  }
+	if (playing)
+	{
+		if (paused)
+		{
+			paused = false;
+			return true;
+		}
+		finishRead();
+	}
 
-  SdErrorCode e = startRead(currentfile);
-  if(e != SD_SUCCESS)
-  {
-    // HOST.labelnum("pc: ", e, true);
-    return false;
-  }
-  return true;
+	SdErrorCode e = startRead(getCurrentfile());
+	if(e != SD_SUCCESS)
+	{
+		// HOST.labelnum("pc: ", e, true);
+		return false;
+	}
+	return true;
 }
 
 uint32_t getCurrentPos() {
-  if (file)
-    return file->pos;
-  return 0;
+	if (file)
+		return file->pos;
+	return 0;
 }
 
 uint32_t getCurrentSize() {
-  if (file)
-    return file->dir_entry.file_size;
-  return 0;
+	if (file)
+		return file->dir_entry.file_size;
+	return 0;
 }
 
 } // namespace sdcard
