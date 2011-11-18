@@ -71,6 +71,10 @@ char const* getCurrentfile();
 // print currentfile
 bool printcurrent();
 
+// toggle pause state
+// returns true if we become paused, false if we're resuming or aren't playing
+bool pause();
+
 
 /**************************/
 /** Read File             */

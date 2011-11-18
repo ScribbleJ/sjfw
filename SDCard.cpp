@@ -109,6 +109,8 @@ SdErrorCode initCard() {
 	} else if (sd_raw_locked()) {
 		return SD_ERR_CARD_LOCKED;
 	}
+    playing = false;
+    paused = false;
 	return SD_SUCCESS;
 }
 
@@ -177,6 +179,7 @@ bool openFile(const char* name, struct fat_file_struct** file)
 }
 
 bool playing = false;
+bool paused = false;
 
 bool isReading() {
 	return playing;
@@ -223,6 +226,7 @@ void readRewind(uint8_t bytes) {
 
 void finishRead() {
   playing = false;
+  paused = false;
   if (file != 0) {
 	  fat_close_file(file);
 	  //sd_raw_sync();
@@ -262,14 +266,14 @@ bool autorun() {
 }
 
 void update() {
-  if(!playing)
+  if(!playing || paused)
     return;
   
   if(GCODES.isFull())
   {
     return;
   }
-    
+  
   if(!readHasNext())
   {
     finishRead();
@@ -315,10 +319,17 @@ char const* getNextfile()
   return currentfile;
 }
 
+bool pause() {
+  if (!playing)
+    return false;
+
+  paused = !paused;
+  return paused;
+}
 
 bool printcurrent() {
   if (playing)
-    return false;
+    finishRead();
 
   SdErrorCode e = startRead(currentfile);
   if(e != SD_SUCCESS)
