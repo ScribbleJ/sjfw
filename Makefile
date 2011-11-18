@@ -44,13 +44,13 @@ MCU = atmega1280
 ########################
 # Stuff you prolly don't need to change from here down.
 ########################
-SJFW_VERSION = 1.10
+SJFW_VERSION = 1.11
 
 ifeq ($(USE_LCD),1)
  LCD_FILES = LCDKeypad.cpp
  LCD_DEFINES = -DHAS_LCD
 ifeq ($(USE_KEYPAD),1)
-  KEYPAD_FILES = 
+  KEYPAD_FILES =
   KEYPAD_DEFINES = -DHAS_KEYPAD
 endif
 endif
