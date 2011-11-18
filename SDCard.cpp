@@ -45,6 +45,11 @@ struct fat_file_struct* file = 0;
 
 char currentfile[SD_MAX_FN] = {0};
 
+bool playing = false;
+bool paused = false;
+uint8_t next_byte;
+bool has_more;
+
 bool openPartition()
 {
   /* open first partition */
@@ -180,15 +185,9 @@ bool openFile(const char* name, struct fat_file_struct** file)
   return true;
 }
 
-bool playing = false;
-bool paused = false;
-
 bool isReading() {
 	return playing;
 }
-
-uint8_t next_byte;
-bool has_more;
 
 void fetchNextByte() {
   int16_t read = fat_read_file(file, &next_byte, 1);
@@ -302,11 +301,17 @@ void update() {
 
 char const* getCurrentfile()
 {
-  return currentfile;
+  if (file)
+    return file->dir_entry.long_name;
+  else
+    return currentfile;
 }
 
 char const* getNextfile()
 {
+  if (playing)
+    finishRead();
+
   sdcard::SdErrorCode e;
   if(currentfile[0] == 0)
   {
@@ -325,13 +330,20 @@ bool pause() {
   if (!playing)
     return false;
 
-  paused = !paused;
+  paused = true;
   return paused;
 }
 
 bool printcurrent() {
   if (playing)
+  {
+    if (paused)
+    {
+      paused = false;
+      return true;
+    }
     finishRead();
+  }
 
   SdErrorCode e = startRead(currentfile);
   if(e != SD_SUCCESS)
@@ -342,5 +354,16 @@ bool printcurrent() {
   return true;
 }
 
+uint32_t getCurrentPos() {
+  if (file)
+    return file->pos;
+  return 0;
+}
+
+uint32_t getCurrentSize() {
+  if (file)
+    return file->dir_entry.file_size;
+  return 0;
+}
 
 } // namespace sdcard

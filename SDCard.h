@@ -71,10 +71,14 @@ char const* getCurrentfile();
 // print currentfile
 bool printcurrent();
 
-// toggle pause state
-// returns true if we become paused, false if we're resuming or aren't playing
+// pause printing, call printcurrent() to resume
 bool pause();
 
+// get current position
+uint32_t getCurrentPos();
+
+// get file size
+uint32_t getCurrentSize();
 
 /**************************/
 /** Read File             */
