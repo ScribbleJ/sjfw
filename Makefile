@@ -71,7 +71,7 @@ else
   OPT = s
 endif
 ifeq ($(USE_BT),1)
-  BT_FILES = 
+  BT_FILES =
   BT_DEFINES = -DHAS_BT
 endif
 ifeq ($(USE_MARLIN),1)
@@ -82,13 +82,13 @@ else
   MOTION_DEFINES =
 endif
 ifeq ($(INCLUDE_SJFW_LOOKAHEAD),1)
-  LOOK_FILES = 
+  LOOK_FILES =
   LOOK_DEFINES = -DLOOKAHEAD
 endif
 
 
 
-  
+
 
 EXTRA_FILES = $(MOTION_FILES) $(LCD_FILES) $(SD_FILES) $(BOARD_FILES) $(KEYPAD_FILES) $(BT_FILES) $(LOOK_FILES)
 EXTRA_DEFINES = $(MOTION_DEFINES) $(LCD_DEFINES) $(SD_DEFINES) $(BOARD_DEFINES) $(KEYPAD_DEFINES) $(BT_DEFINES) -DSJFW_VERSION='"$(SJFW_VERSION)"' $(LOOK_DEFINES)
@@ -97,14 +97,14 @@ EXTRA_DEFINES = $(MOTION_DEFINES) $(LCD_DEFINES) $(SD_DEFINES) $(BOARD_DEFINES) 
 
 F_CPU = 16000000
 CXXSRC = $(EXTRA_FILES) avr/AvrPort.cpp Host.cpp Time.cpp GcodeQueue.cpp GCode.cpp \
-Globals.cpp Temperature.cpp avr/ArduinoMap.cpp Eeprom.cpp 
+Globals.cpp Temperature.cpp avr/ArduinoMap.cpp Eeprom.cpp
 
 
 FORMAT = ihex
 
 # Place -D or -U options here
-CXXBENICE = -fno-default-inline 
-CXXBEMEAN = 
+CXXBENICE = -fno-default-inline
+CXXBEMEAN =
 CXXDEFS = -DF_CPU=$(F_CPU) $(EXTRA_DEFINES)
 CXXEXTRA = -fno-threadsafe-statics -fwrapv -fno-exceptions -ffunction-sections -fdata-sections -Wall -Wextra
 #work around current bug in compiler triggered by Marlin engine by disabling optimization.
@@ -142,14 +142,17 @@ ALL_CXXFLAGS = -mmcu=$(MCU) -I. -I./$(CONFIG_PATH) -I./lib_sd -I./avr -I/usr/lib
 # Default target.
 all: build sizeafter
 
-build: elf hex 
+build: elf hex
 
 elf: main.elf
 hex: main.hex
 
-# Program the device.  
+# Program the device.
 upload: main.hex
-	perl ./util/reset.pl $(PORT);$(AVRDUDE)  $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH)
+	stty raw ignbrk hup < $(PORT)
+	stty raw ignbrk hup < $(PORT)
+	$(AVRDUDE)  $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH)
+	stty raw ignbrk -hup < $(PORT)
 
 
 # Display size of file.
@@ -162,13 +165,13 @@ sizeafter:
 	@if [ -f main.elf ]; then echo; echo $(MSG_SIZE_AFTER); $(ELFSIZE); echo; fi
 
 
-.SUFFIXES: .elf .hex 
+.SUFFIXES: .elf .hex
 
 .elf.hex:
 	$(OBJCOPY) -O $(FORMAT) -R .eeprom $< $@
 
 	# Link: create ELF output file from library.
-main.elf: main.cpp core.a 
+main.elf: main.cpp core.a
 	$(CC) $(ALL_CXXFLAGS) -o $@ main.cpp -L. core.a $(LDFLAGS)
 
 core.a: $(OBJ)
@@ -178,7 +181,7 @@ core.a: $(OBJ)
 
 # Compile: create object files from C++ source files.
 .cpp.o:
-	$(CXX) -c $(ALL_CXXFLAGS) $< -o $@ 
+	$(CXX) -c $(ALL_CXXFLAGS) $< -o $@
 
 # Target: clean project.
 clean:
