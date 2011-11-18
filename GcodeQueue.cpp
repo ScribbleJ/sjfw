@@ -10,6 +10,7 @@
 // REMOVEME
 #include "Time.h"
 #include "Eeprom.h"
+#include "SDCard.h"
 
 
 
@@ -253,23 +254,93 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
     case 'M':
       // EEPROM write begin must start immediately so we do not miss whatever may come in
       c[M].setInt(bytes+1);
-      if(c[M].getInt() == 400)
-      {
-        eeprom::Stop();
-        c[M].unset();
-        Host::Instance(source).write_P(PSTR("EEPROM STOP"));
-        Host::Instance(source).endl();
-      }
-      if(c[M].getInt() == 402)
-      {
-        Host::Instance(source).write_P(PSTR("EEPROM "));
-        if(eeprom::beginWrite())
-          Host::Instance(source).write_P(PSTR("BEGIN"));
-        else
-          Host::Instance(source).write_P(PSTR("FAIL"));
-        Host::Instance(source).endl();
-        c[M].unset();
-      }
+      switch(c[M].getInt()) {
+#ifdef HAS_SD
+        case 20: // M20 - list SD card files
+          do {
+            char buf[32];
+            int c = 32;
+            sdcard::directoryReset();
+            Host::Instance(source).write_P(PSTR("Begin file list\n"));
+            do {
+              if (sdcard::directoryNextEntry(buf, 32) == 0) {
+                if (buf[0]) {
+                  Host::Instance(source).write_P(PSTR("  "));
+                  // convert to uppercase
+                  for (int i=0; buf[i] > 0; i++)
+                    if (buf[i] >= 'a' && buf[i] <= 'z')
+                      buf[i] -= 'a' - 'A';
+                  Host::Instance(source).write(buf);
+                  Host::Instance(source).endl();
+                }
+              }
+              else
+                buf[0] = 0;
+            } while ((buf[0] != 0) && (--c > 0));
+        	Host::Instance(source).write_P(PSTR("End file list\n"));
+          } while (0);
+          c[M].unset();
+    	  break;
+        case 21: // initialise SD
+          sdcard::SdErrorCode rsp;
+          rsp = sdcard::directoryReset();
+          if (rsp) {
+              Host::Instance(source).write_P(PSTR("SD Error: "));
+              Host::Instance(source).write(rsp);
+          }
+          else
+              Host::Instance(source).write_P(PSTR("SD OK"));
+          Host::Instance(source).endl();
+          c[M].unset();
+          break;
+        case 22: // release SD
+          sdcard::reset();
+          c[M].unset();
+          break;
+        case 23: // select file (TODO: hack or hook parser to retrieve filename)
+          c[M].unset();
+          break;
+        case 24: // start/resume SD print
+          Host::Instance(source).write(sdcard::getCurrentfile());
+          if(sdcard::printcurrent())
+            Host::Instance(source).write_P(PSTR(" BEGUN"));
+          else
+            Host::Instance(source).write_P(PSTR(" FAIL"));
+          Host::Instance(source).endl();
+          c[M].unset();
+          break;
+        case 25: // pause SD print
+          sdcard::pause();
+          c[M].unset();
+          break;
+        //case 26: // SD seek
+        case 27: // report SD print status
+          Host::Instance(source).write_P(PSTR("SD byte "));
+          Host::Instance(source).write(sdcard::getCurrentPos());
+          Host::Instance(source).write_P(PSTR(" of "));
+          Host::Instance(source).write(sdcard::getCurrentSize());
+          Host::Instance(source).endl();
+          c[M].unset();
+          break;
+        //case 28: // write to SD
+        //case 29: // finish writing
+#endif
+        case 400:
+          eeprom::Stop();
+          c[M].unset();
+          Host::Instance(source).write_P(PSTR("EEPROM STOP"));
+          Host::Instance(source).endl();
+          break;
+        case 402:
+          Host::Instance(source).write_P(PSTR("EEPROM "));
+          if(eeprom::beginWrite())
+            Host::Instance(source).write_P(PSTR("BEGIN"));
+          else
+            Host::Instance(source).write_P(PSTR("FAIL"));
+          Host::Instance(source).endl();
+          c[M].unset();
+          break;
+        }
       break;
     case 'G':
       c[G].setInt(bytes+1);
