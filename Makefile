@@ -106,7 +106,7 @@ FORMAT = ihex
 CXXBENICE = -fno-default-inline 
 CXXBEMEAN = 
 CXXDEFS = -DF_CPU=$(F_CPU) $(EXTRA_DEFINES)
-CXXEXTRA = -fno-threadsafe-statics -fwrapv -fno-exceptions -ffunction-sections -fdata-sections -Wall -funroll-loops
+CXXEXTRA = -fno-threadsafe-statics -fwrapv -fno-exceptions -ffunction-sections -fdata-sections -Wall -Wextra
 #work around current bug in compiler triggered by Marlin engine by disabling optimization.
 ifeq ($(USE_MARLIN),1)
 CXXFLAGS = $(CXXDEFS) $(CXXINCS) -O0 $(CXXEXTRA) $(CXXBENICE)
