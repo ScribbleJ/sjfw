@@ -18,6 +18,7 @@
 
 #ifdef HAS_SD
 #include "SDCard.h"
+#include "fat.h"
 #endif
 
 // These bits of global data are used by the LCD and Keypad handler classes.
@@ -83,6 +84,11 @@ public:
       last_lcdrefresh = now;
       update_TEMPGRAPH();
       update_TEMP();
+
+#ifdef HAS_SD
+      update_SDSELECT();
+			update_MODS();
+#endif
       
 #ifdef HAS_KEYPAD
       update_MOTORS();
@@ -539,6 +545,8 @@ private:
     LCD.write((char)3);
     LCD.write((char)5);
     LCD.write((char)7);
+
+    tagline();
   }
 
 #ifdef HAS_KEYPAD
@@ -562,6 +570,13 @@ private:
     LCD.setCursor(9,2);
     LCD.label("STP:",MOTION.getAxis(MOD_AXIS).getStepsPerMM());
 
+    tagline();
+  }
+
+  void update_MODS()
+  {
+    if(currentmode != MODS)
+      return;
     tagline();
   }
 
@@ -761,6 +776,18 @@ private:
   {
     currentmode = SDSELECT;
     LCD.clear();
+    display_SDSELECT();
+  }
+
+  void update_SDSELECT()
+  {
+    if(currentmode != SDSELECT)
+      return;
+    tagline();
+  }
+
+  void display_SDSELECT()
+  {
 #ifdef HAS_SD    
     if(sdcard::isReading())
     {
@@ -796,7 +823,18 @@ private:
     if(lcd_y < 4)
       return;
     LCD.setCursor(0,3);
-    LCD.write_P(PSTR(LCD_TAGLINE));
+#ifdef HAS_SD
+    if(sdcard::isReading())
+    {
+      LCD.write_P(PSTR("SD Print: "));
+      LCD.write((uint16_t)(sdcard::getFilePos() * 100 / sdcard::getFileSize()));
+      LCD.write_P(PSTR("%"));
+		} else {
+#endif
+    	LCD.write_P(PSTR(LCD_TAGLINE));
+#ifdef HAS_SD
+		}
+#endif
   }
 
 };

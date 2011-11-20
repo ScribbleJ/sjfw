@@ -71,6 +71,11 @@ char const* getCurrentfile();
 // print currentfile
 bool printcurrent();
 
+// returns the current file position, null if not sd printing
+uint32_t  getFilePos();
+
+// returns the current file size, null if not sd printing
+uint32_t  getFileSize();
 
 /**************************/
 /** Read File             */
