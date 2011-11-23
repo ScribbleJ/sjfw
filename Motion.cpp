@@ -795,7 +795,7 @@ void Motion::writePositionToHost(GCode& gc)
   {
     Host::Instance(gc.source).write(ax > Z ? 'A' - Z - 1 + ax : 'X' + ax); 
     Host::Instance(gc.source).write(':'); 
-    Host::Instance(gc.source).write(AXES[ax].getCurrentPosition(),0,4); 
+    Host::Instance(gc.source).write(AXES[ax].getCurrentPosition(),0,2); 
     Host::Instance(gc.source).write(' ');
   }
 }
