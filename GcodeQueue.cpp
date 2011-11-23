@@ -221,14 +221,15 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
 		m23filename = false;
 		if (sdcard::openFile(bytes, &sdcard::file)) {
 			sdcard::finishRead();
-			Host::Instance(source).write_P(PSTR("Opened "));
+			Host::Instance(source).write_P(PSTR("File selected "));
 			Host::Instance(source).write(bytes);
 			Host::Instance(source).write_P(PSTR(", ready to print\n"));
 		}
 		else {
-			Host::Instance(source).write_P(PSTR("Open "));
+			Host::Instance(source).write_P(PSTR("file.open "));
+			Host::Instance(source).write_P(PSTR(" failed: "));
 			Host::Instance(source).write(bytes);
-			Host::Instance(source).write_P(PSTR(" failed\n"));
+			Host::Instance(source).endl();
 		}
 	}
 	else {
@@ -336,9 +337,9 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
 						break;
 					//case 26: // SD seek
 					case 27: // report SD print status
-						Host::Instance(source).write_P(PSTR("SD byte "));
+						Host::Instance(source).write_P(PSTR("SD printing byte "));
 						Host::Instance(source).write(sdcard::getCurrentPos(), 10);
-						Host::Instance(source).write_P(PSTR(" of "));
+						Host::Instance(source).write_P(PSTR("/"));
 						Host::Instance(source).write(sdcard::getCurrentSize(), 10);
 						Host::Instance(source).endl();
 						c[M].unset();
