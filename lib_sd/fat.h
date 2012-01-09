@@ -89,7 +89,6 @@ struct fat_dir_entry_struct
     offset_t entry_offset;
 };
 
-
 struct fat_file_struct
 {
     struct fat_fs_struct* fs;
