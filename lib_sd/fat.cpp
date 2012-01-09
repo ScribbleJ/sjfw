@@ -161,16 +161,17 @@ struct fat_fs_struct
     cluster_t cluster_free;
 };
 
-struct fat_file_struct
-{
-    struct fat_fs_struct* fs;
-    struct fat_dir_entry_struct dir_entry;
-    offset_t pos;
-    cluster_t pos_cluster;
-#ifdef FAT_DELAY_DIRENTRY_UPDATE
-    uint8_t needs_write;
-#endif
-};
+// moved to fat.h (by tommyc)
+// struct fat_file_struct
+// {
+//     struct fat_fs_struct* fs;
+//     struct fat_dir_entry_struct dir_entry;
+//     offset_t pos;
+//     cluster_t pos_cluster;
+// #ifdef FAT_DELAY_DIRENTRY_UPDATE
+//     uint8_t needs_write;
+// #endif
+// };
 
 struct fat_dir_struct
 {
