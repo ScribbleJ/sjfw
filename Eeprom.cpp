@@ -81,7 +81,7 @@ namespace eeprom
     if(GCODES.isFull())
       return;
 
-    char buf[MAX_GCODE_FRAG_SIZE];
+    uint8_t buf[MAX_GCODE_FRAG_SIZE];
     int x = 0;
     for(;x<MAX_GCODE_FRAG_SIZE;x++)
     {
@@ -103,7 +103,7 @@ namespace eeprom
         reading = false;
       }
     }
-    GCODES.parsebytes(buf, x, EEPROM_SOURCE);
+    GCODES.parsebytes((char *) buf, x, EEPROM_SOURCE);
   }
 
 };
