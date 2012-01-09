@@ -329,5 +329,20 @@ bool printcurrent() {
   return true;
 }
 
+uint32_t getFilePos() {
+	if (playing)
+	{
+		return (uint32_t)file->pos;
+	}
+	return NULL;
+}
+
+uint32_t getFileSize() {
+	if (playing)
+	{
+		return (uint32_t)file->dir_entry.file_size;
+	}
+	return NULL;
+}
 
 } // namespace sdcard

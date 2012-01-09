@@ -11,6 +11,9 @@ INCLUDE_SJFW_LOOKAHEAD = 1
 # EC for Gen3/4 only.  Others default to 100k Thermistors.
 USE_EXTRUDERCONTROLLER = 1
 
+# If the printer is position backwords (ie Y motor away form you on a prusa)
+#REVERSE_PRINTER = 1
+
 # "generic" is a special config with no pins defined.
 # You should be able to compile this for your chip, upload it, then configure the pins at
 # runtime.
@@ -85,13 +88,14 @@ ifeq ($(INCLUDE_SJFW_LOOKAHEAD),1)
   LOOK_FILES = 
   LOOK_DEFINES = -DLOOKAHEAD
 endif
-
-
+ifeq ($(REVERSE_PRINTER),1)
+  REVERSE_DEFINES = -DREVERSE_PRINTER
+endif
 
   
 
 EXTRA_FILES = $(MOTION_FILES) $(LCD_FILES) $(SD_FILES) $(BOARD_FILES) $(KEYPAD_FILES) $(BT_FILES) $(LOOK_FILES)
-EXTRA_DEFINES = $(MOTION_DEFINES) $(LCD_DEFINES) $(SD_DEFINES) $(BOARD_DEFINES) $(KEYPAD_DEFINES) $(BT_DEFINES) -DSJFW_VERSION='"$(SJFW_VERSION)"' $(LOOK_DEFINES)
+EXTRA_DEFINES = $(MOTION_DEFINES) $(LCD_DEFINES) $(SD_DEFINES) $(BOARD_DEFINES) $(KEYPAD_DEFINES) $(BT_DEFINES) -DSJFW_VERSION='"$(SJFW_VERSION)"' $(LOOK_DEFINES) $(REVERSE_DEFINES)
 
 
 
