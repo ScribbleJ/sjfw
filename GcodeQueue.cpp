@@ -216,6 +216,7 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
 	long l;
 	errno = 0;
 
+#ifdef HAS_SD
 	// bytes should contain the filename
 	if (m23filename) {
 		m23filename = false;
@@ -232,7 +233,9 @@ void GcodeQueue::parsebytes(char *bytes, uint8_t numbytes, uint8_t source)
 			Host::Instance(source).endl();
 		}
 	}
-	else {
+	else 
+#endif
+	{
 		switch(bytes[0])
 		{
 			case 'N':

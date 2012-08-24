@@ -18,7 +18,8 @@ void init_time()
 
 void wait(unsigned long t)
 {
-  _delay_ms(t);
+	while(t--)
+  		_delay_ms(1);
 }    
 
 
